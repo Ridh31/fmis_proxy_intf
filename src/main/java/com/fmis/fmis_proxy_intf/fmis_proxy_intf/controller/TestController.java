@@ -1,8 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Test;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TestService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.StandardResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,8 +17,8 @@ public class TestController {
     }
 
     @GetMapping("/test")
-    public String test() {
-        return "Hello World111";
+    public StandardResponse test() {
+        return StandardResponse.success("Hello World111", null);
     }
 
     @GetMapping("/getname")
@@ -28,12 +27,14 @@ public class TestController {
 
         return test;
     }
-
     @GetMapping("/getall")
-    public ResponseEntity<List<Test>> getAll() {
-       List <Test> test = testService.getAllTests();
-
-       return new ResponseEntity<>(test, HttpStatus.OK);
+    public StandardResponse getAll() {
+        List<Test> testList = testService.getAllTests();
+        if (testList != null && !testList.isEmpty()) {
+            return StandardResponse.success("Tests found", testList);
+        } else {
+            return StandardResponse.notFound("No tests found");
+        }
     }
 
     @PostMapping("/add")

@@ -1,10 +1,10 @@
-package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
+//package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-@Configuration
-public class OpenApiConfig {
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.context.annotation.Bean;
+//import org.springframework.context.annotation.Configuration;
+//@Configuration
+//public class OpenApiConfig {
 //    @Bean
 //    public OpenAPI openAPI(@Value("${application-title}") String title,
 //                           @Value("${application-description}") String description,
@@ -26,4 +26,4 @@ public class OpenApiConfig {
 //                .type(SecurityScheme.Type.HTTP)
 //                .scheme("bearer"); // Removed bearerFormat="JWT" to make it more generic
 //    }
-}
+//}
