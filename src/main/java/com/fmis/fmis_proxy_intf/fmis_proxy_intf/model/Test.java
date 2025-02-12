@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Entity representing a test record in the database.
+ */
 @Entity
 @Data
 @Getter
@@ -31,5 +34,5 @@ public class Test {
         return name;
     }
 
-    String name;
+    private String name;
 }
