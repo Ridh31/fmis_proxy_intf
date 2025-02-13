@@ -45,23 +45,33 @@ public class PartnerController {
             partner.setRsaPublicKey(key.get("public_key").toString());
             partner.setRsaPrivateKey(key.get("private_key").toString());
 
-            // Save the partner
-            partnerService.createPartner(partner);
+            // Check if partner code already exists
+            if (partnerService.findByCode(partner.getCode()).isPresent()) {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                "400",
+                                "Partner's code already taken. Please use another code!"
+                        ));
+            }
 
-            // Return success response with HTTP 201 Created status
-            ApiResponse<Object> response = new ApiResponse<>(
-                    "200",
-                    "Partner created successfully"
-            );
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            // Save the partner and return response
+            Partner savedPartner = partnerService.createPartner(partner);
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(new ApiResponse<>(
+                            "200",
+                            "Partner created successfully!",
+                            savedPartner
+                    ));
 
         } catch (Exception e) {
-            // Handle errors gracefully and return HTTP 500 Internal Server Error
-            ApiResponse<Object> response = new ApiResponse<>(
-                    "500",
-                    "Error creating partner: " + e.getMessage()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            "500",
+                            e.getMessage()
+                    ));
         }
     }
 

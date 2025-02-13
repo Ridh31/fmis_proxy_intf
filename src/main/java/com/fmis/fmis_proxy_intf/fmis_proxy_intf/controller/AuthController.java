@@ -39,6 +39,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> register(@RequestBody User user) {
         try {
+            // Check if the username already exists
             if (userService.findByUsername(user.getUsername()).isPresent()) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
@@ -48,6 +49,7 @@ public class AuthController {
                         ));
             }
 
+            // Set the partner and register the user
             user.setPartner(user.getPartner());
             User savedUser = userService.registerUser(user);
 
@@ -78,10 +80,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User user) {
         try {
+            // Authenticate the user using the provided credentials
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
             );
 
+            // Retrieve the logged-in user and return success response
             User loggedInUser = userService.findByUsername(user.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -91,13 +95,15 @@ public class AuthController {
             ));
 
         } catch (BadCredentialsException e) {
+            // Invalid credentials case
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(
                             "401",
                             "Invalid username or password!"
                     ));
 
-        } catch (RuntimeException e) { // Covers user not found
+        } catch (RuntimeException e) {
+            // User not found case
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(
                             "404",
@@ -105,6 +111,7 @@ public class AuthController {
                     ));
 
         } catch (Exception e) {
+            // General error case
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",

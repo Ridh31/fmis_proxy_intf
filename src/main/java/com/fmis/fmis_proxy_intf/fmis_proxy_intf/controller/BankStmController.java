@@ -1,6 +1,5 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.BankStm;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
@@ -25,7 +24,12 @@ public class BankStmController {
     private final PartnerService partnerService;
     private final UserService userService;
 
-    // Constructor for injecting services
+    /**
+     * Constructor for injecting the required services.
+     *
+     * @param partnerService Service to handle partner-related logic.
+     * @param userService    Service to handle user-related logic.
+     */
     @Autowired
     public BankStmController(PartnerService partnerService, UserService userService) {
         this.partnerService = partnerService;
@@ -33,15 +37,19 @@ public class BankStmController {
     }
 
     /**
-     * Endpoint to create a bank statement.
+     * Endpoint to create a bank statement for a specific partner.
      *
-     * @param hintCode the encoded hint code to identify the partner
-     * @param bankStm the bank statement details to be created
-     * @return a response message indicating success or failure
+     * @param hintCode The encoded hint code used to identify the partner.
+     * @param bankStm  The bank statement details to be created.
+     * @return A response indicating the success or failure of the operation.
      */
     @PostMapping("/create/{hintCode}")
-    public ResponseEntity<ApiResponse<String>> createBankStm(@PathVariable String hintCode, @RequestBody BankStm bankStm) {
-        String response;
+    public ResponseEntity<ApiResponse<String>> createBankStm(
+            @PathVariable String hintCode,
+            @RequestBody BankStm bankStm) {
+
+        String statusCode;
+        String message;
 
         try {
             // Retrieve the Authentication object from the SecurityContext
@@ -56,24 +64,23 @@ public class BankStmController {
 
             if (userOpt.isPresent()) {
                 User foundUser = userOpt.get();
-                response = "User found!";
+                statusCode = "200";
+                message = "User found!";
             } else {
-                response = "User not found!";
+                statusCode = "404";
+                message = "User not found!";
             }
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            String jsonString = objectMapper.writeValueAsString(new ApiResponse<>("200", "User found!"));
-            System.out.println("TESTSETESTES============ " + jsonString);  // Log the serialized object
-
-            // Return response with HttpStatus.OK (200)
-            ApiResponse<String> apiResponse = new ApiResponse<>("200", response);
-            return ResponseEntity.ok(apiResponse);
+            // Return the appropriate response based on the user lookup result
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(new ApiResponse<>(statusCode, message));
 
         } catch (Exception e) {
-            // Log the error and return it in the response
-            e.printStackTrace();
-            ApiResponse<String> errorResponse = new ApiResponse<>("500", "Error: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            // Return an internal server error response if an exception occurs
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("500", e.getMessage()));
         }
     }
 }

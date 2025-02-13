@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @Getter
 @Setter
-@Table(name = "partner_intf")
+@Table(name = "partner_intf", uniqueConstraints = @UniqueConstraint(columnNames = {"base64", "sha256", "rsa_public_key", "rsa_private_key"}))
 public class Partner {
 
     @Id
@@ -33,15 +33,19 @@ public class Partner {
     private String code;
 
     @Lob
+    @Column(name = "base64", nullable = false, unique = true)
     private String base64;
 
     @Lob
+    @Column(name = "sha256", nullable = false, unique = true)
     private String sha256;
 
     @Lob
+    @Column(name = "rsa_public_key", nullable = false, unique = true)
     private String rsaPublicKey;
 
     @Lob
+    @Column(name = "rsa_private_key", nullable = false, unique = true)
     private String rsaPrivateKey;
 
     private Integer createdBy;

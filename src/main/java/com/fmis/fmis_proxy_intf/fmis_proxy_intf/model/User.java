@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @Getter
 @Setter
-@Table(name = "user")
+@Table(name = "user", uniqueConstraints = @UniqueConstraint(columnNames = {"username"}))
 public class User {
 
     @Id
