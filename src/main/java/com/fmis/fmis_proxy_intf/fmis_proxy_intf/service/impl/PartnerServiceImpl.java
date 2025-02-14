@@ -55,6 +55,6 @@ public class PartnerServiceImpl implements PartnerService {
     public Long findByBase64(String base64) {
         return partnerRepository.findByBase64(base64)
                 .map(Partner::getId) // Get the id of the Hint Code
-                .orElseThrow(() -> new ResourceNotFoundException("Bank not found with hint code: " + base64));
+                .orElseThrow(() -> new ResourceNotFoundException("Partner not found with code: " + base64));
     }
 }

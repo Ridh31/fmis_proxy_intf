@@ -18,7 +18,7 @@ import java.util.Optional;
  * Controller for handling Bank Statement creation and management.
  */
 @RestController
-@RequestMapping("/api/bankstm")
+@RequestMapping("/api/bank-statement")
 public class BankStmController {
 
     private final PartnerService partnerService;
@@ -39,13 +39,13 @@ public class BankStmController {
     /**
      * Endpoint to create a bank statement for a specific partner.
      *
-     * @param hintCode The encoded hint code used to identify the partner.
+     * @param partnerCode The encoded hint code used to identify the partner.
      * @param bankStm  The bank statement details to be created.
      * @return A response indicating the success or failure of the operation.
      */
-    @PostMapping("/create/{hintCode}")
-    public ResponseEntity<ApiResponse<String>> createBankStm(
-            @PathVariable String hintCode,
+    @PostMapping("/create/{partnerCode}")
+    public ResponseEntity<ApiResponse<?>> createBankStm(
+            @PathVariable String partnerCode,
             @RequestBody BankStm bankStm) {
 
         String statusCode;
@@ -56,8 +56,8 @@ public class BankStmController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
 
-            // Decode the partner ID using the hintCode
-            Long partnerId = partnerService.findByBase64(hintCode);
+            // Decode the partner ID using the partnerCode
+            Long partnerId = partnerService.findByBase64(partnerCode);
 
             // Check if the user exists for the given partner ID and username
             Optional<User> userOpt = userService.findByPartnerIdAndUsername(partnerId, username);
@@ -67,8 +67,8 @@ public class BankStmController {
                 statusCode = "200";
                 message = "User Authorized!";
             } else {
-                statusCode = "404";
-                message = "Unauthorized access. Your code is invalid. Please use a valid code.";
+                statusCode = "400";
+                message = "Your partner code is invalid. Please use a provided code.";
             }
 
             // Return the appropriate response based on the user lookup result

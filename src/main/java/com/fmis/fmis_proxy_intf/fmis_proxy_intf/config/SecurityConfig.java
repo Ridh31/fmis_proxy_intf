@@ -60,7 +60,7 @@ public class SecurityConfig {
                             response.setContentType("application/json");
 
                             // Add status code to the response body
-                            String jsonResponse = "{\"code\":" + HttpStatus.UNAUTHORIZED.value() +
+                            String jsonResponse = "{\"code\":" + "\"" +  HttpStatus.UNAUTHORIZED.value() + "\"" +
                                     ", \"message\":\"Unauthorized access. Please provide valid credentials.\"}";
                             response.getWriter().write(jsonResponse);
                         })

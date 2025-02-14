@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -20,14 +19,11 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
-    private final PasswordEncoder passwordEncoder;
 
     public AuthController(UserService userService,
-                          AuthenticationManager authenticationManager,
-                          PasswordEncoder passwordEncoder) {
+                          AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
-        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -78,7 +74,7 @@ public class AuthController {
      * @return ResponseEntity containing login status
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<?>> login(@RequestBody User user) {
         try {
             // Authenticate the user using the provided credentials
             authenticationManager.authenticate(

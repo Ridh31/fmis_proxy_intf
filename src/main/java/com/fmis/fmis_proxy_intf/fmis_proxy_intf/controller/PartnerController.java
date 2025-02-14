@@ -34,7 +34,7 @@ public class PartnerController {
      * @return Response entity with the creation status.
      */
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse<Object>> createPartner(@RequestBody Partner partner) {
+    public ResponseEntity<ApiResponse<?>> createPartner(@RequestBody Partner partner) {
         try {
             // Generate key from partner code
             Map<String, Object> key = generatePartnerKey(partner.getCode());

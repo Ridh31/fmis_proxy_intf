@@ -10,14 +10,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class BankStmServiceImpl implements BankStmService {
 
-    private final BankStmRepository bankStmRepository;
-
     /**
      * Constructs a new BankStmRepository with the given repository.
      *
      * @param bankStmRepository The repository for managing Test entities.
      */
     public BankStmServiceImpl(BankStmRepository bankStmRepository) {
-        this.bankStmRepository = bankStmRepository;
     }
 }
