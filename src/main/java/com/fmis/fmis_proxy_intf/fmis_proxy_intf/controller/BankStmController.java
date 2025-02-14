@@ -68,7 +68,7 @@ public class BankStmController {
                 message = "User Authorized!";
             } else {
                 statusCode = "404";
-                message = "Unauthorized, invalid code! Please use your code.";
+                message = "Unauthorized access. Your code is invalid. Please use a valid code.";
             }
 
             // Return the appropriate response based on the user lookup result
