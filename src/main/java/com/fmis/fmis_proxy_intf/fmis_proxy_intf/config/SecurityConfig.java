@@ -28,7 +28,10 @@ public class SecurityConfig {
     }
 
     /**
-     * Configures security filters and authentication policies.
+     * Configures the HTTP security filter chain.
+     * @param http HttpSecurity object to configure
+     * @return SecurityFilterChain
+     * @throws Exception if any error occurs during configuration
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -46,7 +49,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Provides password encoding using BCrypt.
+     * Bean for password encoding using BCrypt.
+     * @return PasswordEncoder instance
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -54,7 +58,10 @@ public class SecurityConfig {
     }
 
     /**
-     * Retrieves the AuthenticationManager from the authentication configuration.
+     * Bean for retrieving the AuthenticationManager from the authentication configuration.
+     * @param authenticationConfiguration AuthenticationConfiguration object
+     * @return AuthenticationManager
+     * @throws Exception if any error occurs during configuration
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {

@@ -65,10 +65,10 @@ public class BankStmController {
             if (userOpt.isPresent()) {
                 User foundUser = userOpt.get();
                 statusCode = "200";
-                message = "User found!";
+                message = "User Authorized!";
             } else {
                 statusCode = "404";
-                message = "User not found!";
+                message = "Unauthorized, invalid code! Please use your code.";
             }
 
             // Return the appropriate response based on the user lookup result
