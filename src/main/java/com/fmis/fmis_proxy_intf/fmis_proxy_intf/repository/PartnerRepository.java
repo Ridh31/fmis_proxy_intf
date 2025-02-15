@@ -2,7 +2,6 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 
 /**
@@ -25,4 +24,12 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
      * @return an Optional containing the Partner if found, or empty if not found
      */
     Optional<Partner> findByBase64(String base64);
+
+    /**
+     * Finds a Partner by its RSA public key.
+     *
+     * @param rsaPublicKey the RSA public key associated with the partner
+     * @return an Optional containing the Partner if found, or empty if not found
+     */
+    Optional<Partner> findIdByRsaPublicKey(String rsaPublicKey);
 }

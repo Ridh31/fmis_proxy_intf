@@ -48,7 +48,7 @@ public class Partner {
     @Column(name = "rsa_private_key", nullable = false, unique = true)
     private String rsaPrivateKey;
 
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate = LocalDateTime.now();
@@ -74,7 +74,7 @@ public class Partner {
      * @param rsaPrivateKey RSA private key.
      * @param createdBy    ID of the user who created the partner.
      */
-    public Partner(String name, String description, String code, String base64, String sha256, String rsaPublicKey, String rsaPrivateKey, Integer createdBy) {
+    public Partner(String name, String description, String code, String base64, String sha256, String rsaPublicKey, String rsaPrivateKey, Long createdBy) {
         this.name = name;
         this.description = description;
         this.code = code;
@@ -151,11 +151,11 @@ public class Partner {
         this.rsaPrivateKey = rsaPrivateKey;
     }
 
-    public Integer getCreatedBy() {
+    public Long getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(Integer createdBy) {
+    public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
     }
 

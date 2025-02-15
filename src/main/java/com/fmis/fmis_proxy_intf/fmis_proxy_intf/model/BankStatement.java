@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Table(name = "bankstm_stg")
-public class BankStm {
+public class BankStatement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -77,7 +77,7 @@ public class BankStm {
     @Column(name = "descrlong")
     private String descrLong;
 
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate = LocalDateTime.now();
@@ -208,11 +208,11 @@ public class BankStm {
         this.descrLong = descrLong;
     }
 
-    public Integer getCreatedBy() {
+    public Long getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(Integer createdBy) {
+    public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
     }
 

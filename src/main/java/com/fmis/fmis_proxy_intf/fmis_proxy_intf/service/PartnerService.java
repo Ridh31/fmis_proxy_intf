@@ -6,7 +6,7 @@ import java.util.Optional;
 
 /**
  * Service interface for managing Partner entities.
- * Provides methods to create a Partner and retrieve it by its unique code or base64 encoding.
+ * Provides methods to create and retrieve Partner entities based on different criteria.
  */
 public interface PartnerService {
 
@@ -19,18 +19,26 @@ public interface PartnerService {
     Partner createPartner(Partner partner);
 
     /**
-     * Finds a Partner by its unique code.
+     * Retrieves a Partner by its unique code.
      *
-     * @param code The unique code associated with the partner.
-     * @return An Optional containing the Partner if found, or empty if not found.
+     * @param code the unique code associated with the partner
+     * @return an Optional containing the Partner if found, or an empty Optional if not found
      */
     Optional<Partner> findByCode(String code);
 
     /**
-     * Finds a Partner by its base64 representation.
+     * Retrieves a Partner by its base64 encoded representation.
      *
      * @param base64 the base64 encoded string representing the partner
      * @return the ID of the Partner associated with the given base64 encoding
      */
-    Long findByBase64(String base64);
+    Long findIdByBase64(String base64);
+
+    /**
+     * Retrieves a Partner by its RSA public key.
+     *
+     * @param rsaPublicKey the RSA public key associated with the partner
+     * @return the ID of the Partner associated with the given RSA public key
+     */
+    Long findIdByRsaPublicKey(String rsaPublicKey);
 }
