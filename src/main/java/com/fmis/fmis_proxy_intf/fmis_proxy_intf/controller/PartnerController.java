@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Map;
 import java.util.Optional;
 
@@ -75,7 +74,8 @@ public class PartnerController {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ApiResponse<>(
                             "200",
-                            "Partner created successfully!", savedPartner
+                            "Partner created successfully!",
+                            savedPartner
                     ));
 
         } catch (Exception e) {

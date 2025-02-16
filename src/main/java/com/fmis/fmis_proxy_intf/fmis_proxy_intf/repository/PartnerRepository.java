@@ -10,6 +10,14 @@ import java.util.Optional;
 public interface PartnerRepository extends JpaRepository<Partner, Integer> {
 
     /**
+     * Finds a Partner by its unique identifier.
+     *
+     * @param id the unique identifier of the partner
+     * @return an Optional containing the Partner if found, or empty if not found
+     */
+    Optional<Partner> findById(Long id);
+
+    /**
      * Finds a Partner by its unique code.
      *
      * @param code the unique code associated with the partner

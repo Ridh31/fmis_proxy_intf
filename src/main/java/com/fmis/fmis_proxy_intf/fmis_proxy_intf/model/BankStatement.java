@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Data
 @Getter
 @Setter
-@Table(name = "bankstm_stg")
+@Table(name = "cmb_bankstm_stg")
 public class BankStatement {
 
     @Id
@@ -25,57 +25,61 @@ public class BankStatement {
     @Lob
     private String code;
 
-    @Lob
-    @Column(name = "bsp_stmt_dt")
-    private LocalDateTime bspStmtDt;
+    @ManyToOne
+    @JoinColumn(name = "partner_intf_id", referencedColumnName = "id")
+    private Partner partner;  // Reference to Partner
 
     @Lob
-    @Column(name = "bank_account_n")
-    private String bankAccountNumber;
+    @Column(name = "cmb_bsp_stmt_dt")
+    private LocalDateTime cmbBspStmtDt;
 
     @Lob
-    @Column(name = "currency_cd")
-    private String currencyCd;
+    @Column(name = "cmb_bank_account_n")
+    private String cmbBankAccountN;
 
     @Lob
-    @Column(name = "value_dt")
-    private LocalDateTime valueDate;
+    @Column(name = "cmb_currency_cd")
+    private String cmbCurrencyCd;
 
     @Lob
-    @Column(name = "bank_stmt_type")
-    private BigDecimal bankStmtType;
+    @Column(name = "cmb_value_dt")
+    private LocalDateTime cmbValueDt;
 
     @Lob
-    @Column(name = "bsp_tran_amt")
-    private BigDecimal bspTranAmt;
+    @Column(name = "cmb_bank_stmt_type")
+    private BigDecimal cmbBankStmtType;
 
     @Lob
-    @Column(name = "open_balance")
-    private BigDecimal openBalance;
+    @Column(name = "cmb_bsp_tran_amt")
+    private BigDecimal cmbBspTranAmt;
 
     @Lob
-    @Column(name = "end_balance")
-    private BigDecimal endBalance;
+    @Column(name = "cmb_open_balance")
+    private BigDecimal cmbOpenBalance;
 
     @Lob
-    @Column(name = "immediate_bal")
-    private BigDecimal immediateBal;
+    @Column(name = "cmb_end_balance")
+    private BigDecimal cmbEndBalance;
 
     @Lob
-    @Column(name = "recon_ref_id")
-    private String reconRefId;
+    @Column(name = "cmb_immediate_bal")
+    private BigDecimal cmbImmediateBal;
 
     @Lob
-    @Column(name = "check_number")
-    private String checkNumber;
+    @Column(name = "cmb_recon_ref_id")
+    private String cmbReconRefId;
 
     @Lob
-    @Column(name = "letter_number")
-    private String letterNumber;
+    @Column(name = "cmb_check_number")
+    private String cmbCheckNumber;
 
     @Lob
-    @Column(name = "descrlong")
-    private String descrLong;
+    @Column(name = "cmb_letter_number")
+    private String cmbLetterNumber;
+
+    @Lob
+    @Column(name = "cmb_descrlong")
+    private String cmbDescrLong;
 
     private Long createdBy;
 
@@ -104,108 +108,116 @@ public class BankStatement {
         this.code = code;
     }
 
-    public LocalDateTime getBspStmtDt() {
-        return bspStmtDt;
+    public Partner getPartner() {
+        return partner;
     }
 
-    public void setBspStmtDt(LocalDateTime bspStmtDt) {
-        this.bspStmtDt = bspStmtDt;
+    public void setPartner(Partner partner) {
+        this.partner = partner;
     }
 
-    public String getBankAccountNumber() {
-        return bankAccountNumber;
+    public LocalDateTime getCmbBspStmtDt() {
+        return cmbBspStmtDt;
     }
 
-    public void setBankAccountNumber(String bankAccountNumber) {
-        this.bankAccountNumber = bankAccountNumber;
+    public void setCmbBspStmtDt(LocalDateTime cmbBspStmtDt) {
+        this.cmbBspStmtDt = cmbBspStmtDt;
     }
 
-    public String getCurrencyCd() {
-        return currencyCd;
+    public String getCmbBankAccountN() {
+        return cmbBankAccountN;
     }
 
-    public void setCurrencyCd(String currencyCd) {
-        this.currencyCd = currencyCd;
+    public void setCmbBankAccountN(String cmbBankAccountN) {
+        this.cmbBankAccountN = cmbBankAccountN;
     }
 
-    public LocalDateTime getValueDate() {
-        return valueDate;
+    public String getCmbCurrencyCd() {
+        return cmbCurrencyCd;
     }
 
-    public void setValueDate(LocalDateTime valueDate) {
-        this.valueDate = valueDate;
+    public void setCmbCurrencyCd(String cmbCurrencyCd) {
+        this.cmbCurrencyCd = cmbCurrencyCd;
     }
 
-    public BigDecimal getBankStmtType() {
-        return bankStmtType;
+    public LocalDateTime getCmbValueDt() {
+        return cmbValueDt;
     }
 
-    public void setBankStmtType(BigDecimal bankStmtType) {
-        this.bankStmtType = bankStmtType;
+    public void setCmbValueDt(LocalDateTime cmbValueDt) {
+        this.cmbValueDt = cmbValueDt;
     }
 
-    public BigDecimal getBspTranAmt() {
-        return bspTranAmt;
+    public BigDecimal getCmbBankStmtType() {
+        return cmbBankStmtType;
     }
 
-    public void setBspTranAmt(BigDecimal bspTranAmt) {
-        this.bspTranAmt = bspTranAmt;
+    public void setCmbBankStmtType(BigDecimal cmbBankStmtType) {
+        this.cmbBankStmtType = cmbBankStmtType;
     }
 
-    public BigDecimal getOpenBalance() {
-        return openBalance;
+    public BigDecimal getCmbBspTranAmt() {
+        return cmbBspTranAmt;
     }
 
-    public void setOpenBalance(BigDecimal openBalance) {
-        this.openBalance = openBalance;
+    public void setCmbBspTranAmt(BigDecimal cmbBspTranAmt) {
+        this.cmbBspTranAmt = cmbBspTranAmt;
     }
 
-    public BigDecimal getEndBalance() {
-        return endBalance;
+    public BigDecimal getCmbOpenBalance() {
+        return cmbOpenBalance;
     }
 
-    public void setEndBalance(BigDecimal endBalance) {
-        this.endBalance = endBalance;
+    public void setCmbOpenBalance(BigDecimal cmbOpenBalance) {
+        this.cmbOpenBalance = cmbOpenBalance;
     }
 
-    public BigDecimal getImmediateBal() {
-        return immediateBal;
+    public BigDecimal getCmbEndBalance() {
+        return cmbEndBalance;
     }
 
-    public void setImmediateBal(BigDecimal immediateBal) {
-        this.immediateBal = immediateBal;
+    public void setCmbEndBalance(BigDecimal cmbEndBalance) {
+        this.cmbEndBalance = cmbEndBalance;
     }
 
-    public String getReconRefId() {
-        return reconRefId;
+    public BigDecimal getCmbImmediateBal() {
+        return cmbImmediateBal;
     }
 
-    public void setReconRefId(String reconRefId) {
-        this.reconRefId = reconRefId;
+    public void setCmbImmediateBal(BigDecimal cmbImmediateBal) {
+        this.cmbImmediateBal = cmbImmediateBal;
     }
 
-    public String getCheckNumber() {
-        return checkNumber;
+    public String getCmbReconRefId() {
+        return cmbReconRefId;
     }
 
-    public void setCheckNumber(String checkNumber) {
-        this.checkNumber = checkNumber;
+    public void setCmbReconRefId(String cmbReconRefId) {
+        this.cmbReconRefId = cmbReconRefId;
     }
 
-    public String getLetterNumber() {
-        return letterNumber;
+    public String getCmbCheckNumber() {
+        return cmbCheckNumber;
     }
 
-    public void setLetterNumber(String letterNumber) {
-        this.letterNumber = letterNumber;
+    public void setCmbCheckNumber(String cmbCheckNumber) {
+        this.cmbCheckNumber = cmbCheckNumber;
     }
 
-    public String getDescrLong() {
-        return descrLong;
+    public String getCmbLetterNumber() {
+        return cmbLetterNumber;
     }
 
-    public void setDescrLong(String descrLong) {
-        this.descrLong = descrLong;
+    public void setCmbLetterNumber(String cmbLetterNumber) {
+        this.cmbLetterNumber = cmbLetterNumber;
+    }
+
+    public String getCmbDescrLong() {
+        return cmbDescrLong;
+    }
+
+    public void setCmbDescrLong(String cmbDescrLong) {
+        this.cmbDescrLong = cmbDescrLong;
     }
 
     public Long getCreatedBy() {
