@@ -7,6 +7,9 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.BankStatementReposito
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.PartnerRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.BankStatementService;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -66,5 +69,18 @@ public class BankStatementServiceImpl implements BankStatementService {
 
         // Save and return the bank statement entity
         return bankStatementRepository.save(bankStatement);
+    }
+
+    /**
+     * Fetches a page of active and non-deleted bank statements.
+     *
+     * @param page The page number to fetch.
+     * @param size The size of each page.
+     * @return A Page of BankStatement entities.
+     */
+    @Override
+    public Page<BankStatement> getAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bankStatementRepository.getAll(pageable);
     }
 }

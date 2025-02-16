@@ -10,12 +10,12 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Map;
 import java.util.Optional;
 
@@ -115,6 +115,19 @@ public class BankStatementController {
             // Handle any unforeseen errors and return a generic server error response
             return buildErrorResponse("500", e.getMessage());
         }
+    }
+
+    /**
+     * API endpoint to fetch a paginated list of active bank statements.
+     *
+     * @param page The page number (default: 0).
+     * @param size The page size (default: 10).
+     * @return A Page of BankStatement entities.
+     */
+    @GetMapping("/list")
+    public Page<BankStatement> getBankStatements(@RequestParam(defaultValue = "0") int page,
+                                                 @RequestParam(defaultValue = "10") int size) {
+        return bankStatementService.getAll(page, size);
     }
 
     /**
