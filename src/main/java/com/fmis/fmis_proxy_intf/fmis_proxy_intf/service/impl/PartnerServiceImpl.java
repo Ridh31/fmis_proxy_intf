@@ -86,6 +86,6 @@ public class PartnerServiceImpl implements PartnerService {
     public Long findIdByRsaPublicKey(String rsaPublicKey) {
         return partnerRepository.findIdByRsaPublicKey(rsaPublicKey)
                 .map(Partner::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Partner with the provided RSA public key not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Partner with the provided code not found."));
     }
 }

@@ -38,10 +38,10 @@ public class AuthController {
             // Check if the username already exists
             if (userService.findByUsername(user.getUsername()).isPresent()) {
                 return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
+                        .status(HttpStatus.CONFLICT)
                         .body(new ApiResponse<>(
-                                "400",
-                                "Username already taken!"
+                                "409",
+                                "Username '" + user.getUsername() + "' is already taken."
                         ));
             }
 
@@ -50,11 +50,10 @@ public class AuthController {
             User savedUser = userService.registerUser(user);
 
             return ResponseEntity
-                    .status(HttpStatus.OK)
+                    .status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
-                            "200",
-                            "Registered successfully!",
-                            savedUser
+                            "201",
+                            "User '" + savedUser.getUsername() + "' registered successfully!"
                     ));
 
         } catch (Exception e) {
@@ -62,7 +61,7 @@ public class AuthController {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
-                            e.getMessage()
+                            "Registration failed: " + e.getMessage()
                     ));
         }
     }
@@ -78,7 +77,7 @@ public class AuthController {
         try {
             // Authenticate the user using the provided credentials
             authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
+                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
             );
 
             // Retrieve the logged-in user and return success response
@@ -87,7 +86,7 @@ public class AuthController {
 
             return ResponseEntity.ok(new ApiResponse<>(
                     "200",
-                    "Login successful! Welcome " + loggedInUser.getUsername()
+                    "Login successful! Welcome, " + loggedInUser.getUsername() + "."
             ));
 
         } catch (BadCredentialsException e) {
@@ -95,7 +94,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(
                             "401",
-                            "Invalid username or password!"
+                            "Invalid username or password. Please try again."
                     ));
 
         } catch (RuntimeException e) {
@@ -103,7 +102,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(
                             "404",
-                            "User not found!"
+                            "User '" + user.getUsername() + "' not found."
                     ));
 
         } catch (Exception e) {
@@ -111,7 +110,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
-                            e.getMessage()
+                            "An error occurred during login: " + e.getMessage()
                     ));
         }
     }

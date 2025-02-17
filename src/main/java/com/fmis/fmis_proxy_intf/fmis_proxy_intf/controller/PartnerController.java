@@ -38,6 +38,32 @@ public class PartnerController {
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<?>> createPartner(@RequestBody Partner partner) {
         try {
+            // Retrieve authenticated user's username
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(
+                                "401",
+                                "Unauthorized: You must be logged in to create a partner."
+                        ));
+            }
+
+            String username = authentication.getName();
+
+            // Get the user ID from username
+            Optional<User> user = userService.findByUsername(username);
+            Long userId = user.map(User::getId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Check if partner code already exists
+            if (partnerService.findByCode(partner.getCode()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                "400",
+                                "Bad Request: Partner code '" + partner.getCode() + "' is already taken. Please use another code."
+                        ));
+            }
+
             // Generate key from partner code
             Map<String, Object> key = RSAUtil.generatePartnerKey(partner.getCode());
 
@@ -46,43 +72,30 @@ public class PartnerController {
             partner.setSha256(key.get("sha256").toString());
             partner.setRsaPublicKey(key.get("public_key").toString());
             partner.setRsaPrivateKey(key.get("private_key").toString());
-
-            // Retrieve authenticated user's username
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String username = authentication.getName();
-
-            // Get the user ID from username
-            Optional<User> user = userService.findByUsername(username);
-            Long userId = user.map(User::getId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            // Set created_by field
             partner.setCreatedBy(userId);
 
-            // Check if partner code already exists
-            if (partnerService.findByCode(partner.getCode()).isPresent()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                "400",
-                                "Partner's code already taken. Please use another code!"
-                        ));
-            }
-
-            // Save the partner and return response
+            // Save the partner
             Partner savedPartner = partnerService.createPartner(partner);
 
-            return ResponseEntity.status(HttpStatus.OK)
+            return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
-                            "200",
+                            "201",
                             "Partner created successfully!",
                             savedPartner
+                    ));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(
+                            "404",
+                            "Not Found: " + e.getMessage()
                     ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
-                            e.getMessage()
+                            "Internal Server Error: " + e.getMessage()
                     ));
         }
     }
