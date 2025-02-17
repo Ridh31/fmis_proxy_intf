@@ -86,6 +86,17 @@ public class PartnerServiceImpl implements PartnerService {
     public Long findIdByRsaPublicKey(String rsaPublicKey) {
         return partnerRepository.findIdByRsaPublicKey(rsaPublicKey)
                 .map(Partner::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Partner with the provided code not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Partner with the provided RSA public key not found."));
+    }
+
+    /**
+     * Checks if a {@code Partner} exists by its ID.
+     *
+     * @param id The ID of the {@code Partner}.
+     * @return {@code true} if the {@code Partner} exists, otherwise {@code false}.
+     */
+    @Override
+    public boolean existsById(Long id) {
+        return partnerRepository.existsById(id);
     }
 }

@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -34,10 +35,12 @@ public class Partner {
 
     @Lob
     @Column(name = "base64", nullable = false, unique = true)
+    @JsonIgnore
     private String base64;
 
     @Lob
     @Column(name = "sha256", nullable = false, unique = true)
+    @JsonIgnore
     private String sha256;
 
     @Lob
@@ -46,16 +49,21 @@ public class Partner {
 
     @Lob
     @Column(name = "rsa_private_key", nullable = false, unique = true)
+    @JsonIgnore
     private String rsaPrivateKey;
 
+    @JsonIgnore
     private Long createdBy;
 
     @Column(name = "created_date", nullable = false, updatable = false)
+    @JsonIgnore
     private LocalDateTime createdDate = LocalDateTime.now();
 
+    @JsonIgnore
     private Boolean status = true;
 
     @Column(name = "is_deleted")
+    @JsonIgnore
     private Boolean isDeleted = false;
 
     // Constructors

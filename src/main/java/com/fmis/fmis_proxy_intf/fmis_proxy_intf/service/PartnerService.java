@@ -6,7 +6,7 @@ import java.util.Optional;
 
 /**
  * Service interface for managing {@link Partner} entities.
- * Provides methods to create and retrieve Partner entities based on different criteria.
+ * Provides methods to create, retrieve, and check the existence of {@link Partner} entities based on different criteria.
  */
 public interface PartnerService {
 
@@ -21,7 +21,7 @@ public interface PartnerService {
     /**
      * Retrieves a {@link Partner} by its unique ID.
      *
-     * @param id The ID of the partner.
+     * @param id The ID of the {@link Partner}.
      * @return An {@link Optional} containing the {@link Partner} if found, or empty if not found.
      */
     Optional<Partner> findById(Long id);
@@ -29,7 +29,7 @@ public interface PartnerService {
     /**
      * Retrieves a {@link Partner} by its unique code.
      *
-     * @param code The unique code associated with the partner.
+     * @param code The unique code associated with the {@link Partner}.
      * @return An {@link Optional} containing the {@link Partner} if found, or empty if not found.
      */
     Optional<Partner> findByCode(String code);
@@ -37,7 +37,7 @@ public interface PartnerService {
     /**
      * Retrieves the ID of a {@link Partner} by its base64-encoded representation.
      *
-     * @param base64 The base64-encoded string representing the partner.
+     * @param base64 The base64-encoded string representing the {@link Partner}.
      * @return The ID of the {@link Partner} associated with the given base64 encoding.
      */
     Long findIdByBase64(String base64);
@@ -45,8 +45,16 @@ public interface PartnerService {
     /**
      * Retrieves the ID of a {@link Partner} by its RSA public key.
      *
-     * @param rsaPublicKey The RSA public key associated with the partner.
+     * @param rsaPublicKey The RSA public key associated with the {@link Partner}.
      * @return The ID of the {@link Partner} associated with the given RSA public key.
      */
     Long findIdByRsaPublicKey(String rsaPublicKey);
+
+    /**
+     * Checks whether a {@link Partner} exists based on its ID.
+     *
+     * @param id The ID of the {@link Partner}.
+     * @return {@code true} if the {@link Partner} exists, otherwise {@code false}.
+     */
+    boolean existsById(Long id);
 }

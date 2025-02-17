@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -18,11 +19,14 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final PartnerService partnerService;
     private final AuthenticationManager authenticationManager;
 
     public AuthController(UserService userService,
+                          PartnerService partnerService,
                           AuthenticationManager authenticationManager) {
         this.userService = userService;
+        this.partnerService = partnerService;
         this.authenticationManager = authenticationManager;
     }
 
@@ -38,10 +42,21 @@ public class AuthController {
             // Check if the username already exists
             if (userService.findByUsername(user.getUsername()).isPresent()) {
                 return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
+                        .status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                "409",
-                                "Username '" + user.getUsername() + "' is already taken."
+                                "400",
+                                "The username '" + user.getUsername() + "' is already taken. Please choose a different username."
+                        ));
+            }
+
+            // Check if the partner exists
+            Long partnerId = user.getPartner().getId();
+            if (!partnerService.existsById(partnerId)) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(
+                                "404",
+                                "Partner with ID '" + partnerId + "' not found. Please check the partner ID."
                         ));
             }
 
@@ -53,7 +68,7 @@ public class AuthController {
                     .status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
                             "201",
-                            "User '" + savedUser.getUsername() + "' registered successfully!"
+                            "User '" + savedUser.getUsername() + "' has been successfully registered."
                     ));
 
         } catch (Exception e) {
@@ -61,7 +76,7 @@ public class AuthController {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
-                            "Registration failed: " + e.getMessage()
+                            "An unexpected error occurred during registration: " + e.getMessage()
                     ));
         }
     }
@@ -86,7 +101,7 @@ public class AuthController {
 
             return ResponseEntity.ok(new ApiResponse<>(
                     "200",
-                    "Login successful! Welcome, " + loggedInUser.getUsername() + "."
+                    "Login successful. Welcome, " + loggedInUser.getUsername() + "."
             ));
 
         } catch (BadCredentialsException e) {
@@ -94,7 +109,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(
                             "401",
-                            "Invalid username or password. Please try again."
+                            "Authentication failed. Invalid username or password."
                     ));
 
         } catch (RuntimeException e) {
@@ -102,7 +117,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(
                             "404",
-                            "User '" + user.getUsername() + "' not found."
+                            "User '" + user.getUsername() + "' not found. Please register if you don't have an account."
                     ));
 
         } catch (Exception e) {
