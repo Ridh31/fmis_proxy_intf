@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
+import org.springframework.data.domain.Page;
 
 import java.util.Optional;
 
@@ -57,4 +58,13 @@ public interface PartnerService {
      * @return {@code true} if the {@link Partner} exists, otherwise {@code false}.
      */
     boolean existsById(Long id);
+
+    /**
+     * Retrieves a paginated list of all partners.
+     *
+     * @param page The page number (starting from 0).
+     * @param size The number of records per page.
+     * @return A paginated list of {@link Partner} entities.
+     */
+    Page<Partner> getAll(int page, int size);
 }

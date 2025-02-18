@@ -59,7 +59,7 @@ public class BankStatementServiceImpl implements BankStatementService {
         bankStatement.setCmbBspTranAmt(statement.getCmbBspTranAmt());
         bankStatement.setCmbOpenBalance(statement.getCmbOpenBalance());
         bankStatement.setCmbEndBalance(statement.getCmbEndBalance());
-        bankStatement.setCmbImmediateBal(statement.getCmbImmediateBalance());
+        bankStatement.setCmbImmediateBal(statement.getCmbImmediateBal());
         bankStatement.setCmbReconRefId(statement.getCmbReconRefId());
         bankStatement.setCmbCheckNumber(statement.getCmbCheckNumber());
         bankStatement.setCmbDescrLong(statement.getCmbDescrlong());

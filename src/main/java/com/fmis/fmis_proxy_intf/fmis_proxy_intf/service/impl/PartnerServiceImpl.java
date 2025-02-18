@@ -5,6 +5,9 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.PartnerRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -98,5 +101,18 @@ public class PartnerServiceImpl implements PartnerService {
     @Override
     public boolean existsById(Long id) {
         return partnerRepository.existsById(id);
+    }
+
+    /**
+     * Retrieves a paginated list of all partners.
+     *
+     * @param page The page number (starting from 0).
+     * @param size The number of records per page.
+     * @return A paginated list of {@code Partner} entities.
+     */
+    @Override
+    public Page<Partner> getAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return partnerRepository.getAll(pageable);
     }
 }

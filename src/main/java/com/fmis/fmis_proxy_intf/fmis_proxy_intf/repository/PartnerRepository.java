@@ -1,7 +1,11 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
 import java.util.Optional;
 
 /**
@@ -49,4 +53,16 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
      * @return true if the Partner exists, false otherwise
      */
     boolean existsById(Long id);
+
+    /**
+     * Retrieves all active and non-deleted Partners, sorted by ID in descending order.
+     *
+     * @param pageable pagination details
+     * @return a paginated list of active and non-deleted Partners
+     */
+    @Query(
+            value = "SELECT * FROM partner_intf pi2 WHERE pi2.status = TRUE AND pi2.is_deleted = FALSE ORDER BY pi2.id DESC",
+            nativeQuery = true
+    )
+    Page<Partner> getAll(Pageable pageable);
 }

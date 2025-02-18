@@ -6,6 +6,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -98,5 +99,18 @@ public class PartnerController {
                             "Internal Server Error: " + e.getMessage()
                     ));
         }
+    }
+
+    /**
+     * Retrieves a paginated list of partners.
+     *
+     * @param page The page number (default: 0).
+     * @param size The number of items per page (default: 10).
+     * @return A paginated list of partners.
+     */
+    @GetMapping("/list")
+    public Page<Partner> getPartners(@RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "10") int size) {
+        return partnerService.getAll(page, size);
     }
 }

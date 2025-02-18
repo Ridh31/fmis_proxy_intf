@@ -1,5 +1,8 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.BankStatementDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.BankStatement;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 
 import java.util.Optional;
+import java.util.List;
 
 /**
  * REST Controller to manage bank statements.
@@ -99,15 +103,32 @@ public class BankStatementController {
             bankStatementDTO.setCreatedBy(userId);
             bankStatementDTO.setPartnerId(partnerId);
 
+            // Extract the list of bank statements
+            List<BankStatementDTO.BankStatement> bankStatements = bankStatementDTO.getData().getCmbBankStmStg();
+
+            // Wrap in the same structure as received
+            BankStatementDTO.BankData responseData = new BankStatementDTO.BankData();
+            responseData.setCmbBankStmStg(bankStatements);
+
+            // Create an ObjectMapper instance
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule()); // Support LocalDateTime serialization
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Use ISO format for dates
+
+            // Convert responseData to JSON
+            String jsonResponse = objectMapper.writeValueAsString(responseData);
+
             // If the bank data contains valid statements, save them
             if (bankData != null && bankData.getCmbBankStmStg() != null) {
                 for (BankStatementDTO.BankStatement statement : bankData.getCmbBankStmStg()) {
                     bankStatementService.createBankStatement(userId, partnerId, statement);
                 }
+
                 return ResponseEntity.status(HttpStatus.CREATED)
                         .body(new ApiResponse<>(
                                 "201",
                                 "Bank statement saved successfully."
+                                // responseData
                         ));
             }
 

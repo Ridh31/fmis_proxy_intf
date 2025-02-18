@@ -21,7 +21,7 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
      * @return A Page of BankStatement entities.
      */
     @Query(
-            value = "SELECT * FROM cmb_bankstm_stg cbs WHERE status = TRUE AND is_deleted = FALSE ORDER BY id DESC",
+            value = "SELECT * FROM cmb_bankstm_stg cbs WHERE cbs.status = TRUE AND cbs.is_deleted = FALSE ORDER BY cbs.id DESC",
             nativeQuery = true
     )
     Page<BankStatement> getAll(Pageable pageable);
