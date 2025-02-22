@@ -14,14 +14,17 @@ import org.springframework.data.jpa.repository.Query;
 public interface BankStatementRepository extends JpaRepository<BankStatement, Long> {
 
     /**
-     * Retrieves all bank statements that are active (status = TRUE) and not deleted (is_deleted = FALSE).
-     * Results are ordered by ID in descending order.
+     * Retrieves all active bank statements (status = TRUE) that are not deleted (is_deleted = FALSE).
+     * The results are ordered by the bank statement ID in descending order.
      *
      * @param pageable The Pageable object for pagination and sorting.
      * @return A Page of BankStatement entities.
      */
     @Query(
-            value = "SELECT * FROM cmb_bankstm_stg cbs WHERE cbs.status = TRUE AND cbs.is_deleted = FALSE ORDER BY cbs.id DESC",
+            value = "SELECT bs.*, pi2.name FROM bank_statement bs " +
+                    "LEFT JOIN partner_intf pi2 ON pi2.id = bs.partner_intf_id " +
+                    "WHERE bs.status = TRUE AND bs.is_deleted = FALSE " +
+                    "ORDER BY bs.id DESC",
             nativeQuery = true
     )
     Page<BankStatement> getAll(Pageable pageable);

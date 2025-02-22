@@ -57,7 +57,7 @@ public class PartnerServiceImpl implements PartnerService {
      * Finds a {@code Partner} by its unique code.
      *
      * @param code The unique code associated with the {@code Partner}.
-     * @return An {@link Optional} containing the {@code Partner}, or empty if not found.
+     * @return An {@link Optional} containing the {@code Partner} if found, or empty if not found.
      */
     @Override
     public Optional<Partner> findByCode(String code) {
@@ -65,31 +65,17 @@ public class PartnerServiceImpl implements PartnerService {
     }
 
     /**
-     * Finds a {@code Partner} by its base64-encoded string.
-     *
-     * @param base64 The base64-encoded representation of the {@code Partner}.
-     * @return The ID of the {@code Partner} if found.
-     * @throws ResourceNotFoundException If the {@code Partner} is not found.
-     */
-    @Override
-    public Long findIdByBase64(String base64) {
-        return partnerRepository.findByBase64(base64)
-                .map(Partner::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Partner with the provided base64 not found."));
-    }
-
-    /**
      * Finds a {@code Partner} by its RSA public key.
      *
-     * @param rsaPublicKey The RSA public key associated with the {@code Partner}.
+     * @param publicKey The RSA public key associated with the {@code Partner}.
      * @return The ID of the {@code Partner} if found.
      * @throws ResourceNotFoundException If the {@code Partner} is not found.
      */
     @Override
-    public Long findIdByRsaPublicKey(String rsaPublicKey) {
-        return partnerRepository.findIdByRsaPublicKey(rsaPublicKey)
+    public Long findIdByPublicKey(String publicKey) {
+        return partnerRepository.findIdByPublicKey(publicKey)
                 .map(Partner::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Partner with the provided RSA public key not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Partner with the provided key not found."));
     }
 
     /**
@@ -108,7 +94,7 @@ public class PartnerServiceImpl implements PartnerService {
      *
      * @param page The page number (starting from 0).
      * @param size The number of records per page.
-     * @return A paginated list of {@code Partner} entities.
+     * @return A {@link Page} containing {@code Partner} entities.
      */
     @Override
     public Page<Partner> getAll(int page, int size) {

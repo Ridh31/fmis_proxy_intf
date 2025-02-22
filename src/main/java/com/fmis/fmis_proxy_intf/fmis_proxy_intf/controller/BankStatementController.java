@@ -1,8 +1,5 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.BankStatementDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.BankStatement;
@@ -10,6 +7,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.BankStatementService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.JsonToXmlUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,16 +17,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
-import java.util.List;
 
 /**
- * REST Controller to manage bank statements.
- * Provides endpoints for creating and retrieving bank statements.
+ * REST Controller for managing bank statements.
  */
 @RestController
-@RequestMapping("/api/bank-statement")
+@RequestMapping("/api")
 public class BankStatementController {
 
     private final PartnerService partnerService;
@@ -45,31 +42,24 @@ public class BankStatementController {
     }
 
     /**
-     * Endpoint to create a bank statement for a specific partner.
-     * This method processes the provided bank statement details, verifies user authentication,
-     * validates the partner code using RSA decryption, and saves the bank statement if all conditions are met.
+     * Creates a bank statement for a specific partner.
      *
-     * @param bankStatementDTO The bank statement details provided by the user.
-     * @return ResponseEntity containing success or error message.
+     * @param bankStatementDTO The bank statement details.
+     * @return ResponseEntity with success or error message.
      */
-    @PostMapping("/create")
+    @PostMapping("/import-bank-statement")
     public ResponseEntity<ApiResponse<?>> createBankStatement(@Valid @RequestBody BankStatementDTO bankStatementDTO) {
         try {
-            // Get the currently authenticated user from the security context
+            // Get the currently authenticated user's username
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
-
-            // Retrieve the partner's public key and bank data from the request
             String publicKey = bankStatementDTO.getPartnerCode();
-            BankStatementDTO.BankData bankData = bankStatementDTO.getData();
 
-            // Find the partner ID using the provided RSA public key
-            Long partnerId = partnerService.findIdByRsaPublicKey(publicKey);
-
-            // Find the user associated with the given partner and username
+            // Find partner ID by public key and validate user's association
+            Long partnerId = partnerService.findIdByPublicKey(publicKey);
             Optional<User> userOptional = userService.findByPartnerIdAndUsername(partnerId, username);
 
-            // If the user is not found, return an unauthorized response
+            // Unauthorized if user does not exist or has an invalid partner code
             if (userOptional.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
@@ -78,14 +68,11 @@ public class BankStatementController {
                         ));
             }
 
-            // Retrieve the user details
             User foundUser = userOptional.get();
-
-            // Decrypt the partner data using RSA decryption to verify the partner code
-            String decryptedData = RSAUtil.decrypt(publicKey, foundUser.getPartner().getRsaPrivateKey())
+            String decryptedData = RSAUtil.decrypt(publicKey, foundUser.getPartner().getPrivateKey())
                     .get("decrypt").toString();
 
-            // If the decrypted partner code doesn't match, return a forbidden response
+            // Forbidden if partner code validation fails
             if (!decryptedData.equals(foundUser.getPartner().getCode())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new ApiResponse<>(
@@ -94,52 +81,46 @@ public class BankStatementController {
                         ));
             }
 
-            // Retrieve the user ID from the username
+            // Retrieve user ID and set details in the DTO
             Long userId = userService.findByUsername(username)
                     .map(User::getId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Set the user ID and partner ID in the bank statement DTO
             bankStatementDTO.setCreatedBy(userId);
             bankStatementDTO.setPartnerId(partnerId);
 
-            // Extract the list of bank statements
-            List<BankStatementDTO.BankStatement> bankStatements = bankStatementDTO.getData().getCmbBankStmStg();
-
-            // Wrap in the same structure as received
-            BankStatementDTO.BankData responseData = new BankStatementDTO.BankData();
-            responseData.setCmbBankStmStg(bankStatements);
-
-            // Create an ObjectMapper instance
+            // Convert bank statement data to JSON format
             ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule()); // Support LocalDateTime serialization
-            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Use ISO format for dates
+            String data = objectMapper.writeValueAsString(bankStatementDTO.getData());
 
-            // Convert responseData to JSON
-            String jsonResponse = objectMapper.writeValueAsString(responseData);
+            // Save bank statement if valid data is provided
+            if (!data.isEmpty()) {
+                bankStatementDTO.setEndpoint("api/import-bank-statement");
+                bankStatementDTO.setPayload(data);
 
-            // If the bank data contains valid statements, save them
-            if (bankData != null && bankData.getCmbBankStmStg() != null) {
-                for (BankStatementDTO.BankStatement statement : bankData.getCmbBankStmStg()) {
-                    bankStatementService.createBankStatement(userId, partnerId, statement);
-                }
+                // Convert the payload (JSON string) into XML using the utility method
+                String xmlPayload = JsonToXmlUtil.convertJsonToXml(data);
+
+                // Send XML to FMIS
+
+                BankStatement importedBankStatement = bankStatementService.createBankStatement(partnerId, bankStatementDTO);
 
                 return ResponseEntity.status(HttpStatus.CREATED)
                         .body(new ApiResponse<>(
                                 "201",
                                 "Bank statement saved successfully."
-                                // responseData
                         ));
             }
 
-            // If no valid bank statement data is provided, return a bad request response
+            // Return bad request if no valid data is provided
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
                             "400",
                             "Bad Request: No valid bank statement data provided."
                     ));
+
         } catch (Exception e) {
-            // Handle unexpected errors and return an internal server error response
+            // Handle any exceptions and return internal server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
@@ -149,13 +130,13 @@ public class BankStatementController {
     }
 
     /**
-     * API endpoint to fetch a paginated list of active bank statements.
+     * Fetches a paginated list of active bank statements.
      *
      * @param page The page number (default: 0).
      * @param size The page size (default: 10).
      * @return A Page of BankStatement entities.
      */
-    @GetMapping("/list")
+    @GetMapping("/list-bank-statement")
     public Page<BankStatement> getBankStatements(@RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "10") int size) {
         return bankStatementService.getAll(page, size);

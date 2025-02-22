@@ -36,36 +36,24 @@ public class BankStatementServiceImpl implements BankStatementService {
     /**
      * Creates a new bank statement associated with a specific user and partner.
      *
-     * @param userId    The ID of the user creating the bank statement.
      * @param partnerId The ID of the partner associated with the bank statement.
-     * @param statement The DTO containing bank statement details.
+     * @param bankStatementDTO The DTO containing bank statement details.
      * @return The saved {@code BankStatement} entity.
      */
     @Transactional
     @Override
-    public BankStatement createBankStatement(Long userId, Long partnerId, BankStatementDTO.BankStatement statement) {
+    public BankStatement createBankStatement(Long partnerId, BankStatementDTO bankStatementDTO) {
 
         // Retrieve the Partner entity or throw an exception if not found
         Partner partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new RuntimeException("Partner not found"));
 
-        // Map DTO to BankStatement entity
+        // Convert DTO to Entity
         BankStatement bankStatement = new BankStatement();
-        bankStatement.setCmbBspStmtDt(statement.getCmbBspStmtDt());
-        bankStatement.setCmbBankAccountN(statement.getCmbBankAccountN());
-        bankStatement.setCmbCurrencyCd(statement.getCmbCurrencyCd());
-        bankStatement.setCmbValueDt(statement.getCmbValueDt());
-        bankStatement.setCmbBankStmtType(statement.getCmbBankStmtType());
-        bankStatement.setCmbBspTranAmt(statement.getCmbBspTranAmt());
-        bankStatement.setCmbOpenBalance(statement.getCmbOpenBalance());
-        bankStatement.setCmbEndBalance(statement.getCmbEndBalance());
-        bankStatement.setCmbImmediateBal(statement.getCmbImmediateBal());
-        bankStatement.setCmbReconRefId(statement.getCmbReconRefId());
-        bankStatement.setCmbCheckNumber(statement.getCmbCheckNumber());
-        bankStatement.setCmbDescrLong(statement.getCmbDescrlong());
-        bankStatement.setCmbLetterNumber(statement.getCmbLetterNumber());
-        bankStatement.setCreatedBy(userId);
-        bankStatement.setPartner(partner); // Associate the partner
+        bankStatement.setPartner(partner);
+        bankStatement.setEndpoint(bankStatementDTO.getEndpoint());
+        bankStatement.setPayload(bankStatementDTO.getPayload());
+        bankStatement.setCreatedBy(bankStatementDTO.getCreatedBy());
 
         // Save and return the bank statement entity
         return bankStatementRepository.save(bankStatement);
@@ -74,8 +62,8 @@ public class BankStatementServiceImpl implements BankStatementService {
     /**
      * Fetches a page of active and non-deleted bank statements.
      *
-     * @param page The page number to fetch.
-     * @param size The size of each page.
+     * @param page The page number to fetch (starting from 0).
+     * @param size The size of each page (items per page).
      * @return A Page of BankStatement entities.
      */
     @Override

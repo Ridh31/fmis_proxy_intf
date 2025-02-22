@@ -36,20 +36,12 @@ public interface PartnerService {
     Optional<Partner> findByCode(String code);
 
     /**
-     * Retrieves the ID of a {@link Partner} by its base64-encoded representation.
-     *
-     * @param base64 The base64-encoded string representing the {@link Partner}.
-     * @return The ID of the {@link Partner} associated with the given base64 encoding.
-     */
-    Long findIdByBase64(String base64);
-
-    /**
      * Retrieves the ID of a {@link Partner} by its RSA public key.
      *
-     * @param rsaPublicKey The RSA public key associated with the {@link Partner}.
+     * @param publicKey The RSA public key associated with the {@link Partner}.
      * @return The ID of the {@link Partner} associated with the given RSA public key.
      */
-    Long findIdByRsaPublicKey(String rsaPublicKey);
+    Long findIdByPublicKey(String publicKey);
 
     /**
      * Checks whether a {@link Partner} exists based on its ID.

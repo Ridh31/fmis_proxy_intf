@@ -6,19 +6,18 @@ import org.springframework.data.domain.Page;
 
 /**
  * Service interface for managing {@link BankStatement} entities.
- * This interface defines methods for creating and retrieving bank statements.
+ * Defines methods for creating and retrieving bank statements.
  */
 public interface BankStatementService {
 
     /**
      * Creates and saves a new {@link BankStatement}.
      *
-     * @param userId    The ID of the user creating the statement.
-     * @param partnerId The ID of the partner associated with the statement.
-     * @param statement The {@link BankStatementDTO.BankStatement} containing statement details.
+     * @param partnerId        The ID of the associated partner.
+     * @param bankStatementDTO The bank statement data transfer object containing required information.
      * @return The created {@link BankStatement} entity.
      */
-    BankStatement createBankStatement(Long userId, Long partnerId, BankStatementDTO.BankStatement statement);
+    BankStatement createBankStatement(Long partnerId, BankStatementDTO bankStatementDTO);
 
     /**
      * Retrieves a paginated list of all bank statements.

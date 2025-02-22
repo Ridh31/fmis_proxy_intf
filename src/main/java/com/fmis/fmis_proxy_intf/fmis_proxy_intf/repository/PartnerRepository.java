@@ -10,55 +10,47 @@ import java.util.Optional;
 
 /**
  * Repository interface for managing CRUD operations on Partner entities.
- * Extends JpaRepository to provide built-in methods for database interaction.
+ * Extends {@link JpaRepository} to provide built-in methods for database interaction.
  */
 public interface PartnerRepository extends JpaRepository<Partner, Integer> {
 
     /**
      * Finds a Partner by its unique identifier.
      *
-     * @param id the unique identifier of the partner
-     * @return an Optional containing the Partner if found, or an empty Optional if not found
+     * @param id The unique identifier of the partner.
+     * @return An {@link Optional} containing the Partner if found, or an empty {@link Optional} if not found.
      */
     Optional<Partner> findById(Long id);
 
     /**
      * Finds a Partner by its unique code.
      *
-     * @param code the unique code associated with the partner
-     * @return an Optional containing the Partner if found, or an empty Optional if not found
+     * @param code The unique code associated with the partner.
+     * @return An {@link Optional} containing the Partner if found, or an empty {@link Optional} if not found.
      */
     Optional<Partner> findByCode(String code);
 
     /**
-     * Finds a Partner by its base64 encoded representation.
-     *
-     * @param base64 the base64 representation of the partner
-     * @return an Optional containing the Partner if found, or an empty Optional if not found
-     */
-    Optional<Partner> findByBase64(String base64);
-
-    /**
      * Finds a Partner by its RSA public key.
      *
-     * @param rsaPublicKey the RSA public key associated with the partner
-     * @return an Optional containing the Partner if found, or an empty Optional if not found
+     * @param publicKey The RSA public key associated with the partner.
+     * @return An {@link Optional} containing the Partner if found, or an empty {@link Optional} if not found.
      */
-    Optional<Partner> findIdByRsaPublicKey(String rsaPublicKey);
+    Optional<Partner> findIdByPublicKey(String publicKey);
 
     /**
      * Checks if a Partner with the specified ID exists.
      *
-     * @param id the unique identifier of the partner
-     * @return true if the Partner exists, false otherwise
+     * @param id The unique identifier of the partner.
+     * @return {@code true} if the Partner exists, {@code false} otherwise.
      */
     boolean existsById(Long id);
 
     /**
      * Retrieves all active and non-deleted Partners, sorted by ID in descending order.
      *
-     * @param pageable pagination details
-     * @return a paginated list of active and non-deleted Partners
+     * @param pageable The {@link Pageable} object containing pagination and sorting details.
+     * @return A {@link Page} of active and non-deleted Partners.
      */
     @Query(
             value = "SELECT * FROM partner_intf pi2 WHERE pi2.status = TRUE AND pi2.is_deleted = FALSE ORDER BY pi2.id DESC",

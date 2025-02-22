@@ -31,10 +31,10 @@ public class AuthController {
     }
 
     /**
-     * Endpoint to register a new user.
+     * Registers a new user if the username is not taken and the partner exists.
      *
-     * @param user User details for registration
-     * @return ResponseEntity containing the registration status
+     * @param user User details for registration.
+     * @return ResponseEntity containing the registration status.
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> register(@RequestBody User user) {
@@ -49,7 +49,7 @@ public class AuthController {
                         ));
             }
 
-            // Check if the partner exists
+            // Verify if the partner exists by ID
             Long partnerId = user.getPartner().getId();
             if (!partnerService.existsById(partnerId)) {
                 return ResponseEntity
@@ -72,6 +72,7 @@ public class AuthController {
                     ));
 
         } catch (Exception e) {
+            // Handle unexpected exceptions
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
@@ -82,20 +83,20 @@ public class AuthController {
     }
 
     /**
-     * Endpoint to authenticate a user and log them in.
+     * Authenticates a user using provided credentials.
      *
-     * @param user User credentials
-     * @return ResponseEntity containing login status
+     * @param user User credentials for authentication.
+     * @return ResponseEntity containing login status.
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<?>> login(@RequestBody User user) {
         try {
-            // Authenticate the user using the provided credentials
+            // Perform authentication with the provided username and password
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
             );
 
-            // Retrieve the logged-in user and return success response
+            // Fetch the authenticated user from the database
             User loggedInUser = userService.findByUsername(user.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -105,7 +106,7 @@ public class AuthController {
             ));
 
         } catch (BadCredentialsException e) {
-            // Invalid credentials case
+            // Invalid credentials handling
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(
                             "401",
@@ -113,7 +114,7 @@ public class AuthController {
                     ));
 
         } catch (RuntimeException e) {
-            // User not found case
+            // User not found handling
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(
                             "404",
@@ -121,7 +122,7 @@ public class AuthController {
                     ));
 
         } catch (Exception e) {
-            // General error case
+            // General error handling
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
