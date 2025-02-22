@@ -97,8 +97,8 @@ public class PartnerServiceImpl implements PartnerService {
      * @return A {@link Page} containing {@code Partner} entities.
      */
     @Override
-    public Page<Partner> getAll(int page, int size) {
+    public Page<Partner> getAllPartners(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return partnerRepository.getAll(pageable);
+        return partnerRepository.getAllPartners(pageable);
     }
 }

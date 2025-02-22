@@ -112,8 +112,8 @@ public class PartnerController {
      * @return A paginated list of partners.
      */
     @GetMapping("/list-partner")
-    public Page<Partner> getPartners(@RequestParam(defaultValue = "0") int page,
+    public Page<Partner> getAllPartners(@RequestParam(defaultValue = "0") int page,
                                      @RequestParam(defaultValue = "10") int size) {
-        return partnerService.getAll(page, size);
+        return partnerService.getAllPartners(page, size);
     }
 }

@@ -26,5 +26,5 @@ public interface BankStatementService {
      * @param size The number of items per page.
      * @return A {@link Page} of {@link BankStatement} entities.
      */
-    Page<BankStatement> getAll(int page, int size);
+    Page<BankStatement> getAllBankStatements(int page, int size);
 }

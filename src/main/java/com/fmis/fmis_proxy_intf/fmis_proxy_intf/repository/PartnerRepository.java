@@ -56,5 +56,5 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
             value = "SELECT * FROM partner_intf pi2 WHERE pi2.status = TRUE AND pi2.is_deleted = FALSE ORDER BY pi2.id DESC",
             nativeQuery = true
     )
-    Page<Partner> getAll(Pageable pageable);
+    Page<Partner> getAllPartners(Pageable pageable);
 }

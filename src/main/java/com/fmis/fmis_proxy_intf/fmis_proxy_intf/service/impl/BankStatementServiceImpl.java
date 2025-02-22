@@ -67,8 +67,8 @@ public class BankStatementServiceImpl implements BankStatementService {
      * @return A Page of BankStatement entities.
      */
     @Override
-    public Page<BankStatement> getAll(int page, int size) {
+    public Page<BankStatement> getAllBankStatements(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return bankStatementRepository.getAll(pageable);
+        return bankStatementRepository.getAllBankStatements(pageable);
     }
 }

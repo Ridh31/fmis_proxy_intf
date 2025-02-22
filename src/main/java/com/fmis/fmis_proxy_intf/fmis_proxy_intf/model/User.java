@@ -21,6 +21,10 @@ public class User {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "role_id", referencedColumnName = "id")
+    private Role role;  // Reference to Role
+
+    @ManyToOne
     @JoinColumn(name = "partner_intf_id", referencedColumnName = "id")
     private Partner partner;  // Reference to Partner
 
@@ -30,8 +34,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String roles;
+    private String email;
 
     @Column(nullable = false)
     private boolean enabled = true;
@@ -44,8 +47,6 @@ public class User {
 
     @Column(nullable = false)
     private boolean accountNonLocked = true;
-
-    private String email;
 
     @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate = LocalDateTime.now();
@@ -72,6 +73,14 @@ public class User {
         this.id = id;
     }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     public Partner getPartner() {
         return partner;
     }
@@ -96,12 +105,12 @@ public class User {
         this.password = password;
     }
 
-    public String getRoles() {
-        return roles;
+    public String getEmail() {
+        return email;
     }
 
-    public void setRoles(String roles) {
-        this.roles = roles;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public boolean isEnabled() {
@@ -134,14 +143,6 @@ public class User {
 
     public void setAccountNonLocked(boolean accountNonLocked) {
         this.accountNonLocked = accountNonLocked;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public LocalDateTime getCreatedDate() {

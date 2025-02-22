@@ -58,5 +58,5 @@ public interface PartnerService {
      * @param size The number of records per page.
      * @return A paginated list of {@link Partner} entities.
      */
-    Page<Partner> getAll(int page, int size);
+    Page<Partner> getAllPartners(int page, int size);
 }

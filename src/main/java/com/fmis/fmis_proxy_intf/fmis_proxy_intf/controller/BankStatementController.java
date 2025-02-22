@@ -101,7 +101,7 @@ public class BankStatementController {
                 // Convert the payload (JSON string) into XML using the utility method
                 String xmlPayload = JsonToXmlUtil.convertJsonToXml(data);
 
-                // Send XML to FMIS
+                // Send XML to Finance Management Information System (FMIS)
 
                 BankStatement importedBankStatement = bankStatementService.createBankStatement(partnerId, bankStatementDTO);
 
@@ -139,6 +139,6 @@ public class BankStatementController {
     @GetMapping("/list-bank-statement")
     public Page<BankStatement> getBankStatements(@RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "10") int size) {
-        return bankStatementService.getAll(page, size);
+        return bankStatementService.getAllBankStatements(page, size);
     }
 }

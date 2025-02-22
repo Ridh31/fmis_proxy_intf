@@ -53,7 +53,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         return org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
                 .password(user.getPassword()) // Password already hashed
-                .roles(user.getRoles().split(",")) // Convert roles to array
                 .build();
     }
 

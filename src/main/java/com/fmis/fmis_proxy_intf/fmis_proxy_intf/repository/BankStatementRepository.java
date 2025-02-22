@@ -27,5 +27,5 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
                     "ORDER BY bs.id DESC",
             nativeQuery = true
     )
-    Page<BankStatement> getAll(Pageable pageable);
+    Page<BankStatement> getAllBankStatements(Pageable pageable);
 }
