@@ -10,7 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Controller for handling user authentication and registration operations.
@@ -23,15 +26,18 @@ public class AuthController {
     private final RoleService roleService;
     private final PartnerService partnerService;
     private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(UserService userService,
                           RoleService roleService,
                           PartnerService partnerService,
-                          AuthenticationManager authenticationManager) {
-        this.roleService = roleService;
+                          AuthenticationManager authenticationManager,
+                          PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.roleService = roleService;
         this.partnerService = partnerService;
         this.authenticationManager = authenticationManager;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -72,7 +78,7 @@ public class AuthController {
                         ));
             }
 
-            // Set the partner and register the user
+            // Register the user
             user.setPartner(user.getPartner());
             User savedUser = userService.registerUser(user);
 
@@ -83,7 +89,6 @@ public class AuthController {
                     ));
 
         } catch (Exception e) {
-            // Handle unexpected errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
@@ -116,7 +121,6 @@ public class AuthController {
             ));
 
         } catch (BadCredentialsException e) {
-            // Handle invalid credentials
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(
                             "401",
@@ -124,7 +128,6 @@ public class AuthController {
                     ));
 
         } catch (RuntimeException e) {
-            // Handle user not found
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(
                             "404",
@@ -132,11 +135,69 @@ public class AuthController {
                     ));
 
         } catch (Exception e) {
-            // Handle other errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
                             "An error occurred during login: " + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * Resets the password of a user by the Super Admin using the username.
+     *
+     * @param username the username of the user whose password is to be reset
+     * @param password the new password to set
+     * @return response with the status of the operation
+     */
+    @PutMapping("/reset-password")
+    public ResponseEntity<ApiResponse<?>> resetPassword(@RequestParam String username, @RequestParam String password) {
+        try {
+            // Get the currently authenticated user
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String currentUsername = authentication.getName(); // The logged-in user's username
+            User currentUser = userService.findByUsername(currentUsername)
+                    .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+            // Fetch the role of the authenticated user
+            Long roleId = currentUser.getRole().getId();
+            if (!roleService.existsById(roleId)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(
+                                "404",
+                                "Role not found"
+                        ));
+            }
+
+            // Check if the authenticated user is a Super Admin (level 1)
+            if (currentUser.getRole().getLevel() != 1) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>(
+                                "403",
+                                "You do not have permission to reset passwords."
+                        ));
+            }
+
+            // Fetch the target user by username
+            User targetUser = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Hash the new password before saving
+            String encodedPassword = passwordEncoder.encode(password);
+            targetUser.setPassword(encodedPassword);
+
+            // Save the updated user object
+            userService.save(targetUser);
+
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "200",
+                    "Password reset successfully for user: " + username));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            "500",
+                            "An error occurred: " + e.getMessage()
                     ));
         }
     }

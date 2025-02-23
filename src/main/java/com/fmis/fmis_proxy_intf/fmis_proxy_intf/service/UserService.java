@@ -25,6 +25,22 @@ public interface UserService {
     Optional<User> findByUsername(String username);
 
     /**
+     * Finds a user by their ID.
+     *
+     * @param id the ID of the user to find
+     * @return an Optional containing the user, or empty if not found
+     */
+    Optional<User> findById(Long id);
+
+    /**
+     * Saves or updates the user.
+     *
+     * @param user the user to be saved or updated
+     * @return the saved or updated user
+     */
+    User save(User user);
+
+    /**
      * Finds a user by their partner ID and username.
      *
      * @param partnerId the partner ID associated with the user

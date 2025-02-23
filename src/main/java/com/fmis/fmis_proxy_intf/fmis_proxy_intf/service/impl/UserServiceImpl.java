@@ -34,6 +34,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * @param user the user object containing user information
      * @return the saved user with an encoded password
      */
+    @Override
     public User registerUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
@@ -51,7 +52,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        return org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getUsername())
                 .password(user.getPassword()) // Password already hashed
                 .build();
     }
@@ -62,8 +64,31 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * @param username the username of the user to find
      * @return an Optional containing the user, or empty if not found
      */
+    @Override
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    /**
+     * Finds a user by their ID.
+     *
+     * @param id the ID of the user to find
+     * @return an Optional containing the user, or empty if not found
+     */
+    @Override
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    /**
+     * Saves the provided user to the repository.
+     *
+     * @param user the user to save
+     * @return the saved user
+     */
+    @Override
+    public User save(User user) {
+        return userRepository.save(user);
     }
 
     /**
@@ -73,6 +98,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      * @param username the username of the user to find
      * @return an Optional containing the user, or empty if not found
      */
+    @Override
     public Optional<User> findByPartnerIdAndUsername(Long partnerId, String username) {
         return userRepository.findByPartnerIdAndUsername(partnerId, username);
     }
