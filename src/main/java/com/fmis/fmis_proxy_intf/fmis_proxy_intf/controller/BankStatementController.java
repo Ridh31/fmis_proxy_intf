@@ -1,14 +1,17 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.BankStatementDTO;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.BankStatement;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.BankStatementService;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.JsonToXmlUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,49 +20,49 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
 
-/**
- * REST Controller for managing bank statements.
- */
 @RestController
 @RequestMapping("/api")
 public class BankStatementController {
 
+    // Service dependencies injected via constructor
     private final PartnerService partnerService;
     private final UserService userService;
+    private final FmisService fmisService;
     private final BankStatementService bankStatementService;
 
     @Autowired
     public BankStatementController(PartnerService partnerService,
                                    UserService userService,
+                                   FmisService fmisService,
                                    BankStatementService bankStatementService) {
         this.partnerService = partnerService;
         this.userService = userService;
+        this.fmisService = fmisService;
         this.bankStatementService = bankStatementService;
     }
 
     /**
-     * Creates a bank statement for a specific partner.
+     * Endpoint to create a bank statement after importing the data.
      *
-     * @param bankStatementDTO The bank statement details.
-     * @return ResponseEntity with success or error message.
+     * @param bankStatementDTO The bank statement data transfer object containing the data.
+     * @return ResponseEntity with API response.
      */
     @PostMapping("/import-bank-statement")
     public ResponseEntity<ApiResponse<?>> createBankStatement(@Valid @RequestBody BankStatementDTO bankStatementDTO) {
         try {
-            // Get the currently authenticated user's username
+            // Get the currently authenticated user
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
             String publicKey = bankStatementDTO.getPartnerCode();
 
-            // Find partner ID by public key and validate user's association
+            // Retrieve partner id based on the public key
             Long partnerId = partnerService.findIdByPublicKey(publicKey);
             Optional<User> userOptional = userService.findByPartnerIdAndUsername(partnerId, username);
 
-            // Unauthorized if user does not exist or has an invalid partner code
+            // Check if the user is authorized to perform this action
             if (userOptional.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
@@ -68,11 +71,11 @@ public class BankStatementController {
                         ));
             }
 
+            // Decrypt the partner data and validate the partner code
             User foundUser = userOptional.get();
             String decryptedData = RSAUtil.decrypt(publicKey, foundUser.getPartner().getPrivateKey())
                     .get("decrypt").toString();
 
-            // Forbidden if partner code validation fails
             if (!decryptedData.equals(foundUser.getPartner().getCode())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new ApiResponse<>(
@@ -81,7 +84,7 @@ public class BankStatementController {
                         ));
             }
 
-            // Retrieve user ID and set details in the DTO
+            // Set the createdBy and partnerId values
             Long userId = userService.findByUsername(username)
                     .map(User::getId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
@@ -89,38 +92,69 @@ public class BankStatementController {
             bankStatementDTO.setCreatedBy(userId);
             bankStatementDTO.setPartnerId(partnerId);
 
-            // Convert bank statement data to JSON format
+            // Convert the bank statement data to JSON
             ObjectMapper objectMapper = new ObjectMapper();
             String data = objectMapper.writeValueAsString(bankStatementDTO.getData());
 
-            // Save bank statement if valid data is provided
+            // Check if the data is valid
             if (!data.isEmpty()) {
                 bankStatementDTO.setEndpoint("api/import-bank-statement");
                 bankStatementDTO.setPayload(data);
 
-                // Convert the payload (JSON string) into XML using the utility method
+                // Convert JSON data to XML for FMIS
                 String xmlPayload = JsonToXmlUtil.convertJsonToXml(data);
 
-                // Send XML to Finance Management Information System (FMIS)
+                // Get FMIS configuration
+                Optional<FMIS> fmis = fmisService.getFmisUrlById(1L);
+                if (fmis.isPresent()) {
+                    FMIS fmisConfig = fmis.get();
+                    String fmisURL = fmisConfig.getBaseURL() + "/Z_INTF_SO_GET_TEST_GET.v1/get-test/test";
+                    String fmisUsername = fmisConfig.getUsername();
+                    String fmisPassword = fmisConfig.getPassword();
+                    String fmisContentType = fmisConfig.getContentType();
 
-                BankStatement importedBankStatement = bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+                    // Send XML payload to FMIS and handle response
+                    ResponseEntity<String> fmisResponse = fmisService.getXmlFromFmis(fmisURL, fmisUsername, fmisPassword);
 
-                return ResponseEntity.status(HttpStatus.CREATED)
-                        .body(new ApiResponse<>(
-                                "201",
-                                "Bank statement saved successfully."
-                        ));
+                    // Extract and handle FMIS response
+                    String fmisResponseBody = fmisResponse.getBody();
+
+                    if (fmisResponse.getStatusCode().is2xxSuccessful()) {
+
+                        // Save the bank statement if FMIS response is successful
+                        bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+                        return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(new ApiResponse<>(
+                                        "201",
+                                        "Bank statement saved successfully.",
+                                        fmisResponseBody
+                                ));
+                    } else {
+                        // Handle failure in sending data to FMIS
+                        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                                .body(new ApiResponse<>(
+                                        "502",
+                                        "Failed to send data to FMIS: " + fmisResponse.getBody()
+                                ));
+                    }
+                } else {
+                    // Handle case when FMIS URL is not found
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ApiResponse<>(
+                                    "404",
+                                    "Base URL not found"
+                            ));
+                }
             }
 
-            // Return bad request if no valid data is provided
+            // Return error if no valid bank statement data is provided
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
                             "400",
                             "Bad Request: No valid bank statement data provided."
                     ));
-
         } catch (Exception e) {
-            // Handle any exceptions and return internal server error
+            // Handle any server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
@@ -130,11 +164,11 @@ public class BankStatementController {
     }
 
     /**
-     * Fetches a paginated list of active bank statements.
+     * Endpoint to list bank statements with pagination.
      *
-     * @param page The page number (default: 0).
-     * @param size The page size (default: 10).
-     * @return A Page of BankStatement entities.
+     * @param page The page number for pagination (default: 0).
+     * @param size The size of each page (default: 10).
+     * @return A page of bank statements.
      */
     @GetMapping("/list-bank-statement")
     public Page<BankStatement> getBankStatements(@RequestParam(defaultValue = "0") int page,

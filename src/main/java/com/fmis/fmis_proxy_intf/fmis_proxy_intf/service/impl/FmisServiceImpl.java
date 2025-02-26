@@ -26,9 +26,9 @@ public class FmisServiceImpl implements FmisService {
     private final RestTemplate restTemplate;
 
     @Autowired
-    public FmisServiceImpl(FmisRepository fmisRepository) {
+    public FmisServiceImpl(FmisRepository fmisRepository, RestTemplate restTemplate) {
         this.fmisRepository = fmisRepository;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -43,64 +43,68 @@ public class FmisServiceImpl implements FmisService {
     }
 
     /**
-     * Sends XML data to the FMIS system using HTTP POST.
+     * Sends XML data to the FMIS system via HTTP POST.
      *
-     * @param fmisURL        The FMIS interface base URL.
-     * @param fmisUsername   The FMIS username for basic authentication.
-     * @param fmisPassword   The FMIS password for basic authentication.
-     * @param xmlPayload     The XML payload to be sent.
+     * @param fmisURL      The FMIS system URL.
+     * @param fmisUsername The FMIS username for authentication.
+     * @param fmisPassword The FMIS password for authentication.
+     * @param xmlPayload   The XML payload to be sent.
      * @return The response from the FMIS system.
      */
     @Override
     public ResponseEntity<String> sendXmlToFmis(String fmisURL, String fmisUsername, String fmisPassword, String xmlPayload) {
         try {
+            // Set Basic Authentication Interceptor
             restTemplate.getInterceptors().add(new BasicAuthenticationInterceptor(fmisUsername, fmisPassword));
 
+            // Prepare headers and request entity
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_XML);
 
             HttpEntity<String> requestEntity = new HttpEntity<>(xmlPayload, headers);
 
-            return restTemplate.exchange(
-                    fmisURL,
-                    HttpMethod.POST,
-                    requestEntity,
-                    String.class
-            );
+            // Send the request and return response
+            return restTemplate.exchange(fmisURL, HttpMethod.POST, requestEntity, String.class);
+
         } catch (HttpClientErrorException e) {
+            // Handle specific client error exception
             return ResponseEntity.status(e.getStatusCode()).body(e.getMessage());
+
         } catch (Exception e) {
+            // Handle general exceptions
             return ResponseEntity.status(500).body("Internal Server Error: " + e.getMessage());
         }
     }
 
     /**
-     * Retrieves XML data from the FMIS system using HTTP GET.
+     * Retrieves XML data from the FMIS system via HTTP GET.
      *
-     * @param fmisURL        The FMIS interface base URL.
-     * @param fmisUsername   The FMIS username for basic authentication.
-     * @param fmisPassword   The FMIS password for basic authentication.
-     * @return The response from the FMIS system.
+     * @param fmisURL      The FMIS system URL.
+     * @param fmisUsername The FMIS username for authentication.
+     * @param fmisPassword The FMIS password for authentication.
+     * @return The response containing the XML data from the FMIS system.
      */
     @Override
     public ResponseEntity<String> getXmlFromFmis(String fmisURL, String fmisUsername, String fmisPassword) {
         try {
+            // Set Basic Authentication Interceptor
             restTemplate.getInterceptors().add(new BasicAuthenticationInterceptor(fmisUsername, fmisPassword));
 
+            // Prepare headers and request entity
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(java.util.Collections.singletonList(org.springframework.http.MediaType.APPLICATION_XML));
 
             HttpEntity<String> requestEntity = new HttpEntity<>(headers);
 
-            return restTemplate.exchange(
-                    fmisURL,
-                    HttpMethod.GET,
-                    requestEntity,
-                    String.class
-            );
+            // Send the request and return response
+            return restTemplate.exchange(fmisURL, HttpMethod.GET, requestEntity, String.class);
+
         } catch (HttpClientErrorException e) {
+            // Handle specific client error exception
             return ResponseEntity.status(e.getStatusCode()).body(e.getMessage());
+
         } catch (Exception e) {
+            // Handle general exceptions
             return ResponseEntity.status(500).body("Internal Server Error: " + e.getMessage());
         }
     }
