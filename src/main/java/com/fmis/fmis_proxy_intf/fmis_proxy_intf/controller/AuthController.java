@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Role;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
@@ -58,8 +59,15 @@ public class AuthController {
                         ));
             }
 
-            // Check if the role exists
-            Long roleId = user.getRole().getId();
+            // Set the role if not provided
+            Long roleId = (user.getRole() != null && user.getRole().getId() != null) ? user.getRole().getId() : 5L;
+
+            if (user.getRole() == null) {
+                Role defaultRole = roleService.findById(roleId)
+                        .orElseThrow(() -> new RuntimeException(("Default role not found.")));
+                user.setRole(defaultRole);
+            }
+
             if (!roleService.existsById(roleId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
@@ -69,7 +77,20 @@ public class AuthController {
             }
 
             // Check if the partner exists
-            Long partnerId = user.getPartner().getId();
+            Long partnerId = (user.getPartner() != null && user.getPartner().getId() != null)
+                    ? user.getPartner().getId()
+                    : null;
+
+            // Check if partner is not provided
+            if (partnerId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                "400",
+                                "Partner is not provided. Please provide a valid partner."
+                        ));
+            }
+
+            // Check if partner exists in the database
             if (!partnerService.existsById(partnerId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
