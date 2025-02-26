@@ -20,6 +20,9 @@ public class JsonToXmlUtil {
         JsonNode rootNode = objectMapper.readTree(jsonData);
 
         StringBuilder xmlBuilder = new StringBuilder();
+
+        // Adding the XML declaration at the top
+        xmlBuilder.append("<?xml version=\"1.0\"?>\n");
         xmlBuilder.append("<Data>");
 
         // Handle dynamic keys at the root level
