@@ -1,5 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto;
 
+import jakarta.validation.constraints.NotEmpty;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -9,8 +11,13 @@ import java.util.Map;
 public class BankStatementDTO {
 
     private Long id;
+
+    @NotEmpty(message = "Partner code cannot be empty. Please provide a valid partner code.")
     private String partnerCode;
+
     private Long partnerId;
+
+    @NotEmpty(message = "Data cannot be empty. Please provide a valid data.")
     private Map<String, Object> data;
     private String endpoint;
     private String payload;

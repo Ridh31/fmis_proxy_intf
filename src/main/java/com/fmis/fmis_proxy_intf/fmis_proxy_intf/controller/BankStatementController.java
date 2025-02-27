@@ -12,15 +12,18 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.JsonToXmlUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Valid;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -51,7 +54,18 @@ public class BankStatementController {
      * @return ResponseEntity with API response.
      */
     @PostMapping("/import-bank-statement")
-    public ResponseEntity<ApiResponse<?>> createBankStatement(@Valid @RequestBody BankStatementDTO bankStatementDTO) {
+    public ResponseEntity<ApiResponse<?>> createBankStatement(@Validated
+                                                              @RequestBody BankStatementDTO bankStatementDTO,
+                                                              BindingResult bindingResult) {
+        // Extract validation errors using the utility method
+        Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return them in the response
+        if (!validationErrors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("400", validationErrors));
+        }
+
         try {
             // Get the currently authenticated user
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

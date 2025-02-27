@@ -6,6 +6,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,8 +14,12 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Map;
 
 /**
  * Controller for handling user authentication and registration operations.
@@ -45,10 +50,21 @@ public class AuthController {
      * Registers a new user if the username is available and both the role and partner exist.
      *
      * @param user User details for registration.
+     * @param bindingResult Validation result.
      * @return ResponseEntity containing the registration status.
      */
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<?>> register(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<?>> register(@Validated @RequestBody User user, BindingResult bindingResult) {
+
+        // Extract validation errors using the utility method
+        Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return them in the response
+        if (!validationErrors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("400", validationErrors));
+        }
+
         try {
             // Check if the username is already taken
             if (userService.findByUsername(user.getUsername()).isPresent()) {
@@ -59,15 +75,16 @@ public class AuthController {
                         ));
             }
 
-            // Set the role if not provided
+            // Set default role if not provided
             Long roleId = (user.getRole() != null && user.getRole().getId() != null) ? user.getRole().getId() : 5L;
 
             if (user.getRole() == null) {
                 Role defaultRole = roleService.findById(roleId)
-                        .orElseThrow(() -> new RuntimeException(("Default role not found.")));
+                        .orElseThrow(() -> new RuntimeException("Default role not found."));
                 user.setRole(defaultRole);
             }
 
+            // Validate if role exists
             if (!roleService.existsById(roleId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
@@ -81,7 +98,6 @@ public class AuthController {
                     ? user.getPartner().getId()
                     : null;
 
-            // Check if partner is not provided
             if (partnerId == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
@@ -90,7 +106,6 @@ public class AuthController {
                         ));
             }
 
-            // Check if partner exists in the database
             if (!partnerService.existsById(partnerId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
@@ -108,7 +123,6 @@ public class AuthController {
                             "201",
                             "User '" + savedUser.getUsername() + "' has been successfully registered."
                     ));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
@@ -125,7 +139,17 @@ public class AuthController {
      * @return ResponseEntity containing the login status.
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<?>> login(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<?>> login(@Validated @RequestBody User user, BindingResult bindingResult) {
+
+        // Extract validation errors using the utility method
+        Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return them in the response
+        if (!validationErrors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("400", validationErrors));
+        }
+
         try {
             // Attempt authentication
             authenticationManager.authenticate(
@@ -212,7 +236,8 @@ public class AuthController {
 
             return ResponseEntity.ok(new ApiResponse<>(
                     "200",
-                    "Password reset successfully for user: " + username));
+                    "Password reset successfully for user: " + username
+            ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

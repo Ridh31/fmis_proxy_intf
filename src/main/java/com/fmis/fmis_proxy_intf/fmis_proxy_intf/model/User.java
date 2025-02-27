@@ -1,6 +1,8 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,9 +31,13 @@ public class User {
     private Partner partner;  // Reference to Partner
 
     @Column(nullable = false, unique = true)
+    @Size(min = 2, max = 20, message = "Username must be between 2 and 20 characters. Please provide a valid username.")
+    @NotEmpty(message = "Username cannot be empty. Please provide a valid username.")
     private String username;
 
     @Column(nullable = false)
+    @Size(min = 6, message = "Password must be at least 6 characters long. Please provide a stronger password.")
+    @NotEmpty(message = "Password cannot be empty. Please enter a password.")
     private String password;
 
     private String email;

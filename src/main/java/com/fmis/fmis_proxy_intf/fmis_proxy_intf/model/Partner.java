@@ -2,7 +2,7 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,14 +26,15 @@ public class Partner {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    @NotEmpty(message = "Name cannot be empty. Please provide a valid name.")
     private String name;
 
     @Lob
     private String description;
 
     @Lob
-    @NotNull(message = "Code cannot be null")
     @Column(nullable = false, unique = true)
+    @NotEmpty(message = "Code cannot be empty. Please provide a valid code.")
     @JsonIgnore
     private String code;
 

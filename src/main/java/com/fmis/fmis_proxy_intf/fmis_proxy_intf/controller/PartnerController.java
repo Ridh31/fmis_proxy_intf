@@ -6,11 +6,14 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -39,7 +42,17 @@ public class PartnerController {
      * @return Response entity with the creation status.
      */
     @PostMapping("/create-partner")
-    public ResponseEntity<ApiResponse<?>> createPartner(@RequestBody Partner partner) {
+    public ResponseEntity<ApiResponse<?>> createPartner(@Validated @RequestBody Partner partner, BindingResult bindingResult) {
+
+        // Extract validation errors using the utility method
+        Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return them in the response
+        if (!validationErrors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("400", validationErrors));
+        }
+
         try {
             // Retrieve the currently authenticated user's username
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
