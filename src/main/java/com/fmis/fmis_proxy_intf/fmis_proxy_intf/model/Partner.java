@@ -35,7 +35,6 @@ public class Partner {
     @Lob
     @Column(nullable = false, unique = true)
     @NotEmpty(message = "Code cannot be empty. Please provide a valid code.")
-    @JsonIgnore
     private String code;
 
     @Lob

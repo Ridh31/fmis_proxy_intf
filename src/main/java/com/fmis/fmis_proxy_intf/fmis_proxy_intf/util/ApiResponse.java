@@ -6,13 +6,15 @@ import lombok.Setter;
 
 import java.util.Map;
 
-@Setter
 @Getter
+@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
     private String code;
     private String message;
-    private T error;  // Renamed 'data' to 'error' to match the desired response structure.
+    // Getters and Setters
+    private T data;
+    private T error;
 
     /**
      * Default constructor for successful responses.
@@ -35,26 +37,26 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Constructor for successful responses with error payload.
+     * Constructor for successful responses with data payload.
      *
-     * @param error Error payload (field-specific validation errors)
+     * @param data Data payload (could be XML or other formats)
      */
-    public ApiResponse(T error) {
+    public ApiResponse(T data) {
         this();
-        this.error = error;
+        this.data = data;
     }
 
     /**
-     * Full constructor for custom responses with error payload.
+     * Full constructor for custom responses with data payload.
      *
      * @param code    Response status code
      * @param message Human-readable response message
-     * @param error   Error payload (field-specific validation errors)
+     * @param data    Data payload
      */
-    public ApiResponse(String code, String message, T error) {
+    public ApiResponse(String code, String message, T data) {
         this.code = code;
         this.message = message;
-        this.error = error;
+        this.data = data;
     }
 
     /**
@@ -72,14 +74,14 @@ public class ApiResponse<T> {
     /* Static Factory Methods */
 
     /**
-     * Creates a successful response with error payload.
+     * Creates a successful response with data payload.
      *
-     * @param error Error payload
+     * @param data Data payload
      * @return ApiResponse instance with success status
-     * @param <T> Type of the error payload
+     * @param <T> Type of the data payload
      */
-    public static <T> ApiResponse<T> success(T error) {
-        return new ApiResponse<>(error);
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(data);
     }
 
     /**
@@ -98,35 +100,24 @@ public class ApiResponse<T> {
      *
      * @param code    Error status code
      * @param message Error description
-     * @param error   Additional error data (validation errors)
+     * @param data    Additional error data
      * @return ApiResponse instance with error details
      * @param <T> Type of the error data
      */
-    public static <T> ApiResponse<T> error(String code, String message, T error) {
-        return new ApiResponse<>(code, message, error);
+    public static <T> ApiResponse<T> error(String code, String message, T data) {
+        return new ApiResponse<>(code, message, data);
     }
 
-    // Manually defined getters and setters for error field
-
-    public T getError() {
-        return error;
+    public void setData(T data) {
+        this.data = data;
     }
 
     public void setError(T error) {
         this.error = error;
     }
 
-    // Getters and Setters for other fields
-    public String getCode() {
-        return code;
-    }
-
     public void setCode(String code) {
         this.code = code;
-    }
-
-    public String getMessage() {
-        return message;
     }
 
     public void setMessage(String message) {

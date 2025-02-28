@@ -122,7 +122,7 @@ public class BankStatementController {
                 Optional<FMIS> fmis = fmisService.getFmisUrlById(1L);
                 if (fmis.isPresent()) {
                     FMIS fmisConfig = fmis.get();
-                    String fmisURL = fmisConfig.getBaseURL() + "/Z_INTF_SO_GET_TEST_GET.v1/get-test/test";
+                    String fmisURL = fmisConfig.getBaseURL() + "/INTF_CMB_BANKS TM_STG.v1/";
                     String fmisUsername = fmisConfig.getUsername();
                     String fmisPassword = fmisConfig.getPassword();
                     String fmisContentType = fmisConfig.getContentType();
