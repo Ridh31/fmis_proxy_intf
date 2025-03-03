@@ -6,14 +6,11 @@ import lombok.Setter;
 
 import java.util.Map;
 
-@Getter
-@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
     private String code;
     private String message;
-    // Getters and Setters
-    private T data;
+    private T data;  // Renamed 'error' to 'data' to match the desired response structure
     private T error;
 
     /**
@@ -108,19 +105,36 @@ public class ApiResponse<T> {
         return new ApiResponse<>(code, message, data);
     }
 
-    public void setData(T data) {
-        this.data = data;
-    }
-
-    public void setError(T error) {
-        this.error = error;
+    // Manually defined getters and setters
+    public String getCode() {
+        return code;
     }
 
     public void setCode(String code) {
         this.code = code;
     }
 
+    public String getMessage() {
+        return message;
+    }
+
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    public T getError() {
+        return error;
+    }
+
+    public void setError(T error) {
+        this.error = error;
     }
 }

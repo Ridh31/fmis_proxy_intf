@@ -4,7 +4,6 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Test;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TestService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.BankStatementService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,21 +20,17 @@ public class TestController {
 
     private final TestService testService;
     private final FmisService fmisService;
-    private final BankStatementService bankStatementService;
 
     /**
      * Constructor for {@link TestController}.
      *
      * @param testService          The service handling test-related operations.
      * @param fmisService          The service handling FMIS-related operations.
-     * @param bankStatementService The service handling bank statement operations.
      */
     public TestController(TestService testService,
-                          FmisService fmisService,
-                          BankStatementService bankStatementService) {
+                          FmisService fmisService) {
         this.testService = testService;
         this.fmisService = fmisService;
-        this.bankStatementService = bankStatementService;
     }
 
     /**
