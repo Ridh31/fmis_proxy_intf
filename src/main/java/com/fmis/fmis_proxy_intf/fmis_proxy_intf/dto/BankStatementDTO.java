@@ -19,8 +19,10 @@ public class BankStatementDTO {
 
     @NotEmpty(message = "Data cannot be empty. Please provide a valid data.")
     private Map<String, Object> data;
+    private String method;
     private String endpoint;
     private String payload;
+    private String xml;
     private Long createdBy;
     private LocalDateTime createdDate;
     private Boolean status;
@@ -30,13 +32,15 @@ public class BankStatementDTO {
     public BankStatementDTO() {
     }
 
-    public BankStatementDTO(Long id, String partnerCode, Long partnerId, String endpoint, String payload, Long createdBy,
-                            LocalDateTime createdDate, Boolean status, Boolean isDeleted) {
+    public BankStatementDTO(Long id, String partnerCode, String method, Long partnerId, String endpoint, String payload,
+                            String xml, Long createdBy, LocalDateTime createdDate, Boolean status, Boolean isDeleted) {
         this.id = id;
         this.partnerCode = partnerCode;
         this.partnerId = partnerId;
+        this.method = method;
         this.endpoint = endpoint;
         this.payload = payload;
+        this.xml = xml;
         this.createdBy = createdBy;
         this.createdDate = createdDate;
         this.status = status;
@@ -76,6 +80,14 @@ public class BankStatementDTO {
         this.data = data;
     }
 
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
     public String getEndpoint() {
         return endpoint;
     }
@@ -90,6 +102,14 @@ public class BankStatementDTO {
 
     public void setPayload(String payload) {
         this.payload = payload;
+    }
+
+    public String getXml() {
+        return xml;
+    }
+
+    public void setXml(String xml) {
+        this.xml = xml;
     }
 
     public Long getCreatedBy() {

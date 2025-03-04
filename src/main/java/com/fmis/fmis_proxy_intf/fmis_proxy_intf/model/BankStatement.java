@@ -28,11 +28,18 @@ public class BankStatement {
     private Partner partner;  // Reference to Partner
 
     @Lob
+    private String method;
+
+    @Lob
     private String endpoint;
 
     @Lob
     @JsonIgnore
     private String payload;
+
+    @Lob
+    @JsonIgnore
+    private String xml;
 
     @Column(name = "created_by")
     @JsonIgnore
@@ -66,6 +73,14 @@ public class BankStatement {
         this.partner = partner;
     }
 
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
     public String getEndpoint() {
         return endpoint;
     }
@@ -80,6 +95,14 @@ public class BankStatement {
 
     public void setPayload(String payload) {
         this.payload = payload;
+    }
+
+    public String getXml() {
+        return xml;
+    }
+
+    public void setXml(String xml) {
+        this.xml = xml;
     }
 
     public Long getCreatedBy() {

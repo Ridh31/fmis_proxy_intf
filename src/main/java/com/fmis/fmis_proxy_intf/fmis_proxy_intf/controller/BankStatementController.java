@@ -11,8 +11,8 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.JsonToXmlUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,6 @@ import java.util.Optional;
 @RequestMapping("/api")
 public class BankStatementController {
 
-    // Service dependencies injected via constructor
     private final PartnerService partnerService;
     private final UserService userService;
     private final FmisService fmisService;
@@ -112,11 +111,13 @@ public class BankStatementController {
 
             // Check if the data is valid
             if (!data.isEmpty()) {
+                bankStatementDTO.setMethod("POST");
                 bankStatementDTO.setEndpoint("api/import-bank-statement");
                 bankStatementDTO.setPayload(data);
 
                 // Convert JSON data to XML for FMIS
                 String xmlPayload = JsonToXmlUtil.convertJsonToXml(data);
+                bankStatementDTO.setXml(xmlPayload);
 
                 // Get FMIS configuration
                 Optional<FMIS> fmis = fmisService.getFmisUrlById(1L);

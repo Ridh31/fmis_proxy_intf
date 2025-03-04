@@ -51,8 +51,10 @@ public class BankStatementServiceImpl implements BankStatementService {
         // Convert DTO to Entity
         BankStatement bankStatement = new BankStatement();
         bankStatement.setPartner(partner);
+        bankStatement.setMethod(bankStatementDTO.getMethod());
         bankStatement.setEndpoint(bankStatementDTO.getEndpoint());
         bankStatement.setPayload(bankStatementDTO.getPayload());
+        bankStatement.setXml(bankStatementDTO.getXml());
         bankStatement.setCreatedBy(bankStatementDTO.getCreatedBy());
 
         // Save and return the bank statement entity
