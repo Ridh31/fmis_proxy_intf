@@ -38,12 +38,12 @@ public class Partner {
     private String code;
 
     @Lob
-    @Column(name = "public_key", nullable = false, unique = true)
+    @Column(name = "public_key", columnDefinition = "TEXT", nullable = false, unique = true)
     @JsonIgnore
     private String publicKey;
 
     @Lob
-    @Column(name = "private_key", nullable = false, unique = true)
+    @Column(name = "private_key", columnDefinition = "TEXT", nullable = false, unique = true)
     @JsonIgnore
     private String privateKey;
 
@@ -75,7 +75,7 @@ public class Partner {
      * @param privateKey   RSA private key.
      * @param createdBy    ID of the user who created the partner.
      */
-    public Partner(String name, String description, String code, String base64, String sha256, String publicKey, String privateKey, Long createdBy) {
+    public Partner(String name, String description, String code, String publicKey, String privateKey, Long createdBy) {
         this.name = name;
         this.description = description;
         this.code = code;
