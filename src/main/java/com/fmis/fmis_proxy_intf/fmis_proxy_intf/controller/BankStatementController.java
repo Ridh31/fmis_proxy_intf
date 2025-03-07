@@ -2,6 +2,7 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.BankStatementDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.BankStatement;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.BankStatementService;
@@ -23,6 +24,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -105,6 +107,25 @@ public class BankStatementController {
             bankStatementDTO.setCreatedBy(userId);
             bankStatementDTO.setPartnerId(partnerId);
 
+            Optional<Partner> partner = partnerService.findById(partnerId);
+            String partnerCode = partner.get().getCode();
+
+            // Add CMB_BANK_CODE to all arrays in the data
+            if (bankStatementDTO.getData() != null) {
+                for (Map.Entry<String, Object> entry : bankStatementDTO.getData().entrySet()) {
+
+                    // Check if the value is a list
+                    if (entry.getValue() instanceof List<?>) {
+                        List<Map<String, Object>> list = (List<Map<String, Object>>) entry.getValue();
+
+                        // Add CMB_BANK_CODE to each object in the list
+                        for (Map<String, Object> item : list) {
+                            item.put("CMB_BANK_CODE", partnerCode);
+                        }
+                    }
+                }
+            }
+
             // Convert the bank statement data to JSON
             ObjectMapper objectMapper = new ObjectMapper();
             String data = objectMapper.writeValueAsString(bankStatementDTO.getData());
@@ -135,7 +156,6 @@ public class BankStatementController {
                     String fmisResponseBody = fmisResponse.getBody();
 
                     if (fmisResponse.getStatusCode().is2xxSuccessful()) {
-
                         // Save the bank statement if FMIS response is successful
                         bankStatementService.createBankStatement(partnerId, bankStatementDTO);
                         return ResponseEntity.status(HttpStatus.CREATED)
