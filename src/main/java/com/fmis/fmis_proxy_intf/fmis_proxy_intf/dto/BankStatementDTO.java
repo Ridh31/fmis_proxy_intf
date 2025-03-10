@@ -1,5 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.time.LocalDateTime;
@@ -19,9 +21,16 @@ public class BankStatementDTO {
 
     @NotEmpty(message = "Data cannot be empty. Please provide a valid data.")
     private Map<String, Object> data;
+
     private String method;
     private String endpoint;
+
+    @JsonIgnore
     private String payload;
+
+    @JsonIgnore
+    private JsonNode payloadJson;
+
     private String xml;
     private Long createdBy;
     private LocalDateTime createdDate;
@@ -32,14 +41,27 @@ public class BankStatementDTO {
     public BankStatementDTO() {
     }
 
-    public BankStatementDTO(Long id, String partnerCode, String method, Long partnerId, String endpoint, String payload,
-                            String xml, Long createdBy, LocalDateTime createdDate, Boolean status, Boolean isDeleted) {
+    public BankStatementDTO(
+            Long id,
+            String partnerCode,
+            String method,
+            Long partnerId,
+            String endpoint,
+            String payload,
+            JsonNode payloadJson,
+            String xml,
+            Long createdBy,
+            LocalDateTime createdDate,
+            Boolean status,
+            Boolean isDeleted
+    ) {
         this.id = id;
         this.partnerCode = partnerCode;
         this.partnerId = partnerId;
         this.method = method;
         this.endpoint = endpoint;
         this.payload = payload;
+        this.payloadJson = payloadJson;
         this.xml = xml;
         this.createdBy = createdBy;
         this.createdDate = createdDate;
@@ -102,6 +124,14 @@ public class BankStatementDTO {
 
     public void setPayload(String payload) {
         this.payload = payload;
+    }
+
+    public JsonNode getPayloadJson() {
+        return payloadJson;
+    }
+
+    public void setPayloadJson(JsonNode payloadJson) {
+        this.payloadJson = payloadJson;
     }
 
     public String getXml() {

@@ -34,7 +34,6 @@ public class BankStatement {
     private String endpoint;
 
     @Lob
-    @JsonIgnore
     private String payload;
 
     @Lob

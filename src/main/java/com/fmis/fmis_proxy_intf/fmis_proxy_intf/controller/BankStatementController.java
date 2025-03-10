@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.BankStatementDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
@@ -122,6 +123,12 @@ public class BankStatementController {
                         for (Map<String, Object> item : list) {
                             item.put("CMB_BANK_CODE", partnerCode);
                         }
+                    } else {
+                        // Handle non-list entries by adding CMB_BANK_CODE to the object as null
+                        if (entry.getValue() instanceof Map) {
+                            Map<String, Object> mapValue = (Map<String, Object>) entry.getValue();
+                            mapValue.put("CMB_BANK_CODE", null);
+                        }
                     }
                 }
             }
@@ -144,13 +151,13 @@ public class BankStatementController {
                 Optional<FMIS> fmis = fmisService.getFmisUrlById(1L);
                 if (fmis.isPresent()) {
                     FMIS fmisConfig = fmis.get();
-                    String fmisURL = fmisConfig.getBaseURL() + "/Z_INTF_SO_GET_TEST_GET.v1/get-test/test";
+                    String fmisURL = fmisConfig.getBaseURL() + "/INTF_CMB_BANKSTM_STG.v1/";
                     String fmisUsername = fmisConfig.getUsername();
                     String fmisPassword = fmisConfig.getPassword();
                     String fmisContentType = fmisConfig.getContentType();
 
                     // Send XML payload to FMIS and handle response
-                    ResponseEntity<String> fmisResponse = fmisService.getXmlFromFmis(fmisURL, fmisUsername, fmisPassword);
+                    ResponseEntity<String> fmisResponse = fmisService.sendXmlToFmis(fmisURL, fmisUsername, fmisPassword, xmlPayload);
 
                     // Extract and handle FMIS response
                     String fmisResponseBody = fmisResponse.getBody();
@@ -169,7 +176,7 @@ public class BankStatementController {
                         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                 .body(new ApiResponse<>(
                                         "502",
-                                        "Failed to send data to FMIS: " + fmisResponse.getBody()
+                                        "Failed to send data to FMIS: " + fmisResponseBody
                                 ));
                     }
                 } else {
@@ -199,15 +206,71 @@ public class BankStatementController {
     }
 
     /**
-     * Endpoint to list bank statements with pagination.
+     * Endpoint to fetch paginated bank statements.
      *
-     * @param page The page number for pagination (default: 0).
-     * @param size The size of each page (default: 10).
-     * @return A page of bank statements.
+     * This method retrieves a list of bank statements from the database,
+     * maps them to BankStatementDTOs, and returns them in a paginated format.
+     * The data includes all relevant fields from the bank statement entity,
+     * and it handles parsing and conversion of payload data (JSON) to a Map for the API response.
+     *
+     * @param page The page number to retrieve (default is 0).
+     * @param size The number of items per page (default is 10).
+     * @return A paginated list of BankStatementDTOs containing the bank statement data.
      */
     @GetMapping("/list-bank-statement")
-    public Page<BankStatement> getBankStatements(@RequestParam(defaultValue = "0") int page,
-                                                 @RequestParam(defaultValue = "10") int size) {
-        return bankStatementService.getAllBankStatements(page, size);
+    public Page<BankStatementDTO> getBankStatements(@RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "10") int size) {
+        // Fetch the paginated list of bank statements from the service
+        Page<BankStatement> bankStatements = bankStatementService.getAllBankStatements(page, size);
+
+        // ObjectMapper for JSON conversion
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Mapping each BankStatement entity to a BankStatementDTO
+        return bankStatements.map(bankStatement -> {
+
+            // Initialize a new BankStatementDTO to hold the mapped data
+            BankStatementDTO dto = new BankStatementDTO();
+
+            // Copy fields from the BankStatement entity to the DTO
+            dto.setId(bankStatement.getId());
+            dto.setPartnerCode(bankStatement.getPartner().getCode());
+            dto.setPartnerId(bankStatement.getPartner().getId());
+            dto.setMethod(bankStatement.getMethod());
+            dto.setEndpoint(bankStatement.getEndpoint());
+            dto.setXml(bankStatement.getXml());
+            dto.setCreatedBy(bankStatement.getCreatedBy());
+            dto.setCreatedDate(bankStatement.getCreatedDate());
+            dto.setStatus(bankStatement.getStatus());
+            dto.setIsDeleted(bankStatement.getIsDeleted());
+
+            // Convert payload string to JsonNode for API response
+            JsonNode payloadJson = null;
+            try {
+                // Try to parse the payload (stored as a string) into a JsonNode
+                payloadJson = objectMapper.readTree(bankStatement.getPayload());
+            } catch (Exception e) {
+
+                // If parsing fails, set payloadJson to an empty object node
+                payloadJson = objectMapper.createObjectNode();
+            }
+
+            // Check if the payloadJson is not null and is a valid JSON object
+            if (payloadJson != null && payloadJson.isObject()) {
+
+                // Convert the JSON object (JsonNode) into a Map<String, Object>
+                Map<String, Object> dataMap = objectMapper.convertValue(payloadJson, Map.class);
+
+                // Set the data (parsed payload) in the DTO
+                dto.setData(dataMap);
+            } else {
+                // If the payload is invalid or not an object, set an empty map as the data
+                Map<String, Object> emptyMap = objectMapper.convertValue(objectMapper.createObjectNode(), Map.class);
+                dto.setData(emptyMap);
+            }
+
+            // Return the populated DTO
+            return dto;
+        });
     }
 }
