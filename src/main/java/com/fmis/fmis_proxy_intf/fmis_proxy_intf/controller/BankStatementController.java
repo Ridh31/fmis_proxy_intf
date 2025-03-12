@@ -56,9 +56,21 @@ public class BankStatementController {
      * @return ResponseEntity with API response.
      */
     @PostMapping("/import-bank-statement")
-    public ResponseEntity<ApiResponse<?>> createBankStatement(@Validated
-                                                              @RequestBody BankStatementDTO bankStatementDTO,
-                                                              BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse<?>> createBankStatement(
+            @Validated
+            @RequestHeader(value = "partner-code", required = false) String partnerCode,
+            @RequestBody BankStatementDTO bankStatementDTO,
+            BindingResult bindingResult) {
+
+        // Validate that the Partner-Code is not missing or empty
+        if (partnerCode == null || partnerCode.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            "400",
+                            "Bad Request: 'Partner-Code' header cannot be missing or empty."
+                    ));
+        }
+
         // Extract validation errors using the utility method
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
 
@@ -72,10 +84,9 @@ public class BankStatementController {
             // Get the currently authenticated user
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
-            String publicKey = bankStatementDTO.getPartnerCode();
 
             // Retrieve partner id based on the public key
-            Long partnerId = partnerService.findIdByPublicKey(publicKey);
+            Long partnerId = partnerService.findIdByPublicKey(partnerCode);
             Optional<User> userOptional = userService.findByPartnerIdAndUsername(partnerId, username);
 
             // Check if the user is authorized to perform this action
@@ -89,7 +100,7 @@ public class BankStatementController {
 
             // Decrypt the partner data and validate the partner code
             User foundUser = userOptional.get();
-            String decryptedData = RSAUtil.decrypt(publicKey, foundUser.getPartner().getPrivateKey())
+            String decryptedData = RSAUtil.decrypt(partnerCode, foundUser.getPartner().getPrivateKey())
                     .get("decrypt").toString();
 
             if (!decryptedData.equals(foundUser.getPartner().getCode())) {
@@ -109,7 +120,6 @@ public class BankStatementController {
             bankStatementDTO.setPartnerId(partnerId);
 
             Optional<Partner> partner = partnerService.findById(partnerId);
-            String partnerCode = partner.get().getCode();
 
             // Add CMB_BANK_CODE to all arrays in the data
             if (bankStatementDTO.getData() != null) {
@@ -158,8 +168,6 @@ public class BankStatementController {
 
                     // Send XML payload to FMIS and handle response
                     ResponseEntity<String> fmisResponse = fmisService.sendXmlToFmis(fmisURL, fmisUsername, fmisPassword, xmlPayload);
-
-                    // Extract and handle FMIS response
                     String fmisResponseBody = fmisResponse.getBody();
 
                     if (fmisResponse.getStatusCode().is2xxSuccessful()) {
@@ -195,6 +203,7 @@ public class BankStatementController {
                             "400",
                             "Bad Request: No valid bank statement data provided."
                     ));
+
         } catch (Exception e) {
             // Handle any server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
