@@ -23,7 +23,7 @@ import java.util.Optional;
  * Controller for managing partner-related operations.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class PartnerController {
 
     private final PartnerService partnerService;
@@ -126,7 +126,7 @@ public class PartnerController {
      */
     @GetMapping("/list-partner")
     public Page<Partner> getAllPartners(@RequestParam(defaultValue = "0") int page,
-                                     @RequestParam(defaultValue = "10") int size) {
+                                        @RequestParam(defaultValue = "10") int size) {
         return partnerService.getAllPartners(page, size);
     }
 }

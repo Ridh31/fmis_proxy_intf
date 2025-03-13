@@ -15,7 +15,7 @@ import java.util.Optional;
  * Controller for handling test-related endpoints.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class TestController {
 
     private final TestService testService;

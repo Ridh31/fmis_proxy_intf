@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class BankStatementController {
 
     private final PartnerService partnerService;

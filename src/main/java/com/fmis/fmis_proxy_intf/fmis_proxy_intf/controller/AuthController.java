@@ -25,7 +25,7 @@ import java.util.Map;
  * Controller for handling user authentication and registration operations.
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final UserService userService;
