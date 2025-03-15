@@ -74,8 +74,22 @@
 		<!-- OpenAPI Dependencies -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-ui</artifactId>
-			<version>1.8.0</version>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+
+		<!-- Swagger Dependencies -->
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-boot-starter</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+
+		<!-- Optional: ReDoc for better documentation visualization -->
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>redoc</artifactId>
+			<version>2.0.0</version>
 		</dependency>
 
 		<!-- Spring Security Dependencies -->

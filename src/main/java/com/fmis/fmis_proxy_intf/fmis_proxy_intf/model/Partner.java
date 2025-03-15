@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -23,6 +24,8 @@ public class Partner {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore  // Hide the id field from the request body
+    @Schema(hidden = true)
     private Long id;
 
     @Column(nullable = false, unique = true)

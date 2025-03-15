@@ -2,6 +2,7 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.time.LocalDateTime;
@@ -12,17 +13,23 @@ import java.util.Map;
  */
 public class BankStatementDTO {
 
+    @Schema(hidden = true)
     private Long id;
 
     @NotEmpty(message = "Partner code cannot be empty. Please provide a valid partner code.")
+    @Schema(hidden = true)
     private String partnerCode;
 
+    @Schema(hidden = true)
     private Long partnerId;
 
     @NotEmpty(message = "Data cannot be empty. Please provide a valid data.")
     private Map<String, Object> data;
 
+    @Schema(hidden = true)
     private String method;
+
+    @Schema(hidden = true)
     private String endpoint;
 
     @JsonIgnore
@@ -31,10 +38,19 @@ public class BankStatementDTO {
     @JsonIgnore
     private JsonNode payloadJson;
 
+    @Schema(hidden = true)
     private String xml;
+
+    @Schema(hidden = true)
     private Long createdBy;
+
+    @Schema(hidden = true)
     private LocalDateTime createdDate;
+
+    @Schema(hidden = true)
     private Boolean status;
+
+    @Schema(hidden = true)
     private Boolean isDeleted;
 
     // Constructors

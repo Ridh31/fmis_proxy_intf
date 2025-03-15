@@ -7,6 +7,9 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +27,10 @@ import java.util.Map;
 /**
  * Controller for handling user authentication and registration operations.
  */
+@Tag(
+        name = "User Management",
+        description = "Endpoints for user registration, authentication, and password management."
+)
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -53,6 +60,10 @@ public class AuthController {
      * @param bindingResult Validation result.
      * @return ResponseEntity containing the registration status.
      */
+    @Operation(
+            summary = "Register a New User",
+            description = "Registers a new user if the username is available and the provided role and partner exist."
+    )
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> register(@Validated @RequestBody User user, BindingResult bindingResult) {
 
@@ -138,6 +149,10 @@ public class AuthController {
      * @param user User credentials for authentication.
      * @return ResponseEntity containing the login status.
      */
+    @Operation(
+            summary = "User Verification",
+            description = "Authenticates a user using a username and password. Returns a success message if authentication is successful."
+    )
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<?>> login(@Validated @RequestBody User user, BindingResult bindingResult) {
 
@@ -191,10 +206,14 @@ public class AuthController {
     /**
      * Resets the password of a user by the Super Admin using the username.
      *
-     * @param username the username of the user whose password is to be reset
-     * @param password the new password to set
-     * @return response with the status of the operation
+     * @param username The username of the user whose password is to be reset.
+     * @param password The new password to set.
+     * @return Response with the status of the operation.
      */
+    @Operation(
+            summary = "Reset User Password",
+            description = "Allows a Super Admin (Level 1) to reset a user's password by providing the username and new password."
+    )
     @PutMapping("/reset-password")
     public ResponseEntity<ApiResponse<?>> resetPassword(@RequestParam String username, @RequestParam String password) {
         try {

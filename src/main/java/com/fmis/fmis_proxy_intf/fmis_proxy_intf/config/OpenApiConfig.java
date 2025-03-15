@@ -1,34 +1,37 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
-import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
-import io.swagger.v3.oas.models.security.SecurityScheme;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Contact;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.info.License;
 import org.springframework.context.annotation.Configuration;
+
+/**
+ * Configuration class for OpenAPI documentation.
+ *
+ * This configuration defines the metadata for the FMIS Proxy Interface API documentation,
+ * including the title, version, description, and contact information.
+ */
 @Configuration
+@OpenAPIDefinition(
+        info = @Info(
+                title = "FMIS - Proxy Interface API",
+                version = "v1.0",
+                description = "FMIS Proxy Interface API enables seamless communication between external systems and the FMIS platform. " +
+                        "It provides various endpoints for testing connectivity, managing test entities, and interacting with FMIS data " +
+                        "in a secure and standardized way. This API acts as an intermediary layer to simplify interactions with FMIS, " +
+                        "ensuring efficient integration, data exchange, and system scalability.",
+                contact = @Contact(
+                        name = "FMIS Cambodia",
+                        email = "fmis.info@mef.gov.kh",
+                        url = "https://fmis.gov.kh"
+                ),
+                termsOfService = "https://fmis.gov.kh",
+                license = @License(
+                        name = "© 2023 FMIS-Cambodia. All rights reserved.",
+                        url = "https://fmis.gov.kh"
+                )
+        )
+)
 public class OpenApiConfig {
-    @Bean
-    public OpenAPI openAPI(@Value("${application-title}") String title,
-                           @Value("${application-description}") String description,
-                           @Value("${application-version}") String version,
-                           @Value("${application-license}") String license) {
-        return new OpenAPI()
-                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
-                .components(new Components()
-                        .addSecuritySchemes("Bearer Authentication", createAPIKeyScheme()))
-                .info(new Info()
-                        .title(title)
-                        .description(description)
-                        .version(version)
-                        .license(new License().name(license)));
-    }
-    private SecurityScheme createAPIKeyScheme() {
-        // Removed 'bearerFormat' to allow generic security testing
-        return new SecurityScheme()
-                .type(SecurityScheme.Type.HTTP)
-                .scheme("bearer"); // Removed bearerFormat="JWT" to make it more generic
-    }
 }

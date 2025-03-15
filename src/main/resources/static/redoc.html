@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMIS - Financial Management Information System</title>
+    <link href="https://fmis.gov.kh/storage/logo/logo-fmis-v2-300x190-1.png" rel="shortcut icon">
+    <script src="https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <redoc id="redoc-container"></redoc>
+    <script>
+
+        // Dynamically get the base URL
+        const baseUrl = window.location.origin;
+        const specUrl = baseUrl + "/api/v1/open-api"; // API docs path
+
+        // Set the spec-url dynamically for the redoc tag
+        document.getElementById("redoc-container").setAttribute("spec-url", specUrl);
+
+        // Initialize Redoc with the dynamic URL
+        Redoc.init(specUrl, {
+            scrollYOffset: 50,
+            hideDownloadButton: true,
+            theme: {
+                typography: {
+                    fontSize: "16px",
+                    fontFamily: "Arial, sans-serif",
+                },
+                colors: {
+                    primary: { main: "#007bff" },
+                    text: { primary: "#333" },
+                }
+            }
+        }, document.querySelector("#redoc-container"));
+    </script>
+</body>
+</html>

@@ -23,14 +23,8 @@ import org.springframework.http.HttpStatus;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    /**
-     * Constructor for SecurityConfig.
-     *
-     * @param userDetailsService UserDetailsService object for authentication
-     */
     @Autowired
     public SecurityConfig(@Lazy UserDetailsService userDetailsService) {
-        // UserDetailsService can be injected and used if needed in future configurations.
     }
 
     /**
@@ -43,25 +37,46 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF (enable in production if needed)
+                // Disable CSRF (enable in production if needed)
+                .csrf(csrf -> csrf.disable())
+
+                // Configure HTTP request authorization
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/test", "/api/v1/test/fmis").permitAll() // Public endpoints
+                        // Public endpoints
+                        .requestMatchers(
+                                "/api/v1/test",
+                                "/api/v1/test/**",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/login",
+                                "/api/v1/open-api",
+                                "/swagger-ui/**",
+                                "/webjars/**",
+                                "/api/v1/docs",
+                                "/api/v1/swagger-ui/**"
+                        ).permitAll() // Allow these endpoints without authentication
                         .anyRequest().authenticated() // Protect all other endpoints
                 )
-                .formLogin(login -> login.disable()) // Disable default login form
-                .httpBasic(Customizer.withDefaults()) // Enable Basic Authentication
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Enforce stateless sessions
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint((request, response, authException) -> {
 
-                            // Set response status and JSON response when authentication fails (no Basic Auth)
+                // Disable default login form
+                .formLogin(login -> login.disable())
+
+                // Enable HTTP Basic Authentication
+                .httpBasic(Customizer.withDefaults())
+
+                // Enforce stateless sessions (no session persistence)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // Handle authentication errors
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((
+                                request,
+                                response,
+                                authException) -> {
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
                             response.setContentType("application/json");
-
-                            // Add status code to the response body
-                            String jsonResponse = "{\"code\":" + "\"" +  HttpStatus.UNAUTHORIZED.value() + "\"" +
-                                    ", \"message\":\"Unauthorized access. Please provide valid credentials.\"}";
+                            String jsonResponse = "{\"code\":\"" + HttpStatus.UNAUTHORIZED.value() +
+                                    "\", \"message\":\"Unauthorized access. Please provide valid credentials.\"}";
                             response.getWriter().write(jsonResponse);
                         })
                 );

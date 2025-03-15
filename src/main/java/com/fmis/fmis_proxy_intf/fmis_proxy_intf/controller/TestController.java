@@ -5,6 +5,9 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Test;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TestService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +17,10 @@ import java.util.Optional;
 /**
  * Controller for handling test-related endpoints.
  */
+@Tag(
+        name = "Test Operations",
+        description = "Endpoints related to testing and FMIS connectivity."
+)
 @RestController
 @RequestMapping("/api/v1")
 public class TestController {
@@ -38,8 +45,12 @@ public class TestController {
      *
      * @return ResponseEntity containing API response.
      */
+    @Operation(
+            summary = "Test FMIS Connectivity",
+            description = "Tests the connectivity to FMIS and retrieves test data."
+    )
     @GetMapping("/test/fmis")
-    public ResponseEntity<ApiResponse> testFmis() {
+    public ResponseEntity<ApiResponse<?>> testFmis() {
 
         // Get FMIS configuration
         Optional<FMIS> fmis = fmisService.getFmisUrlById(1L);
@@ -89,6 +100,10 @@ public class TestController {
      *
      * @return A success message wrapped in an {@link ApiResponse}.
      */
+    @Operation(
+            summary = "Basic Test",
+            description = "Verifies that the service is running by returning a simple success message."
+    )
     @GetMapping("/test")
     public ResponseEntity<ApiResponse<?>> test() {
         return ResponseEntity.status(HttpStatus.OK)
@@ -104,6 +119,11 @@ public class TestController {
      * @param name The name of the test entity.
      * @return The test entity if found.
      */
+    @Operation(
+            summary = "Get Test by Name",
+            description = "Retrieves a test entity by its name."
+    )
+    @Hidden
     @GetMapping("/get-name-test")
     public ResponseEntity<Test> getTestByTestName(@RequestParam String name) {
         Test test = testService.test(name);
@@ -116,34 +136,15 @@ public class TestController {
      * @param test The test entity to be saved.
      * @return ResponseEntity indicating the operation status.
      */
+    @Operation(
+            summary = "Add New Test",
+            description = "Adds a new test entity to the system."
+    )
+    @Hidden
     @PostMapping("/add-test")
     public ResponseEntity<String> save(@RequestBody Test test) {
         testService.addTest(test);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body("Test entity added successfully.");
     }
-
-    /*
-     * Alternative test endpoint that returns a structured API response.
-     *
-     * @GetMapping("/test")
-     * public ApiResponse<String> test() {
-     *     return new ApiResponse<>("200", "Success", "Hello, World!");
-     * }
-     */
-
-    /*
-     * Retrieves all test entities.
-     *
-     * @GetMapping("/get-all-test")
-     * public ResponseEntity<List<Test>> getAll() {
-     *     List<Test> testList = testService.getAllTests();
-     *     if (!testList.isEmpty()) {
-     *         return ResponseEntity.ok(testList);
-     *     } else {
-     *         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-     *                 .body(Collections.emptyList());
-     *     }
-     * }
-     */
 }

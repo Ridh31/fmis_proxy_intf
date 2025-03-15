@@ -1,5 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
+import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -20,14 +22,17 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(hidden = true)
     private Long id;
 
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id")
+    @NotEmpty(message = "Role cannot be empty. Please provide a valid role.")
     private Role role;  // Reference to Role
 
     @ManyToOne
     @JoinColumn(name = "partner_intf_id", referencedColumnName = "id")
+    @NotEmpty(message = "Partner cannot be empty. Please provide a valid partner.")
     private Partner partner;  // Reference to Partner
 
     @Column(nullable = false, unique = true)
@@ -43,21 +48,27 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @Schema(hidden = true)
     private boolean enabled = true;
 
-    @Column(nullable = false)
+    @Column(name = "account_non_expired", nullable = false)
+    @Schema(hidden = true)
     private boolean accountNonExpired = true;
 
-    @Column(nullable = false)
+    @Column(name = "credentials_non_expired", nullable = false)
+    @Schema(hidden = true)
     private boolean credentialsNonExpired = true;
 
-    @Column(nullable = false)
+    @Column(name = "account_non_locked", nullable = false)
+    @Schema(hidden = true)
     private boolean accountNonLocked = true;
 
     @Column(name = "created_date", nullable = false, updatable = false)
+    @Schema(hidden = true)
     private LocalDateTime createdDate = LocalDateTime.now();
 
     @Column(name = "last_modified_date", nullable = false)
+    @Schema(hidden = true)
     private LocalDateTime lastModifiedDate = LocalDateTime.now();
 
     @PrePersist

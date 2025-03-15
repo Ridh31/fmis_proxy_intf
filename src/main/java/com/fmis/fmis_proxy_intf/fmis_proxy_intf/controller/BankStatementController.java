@@ -15,6 +15,9 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.JsonToXmlUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +32,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Tag(
+        name = "Bank Statement",
+        description = "Endpoints for importing and retrieving bank statements."
+)
 @RestController
 @RequestMapping("/api/v1")
 public class BankStatementController {
@@ -55,10 +62,15 @@ public class BankStatementController {
      * @param bankStatementDTO The bank statement data transfer object containing the data.
      * @return ResponseEntity with API response.
      */
+    @Operation(
+            summary = "Import Bank Statement",
+            description = "Imports bank statement data after validation and sends it to FMIS."
+    )
     @PostMapping("/import-bank-statement")
     public ResponseEntity<ApiResponse<?>> createBankStatement(
             @Validated
-            @RequestHeader(value = "partner-code", required = false) String partnerCode,
+            @RequestHeader(value = "partner-code", required = false)
+            @Parameter(required = true, description = "Partner-Code") String partnerCode,
             @RequestBody BankStatementDTO bankStatementDTO,
             BindingResult bindingResult) {
 
@@ -226,6 +238,10 @@ public class BankStatementController {
      * @param size The number of items per page (default is 10).
      * @return A paginated list of BankStatementDTOs containing the bank statement data.
      */
+    @Operation(
+            summary = "Get Bank Statements",
+            description = "Retrieves a paginated list of bank statements from the database."
+    )
     @GetMapping("/list-bank-statement")
     public Page<BankStatementDTO> getBankStatements(@RequestParam(defaultValue = "0") int page,
                                                     @RequestParam(defaultValue = "10") int size) {
@@ -255,23 +271,19 @@ public class BankStatementController {
 
             // Convert payload string to JsonNode for API response
             JsonNode payloadJson = null;
-            try {
-                // Try to parse the payload (stored as a string) into a JsonNode
-                payloadJson = objectMapper.readTree(bankStatement.getPayload());
-            } catch (Exception e) {
 
-                // If parsing fails, set payloadJson to an empty object node
+            try {
+                payloadJson = objectMapper.readTree(bankStatement.getPayload());
+
+            } catch (Exception e) {
                 payloadJson = objectMapper.createObjectNode();
             }
 
             // Check if the payloadJson is not null and is a valid JSON object
             if (payloadJson != null && payloadJson.isObject()) {
-
-                // Convert the JSON object (JsonNode) into a Map<String, Object>
                 Map<String, Object> dataMap = objectMapper.convertValue(payloadJson, Map.class);
-
-                // Set the data (parsed payload) in the DTO
                 dto.setData(dataMap);
+
             } else {
                 // If the payload is invalid or not an object, set an empty map as the data
                 Map<String, Object> emptyMap = objectMapper.convertValue(objectMapper.createObjectNode(), Map.class);

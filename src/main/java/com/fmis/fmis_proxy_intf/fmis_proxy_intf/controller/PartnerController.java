@@ -7,6 +7,8 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.RSAUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,10 @@ import java.util.Optional;
 /**
  * Controller for managing partner-related operations.
  */
+@Tag(
+        name = "Partner Operations",
+        description = "Endpoints related to managing partners."
+)
 @RestController
 @RequestMapping("/api/v1")
 public class PartnerController {
@@ -41,6 +47,10 @@ public class PartnerController {
      * @param partner The partner details.
      * @return Response entity with the creation status.
      */
+    @Operation(
+            summary = "Create a new partner",
+            description = "Creates a new partner and returns the partner details along with status."
+    )
     @PostMapping("/create-partner")
     public ResponseEntity<ApiResponse<?>> createPartner(@Validated @RequestBody Partner partner, BindingResult bindingResult) {
 
@@ -124,6 +134,10 @@ public class PartnerController {
      * @param size The number of items per page (default: 10).
      * @return A paginated list of partners.
      */
+    @Operation(
+            summary = "Get all partners",
+            description = "Retrieves a paginated list of all partners."
+    )
     @GetMapping("/list-partner")
     public Page<Partner> getAllPartners(@RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "10") int size) {

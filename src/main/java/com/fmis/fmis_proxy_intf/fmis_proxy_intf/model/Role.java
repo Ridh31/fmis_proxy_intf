@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
@@ -20,11 +21,14 @@ public class Role {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    @Schema(hidden = true)
     private String name;
 
+    @Schema(hidden = true)
     private String description;
 
     @Column(nullable = false)
+    @Schema(hidden = true)
     private int level;
 
     @Column(name = "created_by")
