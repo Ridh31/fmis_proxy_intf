@@ -44,15 +44,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(
-                                "/api/v1/test",
                                 "/api/v1/test/**",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/open-api",
-                                "/swagger-ui/**",
-                                "/webjars/**",
-                                "/api/v1/docs",
-                                "/api/v1/swagger-ui/**"
+                                "/api/v1/docs"
                         ).permitAll() // Allow these endpoints without authentication
                         .anyRequest().authenticated() // Protect all other endpoints
                 )

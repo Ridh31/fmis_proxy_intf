@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
@@ -38,6 +39,7 @@ public class Partner {
     @Lob
     @Column(nullable = false, unique = true)
     @NotEmpty(message = "Code cannot be empty. Please provide a valid code.")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String code;
 
     @Lob

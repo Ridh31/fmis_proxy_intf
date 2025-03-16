@@ -1,10 +1,10 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
-import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.Getter;
@@ -28,13 +28,11 @@ public class User {
 
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id")
-    @NotNull(message = "Role cannot be empty. Please provide a valid role.")
     @Schema(hidden = true)
     private Role role;  // Reference to Role
 
     @ManyToOne
     @JoinColumn(name = "partner_intf_id", referencedColumnName = "id")
-    @NotNull(message = "Partner cannot be empty. Please provide a valid partner.")
     @Schema(hidden = true)
     private Partner partner;  // Reference to Partner
 
@@ -46,6 +44,7 @@ public class User {
     @Column(nullable = false)
     @Size(min = 6, message = "Password must be at least 6 characters long. Please provide a stronger password.")
     @NotEmpty(message = "Password cannot be empty. Please enter a password.")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Schema(hidden = true)
@@ -53,26 +52,32 @@ public class User {
 
     @Column(nullable = false)
     @Schema(hidden = true)
+    @JsonIgnore
     private boolean enabled = true;
 
     @Column(name = "account_non_expired", nullable = false)
     @Schema(hidden = true)
+    @JsonIgnore
     private boolean accountNonExpired = true;
 
     @Column(name = "credentials_non_expired", nullable = false)
     @Schema(hidden = true)
+    @JsonIgnore
     private boolean credentialsNonExpired = true;
 
     @Column(name = "account_non_locked", nullable = false)
     @Schema(hidden = true)
+    @JsonIgnore
     private boolean accountNonLocked = true;
 
     @Column(name = "created_date", nullable = false, updatable = false)
     @Schema(hidden = true)
+    @JsonIgnore
     private LocalDateTime createdDate = LocalDateTime.now();
 
     @Column(name = "last_modified_date", nullable = false)
     @Schema(hidden = true)
+    @JsonIgnore
     private LocalDateTime lastModifiedDate = LocalDateTime.now();
 
     @PrePersist

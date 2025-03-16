@@ -121,7 +121,7 @@ public class AuthController {
             // Create User entity and set its properties
             User user = new User();
             user.setUsername(userDTO.getUsername());
-            user.setPassword(passwordEncoder.encode(userDTO.getPassword())); // Encrypt the password
+            user.setPassword(userDTO.getPassword());
             user.setRole(role);
             user.setPartner(partner);
             user.setEmail(userDTO.getEmail()); // Set email
@@ -180,7 +180,8 @@ public class AuthController {
 
             return ResponseEntity.ok(new ApiResponse<>(
                     "200",
-                    "Login successful. Welcome, " + loggedInUser.getUsername() + "."
+                    "Login successful.",
+                    loggedInUser
             ));
 
         } catch (BadCredentialsException e) {
