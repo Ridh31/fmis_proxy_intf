@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.Getter;
@@ -27,12 +28,14 @@ public class User {
 
     @ManyToOne
     @JoinColumn(name = "role_id", referencedColumnName = "id")
-    @NotEmpty(message = "Role cannot be empty. Please provide a valid role.")
+    @NotNull(message = "Role cannot be empty. Please provide a valid role.")
+    @Schema(hidden = true)
     private Role role;  // Reference to Role
 
     @ManyToOne
     @JoinColumn(name = "partner_intf_id", referencedColumnName = "id")
-    @NotEmpty(message = "Partner cannot be empty. Please provide a valid partner.")
+    @NotNull(message = "Partner cannot be empty. Please provide a valid partner.")
+    @Schema(hidden = true)
     private Partner partner;  // Reference to Partner
 
     @Column(nullable = false, unique = true)
@@ -45,6 +48,7 @@ public class User {
     @NotEmpty(message = "Password cannot be empty. Please enter a password.")
     private String password;
 
+    @Schema(hidden = true)
     private String email;
 
     @Column(nullable = false)

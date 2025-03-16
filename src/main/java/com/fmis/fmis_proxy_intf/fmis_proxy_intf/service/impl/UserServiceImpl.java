@@ -70,6 +70,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
+     * Finds a user by their email.
+     *
+     * @param email the email of the user to find
+     * @return an Optional containing the user, or empty if not found
+     */
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    /**
      * Finds a user by their ID.
      *
      * @param id the ID of the user to find

@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -16,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 @OpenAPIDefinition(
         info = @Info(
                 title = "FMIS - Proxy Interface API",
-                version = "v1.0",
+                version = "1.0",
                 description = "FMIS Proxy Interface API enables seamless communication between external systems and the FMIS platform. " +
                         "It provides various endpoints for testing connectivity, managing test entities, and interacting with FMIS data " +
                         "in a secure and standardized way. This API acts as an intermediary layer to simplify interactions with FMIS, " +
@@ -24,11 +26,6 @@ import org.springframework.context.annotation.Configuration;
                 contact = @Contact(
                         name = "FMIS Cambodia",
                         email = "fmis.info@mef.gov.kh",
-                        url = "https://fmis.gov.kh"
-                ),
-                termsOfService = "https://fmis.gov.kh",
-                license = @License(
-                        name = "© 2023 FMIS-Cambodia. All rights reserved.",
                         url = "https://fmis.gov.kh"
                 )
         )

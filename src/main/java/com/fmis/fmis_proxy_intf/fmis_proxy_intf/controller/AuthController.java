@@ -1,7 +1,9 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Role;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.UserDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
@@ -56,7 +58,7 @@ public class AuthController {
     /**
      * Registers a new user if the username is available and both the role and partner exist.
      *
-     * @param user User details for registration.
+     * @param userDTO User details for registration.
      * @param bindingResult Validation result.
      * @return ResponseEntity containing the registration status.
      */
@@ -65,12 +67,14 @@ public class AuthController {
             description = "Registers a new user if the username is available and the provided role and partner exist."
     )
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<?>> register(@Validated @RequestBody User user, BindingResult bindingResult) {
-
-        // Extract validation errors using the utility method
+    public ResponseEntity<ApiResponse<?>> register(
+            @Validated @RequestBody UserDTO userDTO,
+            BindingResult bindingResult
+    ) {
+        // Extract validation errors
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
 
-        // If there are validation errors, return them in the response
+        // If there are validation errors, return bad request with the errors
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>("400", validationErrors));
@@ -78,46 +82,31 @@ public class AuthController {
 
         try {
             // Check if the username is already taken
-            if (userService.findByUsername(user.getUsername()).isPresent()) {
+            if (userService.findByUsername(userDTO.getUsername()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 "400",
-                                "The username '" + user.getUsername() + "' is already taken. Please choose another username."
+                                "The username '" + userDTO.getUsername() + "' is already taken. Please choose another username."
                         ));
             }
 
-            // Set default role if not provided
-            Long roleId = (user.getRole() != null && user.getRole().getId() != null) ? user.getRole().getId() : 5L;
-
-            if (user.getRole() == null) {
-                Role defaultRole = roleService.findById(roleId)
-                        .orElseThrow(() -> new RuntimeException("Default role not found."));
-                user.setRole(defaultRole);
-            }
-
-            // Validate if role exists
-            if (!roleService.existsById(roleId)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(
-                                "404",
-                                "Role with ID '" + roleId + "' not found."
-                        ));
-            }
-
-            // Check if the partner exists
-            Long partnerId = (user.getPartner() != null && user.getPartner().getId() != null)
-                    ? user.getPartner().getId()
-                    : null;
-
-            if (partnerId == null) {
+            // Check if the email is already taken
+            if (userService.findByEmail(userDTO.getEmail()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 "400",
-                                "Partner is not provided. Please provide a valid partner."
+                                "The email '" + userDTO.getEmail() + "' is already in use. Please choose another email."
                         ));
             }
 
-            if (!partnerService.existsById(partnerId)) {
+            // Validate roleId from DTO and set default if null
+            Long roleId = (userDTO.getRoleId() != null) ? userDTO.getRoleId() : 5L;
+            Role role = roleService.findById(roleId)
+                    .orElseThrow(() -> new RuntimeException("Role with ID '" + roleId + "' not found."));
+
+            // Validate partnerId from DTO
+            Long partnerId = userDTO.getPartnerId();
+            if (partnerId == null || !partnerService.existsById(partnerId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
                                 "404",
@@ -125,20 +114,34 @@ public class AuthController {
                         ));
             }
 
+            // Fetch the partner entity
+            Partner partner = partnerService.findById(partnerId)
+                    .orElseThrow(() -> new RuntimeException("Partner not found."));
+
+            // Create User entity and set its properties
+            User user = new User();
+            user.setUsername(userDTO.getUsername());
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword())); // Encrypt the password
+            user.setRole(role);
+            user.setPartner(partner);
+            user.setEmail(userDTO.getEmail()); // Set email
+
             // Register the user
-            user.setPartner(user.getPartner());
             User savedUser = userService.registerUser(user);
 
+            // Return a successful response with the saved user details
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
                             "201",
                             "User '" + savedUser.getUsername() + "' has been successfully registered."
                     ));
-        } catch (Exception e) {
+
+        } catch (RuntimeException e) {
+            // Handle unexpected errors and return a concise internal server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             "500",
-                            "An unexpected error occurred during registration: " + e.getMessage()
+                            e.getMessage()
                     ));
         }
     }

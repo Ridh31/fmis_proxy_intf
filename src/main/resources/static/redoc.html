@@ -13,31 +13,31 @@
     </style>
 </head>
 <body>
-    <redoc id="redoc-container"></redoc>
-    <script>
+<redoc id="redoc-container"></redoc>
+<script>
 
-        // Dynamically get the base URL
-        const baseUrl = window.location.origin;
-        const specUrl = baseUrl + "/api/v1/open-api"; // API docs path
+    // Dynamically get the base URL
+    const baseUrl = window.location.origin;
+    const specUrl = baseUrl + "/api/v1/open-api"; // API docs path
 
-        // Set the spec-url dynamically for the redoc tag
-        document.getElementById("redoc-container").setAttribute("spec-url", specUrl);
+    // Set the spec-url dynamically for the redoc tag
+    document.getElementById("redoc-container").setAttribute("spec-url", specUrl);
 
-        // Initialize Redoc with the dynamic URL
-        Redoc.init(specUrl, {
-            scrollYOffset: 50,
-            hideDownloadButton: true,
-            theme: {
-                typography: {
-                    fontSize: "16px",
-                    fontFamily: "Arial, sans-serif",
-                },
-                colors: {
-                    primary: { main: "#007bff" },
-                    text: { primary: "#333" },
-                }
+    // Initialize Redoc with the dynamic URL
+    Redoc.init(specUrl, {
+        scrollYOffset: 50,
+        hideDownloadButton: true,
+        theme: {
+            typography: {
+                fontSize: "14px",
+                fontFamily: "Arial, sans-serif",
+            },
+            colors: {
+                primary: { main: "#007BFF" },
+                text: { primary: "#333" },
             }
-        }, document.querySelector("#redoc-container"));
-    </script>
+        }
+    }, document.querySelector("#redoc-container"));
+</script>
 </body>
 </html>

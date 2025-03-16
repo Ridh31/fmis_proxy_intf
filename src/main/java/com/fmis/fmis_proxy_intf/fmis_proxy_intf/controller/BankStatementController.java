@@ -69,17 +69,17 @@ public class BankStatementController {
     @PostMapping("/import-bank-statement")
     public ResponseEntity<ApiResponse<?>> createBankStatement(
             @Validated
-            @RequestHeader(value = "partner-code", required = false)
-            @Parameter(required = true, description = "Partner-Code") String partnerCode,
+            @RequestHeader(value = "X-Partner-Token", required = false)
+            @Parameter(required = true, description = "X-Partner-Token") String partnerCode,
             @RequestBody BankStatementDTO bankStatementDTO,
             BindingResult bindingResult) {
 
-        // Validate that the Partner-Code is not missing or empty
+        // Validate that the X-Partner-Token is not missing or empty
         if (partnerCode == null || partnerCode.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
                             "400",
-                            "Bad Request: 'Partner-Code' header cannot be missing or empty."
+                            "Bad Request: 'X-Partner-Token' header cannot be missing or empty."
                     ));
         }
 

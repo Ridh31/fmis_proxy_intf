@@ -25,6 +25,14 @@ public interface UserService {
     Optional<User> findByUsername(String username);
 
     /**
+     * Finds a user by their email.
+     *
+     * @param email the email of the user to find
+     * @return an Optional containing the user, or empty if not found
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
      * Finds a user by their ID.
      *
      * @param id the ID of the user to find
