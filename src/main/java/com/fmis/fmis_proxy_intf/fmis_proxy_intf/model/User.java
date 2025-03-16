@@ -42,7 +42,7 @@ public class User {
     private String username;
 
     @Column(nullable = false)
-    @Size(min = 6, message = "Password must be at least 6 characters long. Please provide a stronger password.")
+    @Size(min = 6, max = 64, message = "Password must be at least 6 characters long. Please provide a stronger password.")
     @NotEmpty(message = "Password cannot be empty. Please enter a password.")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;

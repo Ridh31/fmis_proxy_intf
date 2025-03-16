@@ -15,7 +15,7 @@ public class UserDTO {
     @NotEmpty(message = "Username cannot be empty. Please provide a valid username.")
     private String username;
 
-    @Size(min = 6, message = "Password must be at least 6 characters long. Please provide a stronger password.")
+    @Size(min = 6, max = 64, message = "Password must be at least 6 characters long. Please provide a stronger password.")
     @NotEmpty(message = "Password cannot be empty. Please enter a password.")
     private String password;
 
