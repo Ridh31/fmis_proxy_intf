@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FMIS - Financial Management Information System</title>
-    <link href="https://fmis.gov.kh/storage/logo/logo-fmis-v2-300x190-1.png" rel="shortcut icon">
-    <script src="https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js"></script>
+    <link href="/img/logo-fmis-v2-300x190-1.png" rel="shortcut icon">
+    <script src="/js/redoc.standalone.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,31 +13,28 @@
     </style>
 </head>
 <body>
-<redoc id="redoc-container"></redoc>
-<script>
+    <div id="redoc-container"></div>
 
-    // Dynamically get the base URL
-    const baseUrl = window.location.origin;
-    const specUrl = baseUrl + "/api/v1/open-api"; // API docs path
+    <script>
+        const baseUrl = window.location.origin;
+        const specUrl = baseUrl + "/api/v1/open-api";
 
-    // Set the spec-url dynamically for the redoc tag
-    document.getElementById("redoc-container").setAttribute("spec-url", specUrl);
-
-    // Initialize Redoc with the dynamic URL
-    Redoc.init(specUrl, {
-        scrollYOffset: 50,
-        hideDownloadButton: true,
-        theme: {
-            typography: {
-                fontSize: "14px",
-                fontFamily: "Arial, sans-serif",
-            },
-            colors: {
-                primary: { main: "#007BFF" },
-                text: { primary: "#333" },
-            }
-        }
-    }, document.querySelector("#redoc-container"));
-</script>
+        document.addEventListener("DOMContentLoaded", function() {
+            Redoc.init(specUrl, {
+                scrollYOffset: 50,
+                hideDownloadButton: true,
+                theme: {
+                    typography: {
+                        fontSize: "14px",
+                        fontFamily: "Arial, sans-serif",
+                    },
+                    colors: {
+                        primary: { main: "#007BFF" },
+                        text: { primary: "#333" },
+                    }
+                }
+            }, document.getElementById("redoc-container"));
+        });
+    </script>
 </body>
 </html>

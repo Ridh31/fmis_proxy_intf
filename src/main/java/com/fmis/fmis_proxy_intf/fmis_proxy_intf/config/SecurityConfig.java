@@ -48,7 +48,13 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/open-api",
-                                "/api/v1/docs"
+                                "/api/v1/docs",
+                                "/api/v1/swagger-ui",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/redoc.html",
+                                "/js/**",
+                                "/img/**"
                         ).permitAll() // Allow these endpoints without authentication
                         .anyRequest().authenticated() // Protect all other endpoints
                 )
