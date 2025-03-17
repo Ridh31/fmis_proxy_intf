@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -14,7 +15,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 /**
  * Security configuration for authentication and authorization.
@@ -37,37 +42,40 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Enable CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // Disable CSRF (enable in production if needed)
                 .csrf(csrf -> csrf.disable())
 
                 // Configure HTTP request authorization
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
                         .requestMatchers(
                                 "/api/v1/test/**",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/open-api",
-                                "/api/v1/docs",
-                                "/api/v1/swagger-ui",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
+                                "/api/v1/swagger-ui",
                                 "/redoc.html",
+                                "/api/v1/docs/**",
                                 "/js/**",
                                 "/img/**"
-                        ).permitAll() // Allow these endpoints without authentication
+                        ).permitAll() // Allow public endpoints without authentication
                         .anyRequest().authenticated() // Protect all other endpoints
                 )
 
                 // Disable default login form
-                .formLogin(login -> login.disable())
+                .formLogin(Customizer.withDefaults())
 
                 // Enable HTTP Basic Authentication
                 .httpBasic(Customizer.withDefaults())
 
                 // Enforce stateless sessions (no session persistence)
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
 
                 // Handle authentication errors
                 .exceptionHandling(exception -> exception
@@ -77,8 +85,10 @@ public class SecurityConfig {
                                 authException) -> {
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
                             response.setContentType("application/json");
-                            String jsonResponse = "{\"code\":\"" + HttpStatus.UNAUTHORIZED.value() +
-                                    "\", \"message\":\"Unauthorized access. Please provide valid credentials.\"}";
+                            String jsonResponse = String.format(
+                                    "{\"code\":\"%d\", \"message\":\"Unauthorized access. Please provide valid credentials.\"}",
+                                    HttpStatus.UNAUTHORIZED.value()
+                            );
                             response.getWriter().write(jsonResponse);
                         })
                 );
@@ -106,5 +116,23 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    /**
+     * Configures CORS settings to allow cross-origin requests.
+     *
+     * @return CorsConfigurationSource instance
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
