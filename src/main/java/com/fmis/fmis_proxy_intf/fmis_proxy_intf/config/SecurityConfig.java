@@ -10,6 +10,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,6 +31,7 @@ public class SecurityConfig {
 
     @Autowired
     public SecurityConfig(@Lazy UserDetailsService userDetailsService) {
+
     }
 
     /**
@@ -46,28 +48,33 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 // Disable CSRF (enable in production if needed)
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
 
                 // Configure HTTP request authorization
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/test/**",
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/login",
-                                "/api/v1/open-api",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/api/v1/swagger-ui",
-                                "/redoc.html",
-                                "/api/v1/docs/**",
-                                "/js/**",
-                                "/img/**"
-                        ).permitAll() // Allow public endpoints without authentication
-                        .anyRequest().authenticated() // Protect all other endpoints
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/create-partner",
+                                "/api/v1/list-partner",
+                                "/api/v1/import-bank-statement",
+                                "/api/v1/list-bank-statement"
+                        ).authenticated()
+                        .requestMatchers(
+                                "/api/v1/open-api/**",
+                                "/api/v1/swagger-ui/**",
+                                "/api/v1/redoc/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
+                        // Allow static resources
+                        .requestMatchers("/css/**", "/js/**", "/img/**", "/static/**").permitAll()
+
+                        // Allow all other requests
+                        .anyRequest().permitAll()
                 )
 
                 // Disable default login form
-                .formLogin(Customizer.withDefaults())
+                .formLogin(AbstractHttpConfigurer::disable)
 
                 // Enable HTTP Basic Authentication
                 .httpBasic(Customizer.withDefaults())
@@ -79,15 +86,21 @@ public class SecurityConfig {
 
                 // Handle authentication errors
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint((
-                                request,
-                                response,
-                                authException) -> {
+                        .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
                             response.setContentType("application/json");
                             String jsonResponse = String.format(
                                     "{\"code\":\"%d\", \"message\":\"Unauthorized access. Please provide valid credentials.\"}",
                                     HttpStatus.UNAUTHORIZED.value()
+                            );
+                            response.getWriter().write(jsonResponse);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType("application/json");
+                            String jsonResponse = String.format(
+                                    "{\"code\":\"%d\", \"message\":\"Access Denied. You do not have permission to access this resource.\"}",
+                                    HttpStatus.FORBIDDEN.value()
                             );
                             response.getWriter().write(jsonResponse);
                         })
