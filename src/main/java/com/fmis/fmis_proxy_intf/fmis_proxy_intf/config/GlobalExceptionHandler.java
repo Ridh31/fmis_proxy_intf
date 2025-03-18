@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResourceNotFoundException;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Global exception handler to manage application-wide exceptions.
  */
+@Hidden
 @RestController
 public class GlobalExceptionHandler {
 

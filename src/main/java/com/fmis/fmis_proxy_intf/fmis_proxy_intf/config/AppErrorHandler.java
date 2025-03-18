@@ -6,17 +6,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Hidden;
 
 /**
- * Handles global application errors and provides standardized JSON responses.
+ * Global error handler that provides standardized JSON responses for application errors.
  */
+@Hidden
 @RestController
 public class AppErrorHandler implements ErrorController {
 
     private static final String STATUS_CODE_ATTRIBUTE = "jakarta.servlet.error.status_code";
 
     /**
-     * Handles application errors and provides a structured error response.
+     * Handles application errors and returns a structured JSON response.
      *
      * @param request the HTTP request containing error details
      * @return a ResponseEntity with the appropriate HTTP status and error message
@@ -25,27 +27,19 @@ public class AppErrorHandler implements ErrorController {
     public ResponseEntity<ErrorResponse> handleError(HttpServletRequest request) {
         Object status = request.getAttribute(STATUS_CODE_ATTRIBUTE);
 
-        if (status instanceof Integer statusCode) {
-            if (statusCode == HttpStatus.NOT_FOUND.value()) {
-                return ResponseEntity
-                        .status(HttpStatus.NOT_FOUND)
-                        .body(new ErrorResponse(
-                                statusCode,
-                                "Resource not found. The requested URL does not exist."
-                        ));
-            }
-        }
+        int statusCode = (status instanceof Integer) ? (Integer) status : HttpStatus.INTERNAL_SERVER_ERROR.value();
+        HttpStatus httpStatus = HttpStatus.resolve(statusCode);
 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        "An unexpected error occurred."
-                ));
+        String message = (httpStatus == HttpStatus.NOT_FOUND)
+                ? "Resource not found. The requested URL does not exist."
+                : "An unexpected error occurred.";
+
+        return ResponseEntity.status(httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(statusCode, message));
     }
 
     /**
-     * A simple DTO for structured error responses.
+     * DTO for structured error responses.
      */
     public static class ErrorResponse {
         private final int code;
