@@ -8,31 +8,72 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+/**
+ * Controller to handle the API documentation request.
+ */
 @Controller
 @RequestMapping("/api/v1")
 public class ReDocController {
 
+    // Inject application details from the application.properties file
+    @Value("${application-title}")
+    private String applicationTitle;
+
+    @Value("${application-description}")
+    private String applicationDescription;
+
+    @Value("${application-version}")
+    private String applicationVersion;
+
+    @Value("${application-base-url}")
+    private String applicationBaseUrl;
+
     /**
      * Serve the redoc.html file as the API documentation.
-     * @return ResponseEntity containing the redoc.html content
-     * @throws IOException if there is an error reading the file
+     * This method replaces placeholders in the HTML template with actual application values
+     * and returns the content as a response with the appropriate headers.
+     *
+     * @return ResponseEntity containing the redoc.html content with replaced placeholders.
+     * @throws IOException if there is an error reading the redoc.html file.
      */
     @GetMapping("/docs")
-    public ResponseEntity<byte[]> serveReDoc() throws IOException {
+    public ResponseEntity<byte[]> serveReDoc() {
+        try {
+            // Load the redoc.html file from the classpath (static directory)
+            Resource resource = new ClassPathResource("static/redoc.html");
 
-        // Load the redoc.html file from the static directory
-        Resource resource = new ClassPathResource("static/redoc.html");
-        byte[] content = Files.readAllBytes(resource.getFile().toPath());
+            // Read the content of the redoc.html file as a String
+            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
 
-        // Set HTTP headers for content type
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
+            // Replace placeholders in the HTML with actual values from the application's properties
+            content = content.replace("{{appTitle}}", applicationTitle)
+                    .replace("{{appDescription}}", applicationDescription)
+                    .replace("{{appVersion}}", applicationVersion)
+                    .replace("{{appBaseUrl}}", applicationBaseUrl);
 
-        // Return the content with the appropriate headers and OK status
-        return new ResponseEntity<>(content, headers, HttpStatus.OK);
+            // Set HTTP headers for content type (HTML with UTF-8 encoding)
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
+
+            // Return the HTML content with 200 OK status
+            return new ResponseEntity<>(content.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.OK);
+
+        } catch (IOException e) {
+            // Handle errors related to reading the redoc.html file
+            String errorMessage = "Error occurred while reading the documentation file.";
+
+            // Set response headers to indicate plain text content
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
+
+            // Return an error response with a 500 Internal Server Error status
+            return new ResponseEntity<>(errorMessage.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

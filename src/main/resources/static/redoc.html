@@ -6,35 +6,17 @@
     <title>FMIS - Financial Management Information System</title>
     <link href="/img/logo-fmis-v2-300x190-1.png" rel="shortcut icon">
     <script src="/js/redoc.standalone.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/redoc.css">
 </head>
 <body>
+    <div id="api-data"
+         data-api-title="{{appTitle}}"
+         data-api-description="{{appDescription}}"
+         data-api-version="{{appVersion}}"
+         data-api-base-url="{{appBaseUrl}}"
+         hidden>
+    </div>
     <div id="redoc-container"></div>
-
-    <script>
-        const baseUrl = window.location.origin;
-        const specUrl = baseUrl + "/api/v1/open-api";
-
-        document.addEventListener("DOMContentLoaded", function() {
-            Redoc.init(specUrl, {
-                scrollYOffset: 50,
-                hideDownloadButton: true,
-                theme: {
-                    typography: {
-                        fontSize: "14px",
-                        fontFamily: "Arial, sans-serif",
-                    },
-                    colors: {
-                        primary: { main: "#007BFF" },
-                        text: { primary: "#333" },
-                    }
-                }
-            }, document.getElementById("redoc-container"));
-        });
-    </script>
+    <script src="/js/redoc.js"></script>
 </body>
 </html>

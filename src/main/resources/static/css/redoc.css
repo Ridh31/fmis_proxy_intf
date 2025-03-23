@@ -1,0 +1,199 @@
+/* General Body Styling */
+body {
+    font-family:
+            ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+            "Segoe UI", Roboto, "Helvetica Neue", Arial,
+            "Noto Sans", sans-serif, "Apple Color Emoji",
+            "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-weight: 400;
+}
+
+/* Menu Styling */
+.menu-content {
+    top: 0 !important;
+}
+
+/* Search Input */
+.search-input {
+    display: none !important;
+}
+
+/* Search Container */
+div[role="search"] {
+    padding: 0 !important;
+}
+
+/* Hover Effects on Label in Overview */
+div#overview > label:hover {
+    background-color: #E1E1E1;
+    color: #007BFF;
+}
+
+/* General Page Styling */
+#content {
+    background-color: #FFFFFF;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px 20px 20px;
+    color: #4A4A4A;
+}
+
+/* Header Styling */
+#content header {
+    background-color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-bottom: 2px solid #E2E2E2;
+    text-align: center;
+}
+
+/* Main Heading */
+#content header h1 {
+    font-size: 32px;
+    color: #263238;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+/* Section Styling */
+#content section {
+    margin-top: 30px;
+}
+
+/* API Version Container */
+.api-version-container {
+    display: flex;
+}
+
+/* API Version Styling */
+.api-version {
+    background-color: #263238;
+    color: #FFFFFF;
+    border-radius: 10px;
+    font-size: 11px;
+    padding: 0 10px;
+    box-shadow: rgba(0, 0, 0, 0.16) 0 1px 4px;
+}
+
+/* API Box Styling */
+.api-box {
+    background-color: #212A3B;
+    color: #DBDBDB;
+    text-align: left;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+/* API Box Title */
+.api-box .api-box-title {
+    padding: 5px 12px;
+}
+
+/* API Box URL */
+.api-box .api-box-url {
+    border: 14px solid #2D394E;
+    padding: 5px 12px;
+}
+
+/* API Box Span */
+.api-box span {
+    font-weight: normal;
+}
+
+/* Section Titles */
+#content h2 {
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 30px;
+    border-radius: 5px;
+}
+
+/* Paragraph Styling */
+#content p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 10px 0;
+}
+
+/* Code Block Styling */
+#content pre {
+    background-color: #111722;
+    padding: 12px;
+    border-radius: 5px;
+    overflow-x: auto;
+    border-left: 5px solid #111722;
+}
+
+/* Inline Code Styling */
+#content code {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    color: #DBDBDB;
+    white-space: pre-wrap;
+}
+
+/* Code Description List */
+.code-description {
+    list-style-type: disc;
+    color: black;
+}
+
+/* Code Description Span */
+.code-description span {
+    background-color: #FAFBFC;
+    border: 1px solid #E1E1E1;
+    border-radius: 3px;
+    padding: 2px 4px;
+}
+
+/* Table Styling */
+.fmis-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: white;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* Table Cells and Headers */
+.fmis-table th, .fmis-table td {
+    border: 1px solid #E2E2E2;
+    padding: 12px;
+    text-align: left;
+}
+
+/* Table Header Styling */
+.fmis-table th {
+    background-color: #EDEDED;
+    color: #333;
+    font-weight: bold;
+}
+
+/* Table Row Hover Styling */
+.fmis-table tr:nth-child(even) {
+    background-color: #FAFAFA;
+}
+
+/* Highlighting Important Text */
+#content strong {
+    color: #263238;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #content {
+        padding: 10px;
+    }
+
+    #content pre {
+        font-size: 14px;
+    }
+
+    .fmis-table th, .fmis-table td {
+        padding: 10px;
+    }
+}

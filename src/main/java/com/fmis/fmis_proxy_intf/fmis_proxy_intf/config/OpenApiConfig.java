@@ -3,6 +3,8 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.servers.Server;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -25,7 +27,13 @@ import org.springframework.context.annotation.Configuration;
                         email = "fmis.info@mef.gov.kh",
                         url = "https://fmis.gov.kh"
                 )
-        )
+        ),
+        servers = {
+                @Server(url = "https://dev-fmis-intf.fmis.gov.kh", description = "Development")
+        },
+        tags = {
+                @Tag(name = "Overview", description = "FMIS - Proxy Interface API")
+        }
 )
 public class OpenApiConfig {
 }
