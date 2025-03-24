@@ -115,6 +115,8 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
 
         if (apiContent) {
+            obs.disconnect();
+
             removeSidebarItemByText(sideBar, "Overview");
             searchRole.innerHTML = overviewNav;
 
@@ -203,14 +205,17 @@ document.addEventListener("DOMContentLoaded", function () {
             if (window.location.href === config.url.docsUrl || window.location.href === config.url.overviewUrl) {
                 manipulateReDoc(redocWrap, apiContent, "none");
                 activeOverview(overview, overviewContent);
+                overviewContent.style.display = "";
+            } else {
+                overviewContent.style.display = "none";
             }
 
             // Handle "Overview" click
             overview.addEventListener("click", () => {
-                window.location.href = config.url.overviewUrl;
                 overviewContent.setAttribute("data-visible", "1");
                 manipulateReDoc(redocWrap, apiContent, "none");
                 activeOverview(overview, overviewContent);
+                window.location.href = config.url.overviewUrl;
             });
 
             // Handle sidebar item clicks
