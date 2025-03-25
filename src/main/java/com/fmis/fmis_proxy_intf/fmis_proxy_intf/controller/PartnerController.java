@@ -1,11 +1,14 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,14 +39,16 @@ public class PartnerController {
 
     private final PartnerService partnerService;
     private final UserService userService;
+    private final RoleService roleService;
 
     @Value("${application-base-url}")
     private String baseUrl;
 
     // Constructor injection for the services
-    public PartnerController(PartnerService partnerService, UserService userService) {
+    public PartnerController(PartnerService partnerService, UserService userService, RoleService roleService) {
         this.partnerService = partnerService;
         this.userService = userService;
+        this.roleService = roleService;
     }
 
     /**
@@ -54,7 +59,7 @@ public class PartnerController {
      */
     @Operation(
             summary = "Create a new partner",
-            description = "Creates a new partner and returns the partner details along with status.",
+            description = "Only accessible by Super Admin users. Creates a new partner and returns the partner details along with status. Super Admins are the only users with permission to create partners.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = {
                             @Content(
@@ -169,6 +174,7 @@ public class PartnerController {
         try {
             // Retrieve the currently authenticated user's username
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
             if (authentication == null || !authentication.isAuthenticated()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
@@ -179,10 +185,37 @@ public class PartnerController {
 
             String username = authentication.getName();
 
-            // Get the user ID from the username
+            // Get the user from the database based on the username
             Optional<User> userOptional = userService.findByUsername(username);
-            Long userId = userOptional.map(User::getId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(
+                                "401",
+                                "Unauthorized: The authenticated user does not exist."
+                        ));
+            }
+
+            User currentUser = userOptional.get();
+
+            // Fetch the role of the authenticated user
+            Long roleId = currentUser.getRole().getId();
+            if (!roleService.existsById(roleId)) {
+                // Handle case where role does not exist
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(
+                                "404",
+                                "Role not found for the authenticated user."
+                        ));
+            }
+
+            // Check if the authenticated user is a Super Admin (level 1)
+            if (currentUser.getRole().getLevel() != 1) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>(
+                                "403",
+                                "Forbidden: You do not have permission to create a partner."
+                        ));
+            }
 
             // Check if the partner code already exists in the database
             if (partnerService.findByCode(partner.getCode()).isPresent()) {
@@ -199,7 +232,7 @@ public class PartnerController {
             // Set the generated keys and the createdBy user ID in the partner entity
             partner.setPublicKey(key.get("public_key").toString());
             partner.setPrivateKey(key.get("private_key").toString());
-            partner.setCreatedBy(userId);
+            partner.setCreatedBy(currentUser.getId());
 
             // Save the new partner in the database
             Partner savedPartner = partnerService.createPartner(partner);
@@ -210,14 +243,6 @@ public class PartnerController {
                             "201",
                             "Partner created successfully!",
                             savedPartner
-                    ));
-
-        } catch (RuntimeException e) {
-            // Handle case where a runtime exception occurs (e.g., user not found)
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(
-                            "404",
-                            "Not Found: " + e.getMessage()
                     ));
 
         } catch (Exception e) {
@@ -242,8 +267,48 @@ public class PartnerController {
             description = "Retrieves a paginated list of all partners."
     )
     @GetMapping("/list-partner")
-    public Page<Partner> getAllPartners(@RequestParam(defaultValue = "0") int page,
-                                        @RequestParam(defaultValue = "10") int size) {
-        return partnerService.getAllPartners(page, size);
+    public ResponseEntity<ApiResponse<?>> getAllPartners(
+            @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
+            @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        // Get the authenticated user's username
+        String username = userService.getAuthenticatedUsername();
+
+        // Validate that the X-Partner-Token is not missing or empty
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        if (partnerValidationResponse != null) {
+            return partnerValidationResponse;
+        }
+
+        try {
+            // Fetch the paginated list of partners
+            Page<Partner> partners = partnerService.getAllPartners(page, size);
+
+            // If no partners are found, return a 204 No Content response
+            if (partners.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body(new ApiResponse<>(
+                                "204",
+                                "No partners found."
+                        ));
+            }
+
+            // Return the paginated list of partners wrapped in a successful API response
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "200",
+                    "Partners fetched successfully.",
+                    partners
+            ));
+
+        } catch (Exception e) {
+            // Handle any exceptions and return an internal server error response
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            "500",
+                            "An error occurred while fetching partners: " + e.getMessage()
+                    ));
+        }
     }
 }

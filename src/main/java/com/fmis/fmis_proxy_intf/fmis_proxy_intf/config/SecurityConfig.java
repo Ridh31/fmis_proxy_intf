@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -89,9 +90,17 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
                             response.setContentType("application/json");
+
+                            // Check if the exception is a BadCredentialsException
+                            String message = "Unauthorized access. Please provide valid credentials.";
+                            if (authException instanceof BadCredentialsException) {
+                                message = "Invalid username or password.";
+                            }
+
                             String jsonResponse = String.format(
-                                    "{\"code\":\"%d\", \"message\":\"Unauthorized access. Please provide valid credentials.\"}",
-                                    HttpStatus.UNAUTHORIZED.value()
+                                    "{\"code\":\"%d\", \"message\":\"%s\"}",
+                                    HttpStatus.UNAUTHORIZED.value(),
+                                    message
                             );
                             response.getWriter().write(jsonResponse);
                         })

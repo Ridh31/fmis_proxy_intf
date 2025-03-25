@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Hidden;
+import org.springframework.security.authentication.BadCredentialsException;
 
 /**
  * Global error handler that provides standardized JSON responses for application errors.
@@ -30,9 +31,22 @@ public class AppErrorHandler implements ErrorController {
         int statusCode = (status instanceof Integer) ? (Integer) status : HttpStatus.INTERNAL_SERVER_ERROR.value();
         HttpStatus httpStatus = HttpStatus.resolve(statusCode);
 
-        String message = (httpStatus == HttpStatus.NOT_FOUND)
-                ? "Resource not found. The requested URL does not exist."
-                : "An unexpected error occurred.";
+        String message = "An unexpected error occurred.";
+
+        // Handle 401 Unauthorized
+        if (statusCode == HttpStatus.UNAUTHORIZED.value()) {
+            Throwable throwable = (Throwable) request.getAttribute("javax.servlet.error.exception");
+            if (throwable instanceof BadCredentialsException) {
+                message = "Invalid username or password.";
+            } else {
+                message = "Unauthorized access. Please provide valid credentials.";
+            }
+        }
+
+        // Handle 404 Not Found
+        if (statusCode == HttpStatus.NOT_FOUND.value()) {
+            message = "Resource not found. The requested URL does not exist.";
+        }
 
         return ResponseEntity.status(httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(statusCode, message));

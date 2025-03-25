@@ -9,6 +9,13 @@ import java.util.Optional;
 public interface UserService {
 
     /**
+     * Retrieves the username of the currently authenticated user.
+     *
+     * @return the username of the authenticated user, or null if not authenticated
+     */
+    String getAuthenticatedUsername();
+
+    /**
      * Registers a new user by saving their information to the database.
      *
      * @param user the user to be registered
@@ -41,7 +48,7 @@ public interface UserService {
     Optional<User> findById(Long id);
 
     /**
-     * Saves or updates the user.
+     * Saves or updates the provided user.
      *
      * @param user the user to be saved or updated
      * @return the saved or updated user
@@ -52,7 +59,7 @@ public interface UserService {
      * Finds a user by their partner ID and username.
      *
      * @param partnerId the partner ID associated with the user
-     * @param username the username of the user to find
+     * @param username  the username of the user to find
      * @return an Optional containing the user, or empty if not found
      */
     Optional<User> findByPartnerIdAndUsername(Long partnerId, String username);

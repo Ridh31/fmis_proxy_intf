@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Role;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
@@ -8,8 +9,10 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.HeaderValidationUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
@@ -157,7 +160,12 @@ public class AuthController {
             description = "Authenticates a user using a username and password. Returns a success message if authentication is successful."
     )
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<?>> login(@Validated @RequestBody User user, BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse<?>> login(
+            @Validated
+            @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
+            @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
+            @RequestBody User user,
+            BindingResult bindingResult) {
 
         // Extract validation errors using the utility method
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
@@ -166,6 +174,15 @@ public class AuthController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>("400", validationErrors));
+        }
+
+        // Get the authenticated user's username
+        String username = user.getUsername();
+
+        // Validate that the X-Partner-Token is not missing or empty
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        if (partnerValidationResponse != null) {
+            return partnerValidationResponse;
         }
 
         try {

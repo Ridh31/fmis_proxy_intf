@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.BankStatementDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
@@ -198,19 +199,10 @@ public class BankStatementController {
     @PostMapping("/import-bank-statement")
     public ResponseEntity<ApiResponse<?>> createBankStatement(
             @Validated
-            @RequestHeader(value = "X-Partner-Token", required = false)
-            @Parameter(required = true, description = "X-Partner-Token") String partnerCode,
+            @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
+            @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
             @RequestBody BankStatementDTO bankStatementDTO,
             BindingResult bindingResult) {
-
-        // Validate that the X-Partner-Token is not missing or empty
-        if (partnerCode == null || partnerCode.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
-                            "400",
-                            "Bad Request: 'X-Partner-Token' header cannot be missing or empty."
-                    ));
-        }
 
         // Extract validation errors using the utility method
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
@@ -221,43 +213,24 @@ public class BankStatementController {
                     .body(new ApiResponse<>("400", validationErrors));
         }
 
+        // Get the authenticated user's username
+        String username = userService.getAuthenticatedUsername();
+
+        // Validate that the X-Partner-Token is not missing or empty
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        if (partnerValidationResponse != null) {
+            return partnerValidationResponse;
+        }
+
         try {
-            // Get the currently authenticated user
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String username = authentication.getName();
-
-            // Retrieve partner id based on the public key
-            Long partnerId = partnerService.findIdByPublicKey(partnerCode);
-            Optional<User> userOptional = userService.findByPartnerIdAndUsername(partnerId, username);
-
-            // Check if the user is authorized to perform this action
-            if (userOptional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse<>(
-                                "401",
-                                "Unauthorized: Invalid partner code."
-                        ));
-            }
-
-            // Decrypt the partner data and validate the partner code
-            User foundUser = userOptional.get();
-            String decryptedData = RSAUtil.decrypt(partnerCode, foundUser.getPartner().getPrivateKey())
-                    .get("decrypt").toString();
-
-            if (!decryptedData.equals(foundUser.getPartner().getCode())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(new ApiResponse<>(
-                                "403",
-                                "Forbidden: Partner code validation failed."
-                        ));
-            }
-
             // Set the createdBy and partnerId values
             Long userId = userService.findByUsername(username)
                     .map(User::getId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             bankStatementDTO.setCreatedBy(userId);
+
+            Long partnerId = partnerService.findIdByPublicKey(partnerCode);
             bankStatementDTO.setPartnerId(partnerId);
 
             Optional<Partner> partner = partnerService.findById(partnerId);
@@ -372,55 +345,88 @@ public class BankStatementController {
             description = "Retrieves a paginated list of bank statements from the database."
     )
     @GetMapping("/list-bank-statement")
-    public Page<BankStatementDTO> getBankStatements(@RequestParam(defaultValue = "0") int page,
-                                                    @RequestParam(defaultValue = "10") int size) {
-        // Fetch the paginated list of bank statements from the service
-        Page<BankStatement> bankStatements = bankStatementService.getAllBankStatements(page, size);
+    public ResponseEntity<ApiResponse<?>> getBankStatements(
+            @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
+            @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        // ObjectMapper for JSON conversion
-        ObjectMapper objectMapper = new ObjectMapper();
+        // Get the authenticated user's username
+        String username = userService.getAuthenticatedUsername();
 
-        // Mapping each BankStatement entity to a BankStatementDTO
-        return bankStatements.map(bankStatement -> {
+        // Validate that the X-Partner-Token is not missing or empty
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        if (partnerValidationResponse != null) {
+            return partnerValidationResponse;
+        }
 
-            // Initialize a new BankStatementDTO to hold the mapped data
-            BankStatementDTO dto = new BankStatementDTO();
+        try {
+            // Fetch the paginated list of bank statements from the service
+            Page<BankStatement> bankStatements = bankStatementService.getAllBankStatements(page, size);
 
-            // Copy fields from the BankStatement entity to the DTO
-            dto.setId(bankStatement.getId());
-            dto.setPartnerCode(bankStatement.getPartner().getCode());
-            dto.setPartnerId(bankStatement.getPartner().getId());
-            dto.setMethod(bankStatement.getMethod());
-            dto.setEndpoint(bankStatement.getEndpoint());
-            dto.setXml(bankStatement.getXml());
-            dto.setCreatedBy(bankStatement.getCreatedBy());
-            dto.setCreatedDate(bankStatement.getCreatedDate());
-            dto.setStatus(bankStatement.getStatus());
-            dto.setIsDeleted(bankStatement.getIsDeleted());
-
-            // Convert payload string to JsonNode for API response
-            JsonNode payloadJson = null;
-
-            try {
-                payloadJson = objectMapper.readTree(bankStatement.getPayload());
-
-            } catch (Exception e) {
-                payloadJson = objectMapper.createObjectNode();
+            // If no data is found, return a 204 No Content response
+            if (bankStatements.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body(new ApiResponse<>(
+                                "204",
+                                "No bank statements found."
+                        ));
             }
 
-            // Check if the payloadJson is not null and is a valid JSON object
-            if (payloadJson != null && payloadJson.isObject()) {
-                Map<String, Object> dataMap = objectMapper.convertValue(payloadJson, Map.class);
-                dto.setData(dataMap);
+            // ObjectMapper for JSON conversion
+            ObjectMapper objectMapper = new ObjectMapper();
 
-            } else {
-                // If the payload is invalid or not an object, set an empty map as the data
-                Map<String, Object> emptyMap = objectMapper.convertValue(objectMapper.createObjectNode(), Map.class);
-                dto.setData(emptyMap);
-            }
+            // Map each BankStatement entity to a BankStatementDTO
+            Page<BankStatementDTO> bankStatementDTOPage = bankStatements.map(bankStatement -> {
+                // Initialize a new BankStatementDTO to hold the mapped data
+                BankStatementDTO dto = new BankStatementDTO();
 
-            // Return the populated DTO
-            return dto;
-        });
+                // Copy fields from the BankStatement entity to the DTO
+                dto.setId(bankStatement.getId());
+                dto.setPartnerCode(bankStatement.getPartner().getCode());
+                dto.setPartnerId(bankStatement.getPartner().getId());
+                dto.setMethod(bankStatement.getMethod());
+                dto.setEndpoint(bankStatement.getEndpoint());
+                dto.setXml(bankStatement.getXml());
+                dto.setCreatedBy(bankStatement.getCreatedBy());
+                dto.setCreatedDate(bankStatement.getCreatedDate());
+                dto.setStatus(bankStatement.getStatus());
+                dto.setIsDeleted(bankStatement.getIsDeleted());
+
+                // Convert payload string to JsonNode for API response
+                JsonNode payloadJson = null;
+                try {
+                    payloadJson = objectMapper.readTree(bankStatement.getPayload());
+                } catch (Exception e) {
+                    payloadJson = objectMapper.createObjectNode(); // If invalid payload, set as empty JSON object
+                }
+
+                // Check if the payloadJson is not null and is a valid JSON object
+                if (payloadJson != null && payloadJson.isObject()) {
+                    Map<String, Object> dataMap = objectMapper.convertValue(payloadJson, Map.class);
+                    dto.setData(dataMap);
+                } else {
+                    // If payload is invalid or not an object, set an empty map
+                    Map<String, Object> emptyMap = objectMapper.convertValue(objectMapper.createObjectNode(), Map.class);
+                    dto.setData(emptyMap);
+                }
+
+                return dto;
+            });
+
+            // Return the paginated list of BankStatementDTO wrapped in a successful API response
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "200",
+                    "Bank statements fetched successfully.", bankStatementDTOPage
+            ));
+
+        } catch (Exception e) {
+            // Handle any exceptions and return an internal server error response
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            "500",
+                            "An error occurred while fetching bank statements: " + e.getMessage()
+                    ));
+        }
     }
 }
