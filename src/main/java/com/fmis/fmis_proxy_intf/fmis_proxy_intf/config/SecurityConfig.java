@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -92,9 +93,9 @@ public class SecurityConfig {
                             response.setContentType("application/json");
 
                             // Check if the exception is a BadCredentialsException
-                            String message = "Unauthorized access. Please provide valid credentials.";
+                            String message = ApiResponseConstants.UNAUTHORIZED_ACCESS;
                             if (authException instanceof BadCredentialsException) {
-                                message = "Invalid username or password.";
+                                message = ApiResponseConstants.INVALID_CREDENTIALS;
                             }
 
                             String jsonResponse = String.format(
@@ -108,8 +109,9 @@ public class SecurityConfig {
                             response.setStatus(HttpStatus.FORBIDDEN.value());
                             response.setContentType("application/json");
                             String jsonResponse = String.format(
-                                    "{\"code\":\"%d\", \"message\":\"Access Denied. You do not have permission to access this resource.\"}",
-                                    HttpStatus.FORBIDDEN.value()
+                                    "{\"code\":\"%d\", \"message\":\"%s\"}",
+                                    HttpStatus.FORBIDDEN.value(),
+                                    ApiResponseConstants.FORBIDDEN
                             );
                             response.getWriter().write(jsonResponse);
                         })

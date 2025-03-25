@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Role;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
@@ -14,7 +15,6 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -80,7 +80,7 @@ public class AuthController {
         // If there are validation errors, return bad request with the errors
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("400", validationErrors));
+                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
         }
 
         try {
@@ -88,8 +88,8 @@ public class AuthController {
             if (userService.findByUsername(userDTO.getUsername()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                "400",
-                                "The username '" + userDTO.getUsername() + "' is already taken. Please choose another username."
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.USERNAME_TAKEN
                         ));
             }
 
@@ -97,29 +97,29 @@ public class AuthController {
             if (userService.findByEmail(userDTO.getEmail()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                "400",
-                                "The email '" + userDTO.getEmail() + "' is already in use. Please choose another email."
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.EMAIL_TAKEN
                         ));
             }
 
             // Validate roleId from DTO and set default if null
             Long roleId = (userDTO.getRoleId() != null) ? userDTO.getRoleId() : 5L;
             Role role = roleService.findById(roleId)
-                    .orElseThrow(() -> new RuntimeException("Role with ID '" + roleId + "' not found."));
+                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.ROLE_NOT_FOUND));
 
             // Validate partnerId from DTO
             Long partnerId = userDTO.getPartnerId();
             if (partnerId == null || !partnerService.existsById(partnerId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
-                                "404",
-                                "Partner with ID '" + partnerId + "' not found."
+                                ApiResponseConstants.NOT_FOUND_CODE,
+                                ApiResponseConstants.NO_PARTNERS_FOUND
                         ));
             }
 
             // Fetch the partner entity
             Partner partner = partnerService.findById(partnerId)
-                    .orElseThrow(() -> new RuntimeException("Partner not found."));
+                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.NO_PARTNERS_FOUND));
 
             // Create User entity and set its properties
             User user = new User();
@@ -135,15 +135,15 @@ public class AuthController {
             // Return a successful response with the saved user details
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
-                            "201",
-                            "User '" + savedUser.getUsername() + "' has been successfully registered."
+                            ApiResponseConstants.CREATED_CODE,
+                            ApiResponseConstants.CREATED
                     ));
 
         } catch (RuntimeException e) {
             // Handle unexpected errors and return a concise internal server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            "500",
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
                             e.getMessage()
                     ));
         }
@@ -173,7 +173,7 @@ public class AuthController {
         // If there are validation errors, return them in the response
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("400", validationErrors));
+                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
         }
 
         // Get the authenticated user's username
@@ -193,33 +193,33 @@ public class AuthController {
 
             // Fetch authenticated user from the database
             User loggedInUser = userService.findByUsername(user.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
 
             return ResponseEntity.ok(new ApiResponse<>(
-                    "200",
-                    "Login successful.",
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.SUCCESS,
                     loggedInUser
             ));
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(
-                            "401",
-                            "Authentication failed. Invalid username or password."
+                            ApiResponseConstants.UNAUTHORIZED_CODE,
+                            ApiResponseConstants.INVALID_CREDENTIALS
                     ));
 
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(
-                            "404",
-                            "User '" + user.getUsername() + "' not found. Please register if you don't have an account."
+                            ApiResponseConstants.NOT_FOUND_CODE,
+                            ApiResponseConstants.USER_NOT_FOUND
                     ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            "500",
-                            "An error occurred during login: " + e.getMessage()
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
                     ));
         }
     }
@@ -242,15 +242,15 @@ public class AuthController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String currentUsername = authentication.getName(); // The logged-in user's username
             User currentUser = userService.findByUsername(currentUsername)
-                    .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
 
             // Fetch the role of the authenticated user
             Long roleId = currentUser.getRole().getId();
             if (!roleService.existsById(roleId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
-                                "404",
-                                "Role not found"
+                                ApiResponseConstants.NOT_FOUND_CODE,
+                                ApiResponseConstants.ROLE_NOT_FOUND
                         ));
             }
 
@@ -258,14 +258,14 @@ public class AuthController {
             if (currentUser.getRole().getLevel() != 1) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new ApiResponse<>(
-                                "403",
-                                "You do not have permission to reset passwords."
+                                ApiResponseConstants.FORBIDDEN_CODE,
+                                ApiResponseConstants.FORBIDDEN_RESET_PASSWORD
                         ));
             }
 
             // Fetch the target user by username
             User targetUser = userService.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
 
             // Hash the new password before saving
             String encodedPassword = passwordEncoder.encode(password);
@@ -275,15 +275,15 @@ public class AuthController {
             userService.save(targetUser);
 
             return ResponseEntity.ok(new ApiResponse<>(
-                    "200",
-                    "Password reset successfully for user: " + username
+                    ApiResponseConstants.UPDATED_CODE,
+                    ApiResponseConstants.PASSWORD_RESET_SUCCESS + username
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            "500",
-                            "An error occurred: " + e.getMessage()
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
                     ));
         }
     }

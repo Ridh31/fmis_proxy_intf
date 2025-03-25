@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <ul class="code-description">
                             <li>
                                 <span>X-Partner-Token</span>
-                                The identifier of the partner, which is recognized and authorized by the provider. (Bank Statement)
+                                The identifier of the partner, which is recognized and authorized by the provider.
                             </li>
                         </ul>
                     </section>

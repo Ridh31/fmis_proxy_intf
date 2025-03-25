@@ -8,17 +8,17 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-    private String code;
+    private int code;  // Changed from String to int
     private String message;
-    private T data;  // Renamed 'error' to 'data' to match the desired response structure
+    private T data;
     private T error;
 
     /**
      * Default constructor for successful responses.
-     * Initializes code to "200" and message to "Success".
+     * Initializes code to 200 and message to "Success".
      */
     public ApiResponse() {
-        this.code = "200";
+        this.code = 200;  // Changed from "200" to 200
         this.message = "Success";
     }
 
@@ -28,7 +28,7 @@ public class ApiResponse<T> {
      * @param code    Response status code
      * @param message Human-readable response message
      */
-    public ApiResponse(String code, String message) {
+    public ApiResponse(int code, String message) {
         this.code = code;
         this.message = message;
     }
@@ -50,7 +50,7 @@ public class ApiResponse<T> {
      * @param message Human-readable response message
      * @param data    Data payload
      */
-    public ApiResponse(String code, String message, T data) {
+    public ApiResponse(int code, String message, T data) {
         this.code = code;
         this.message = message;
         this.data = data;
@@ -62,10 +62,10 @@ public class ApiResponse<T> {
      * @param code            Response status code
      * @param validationErrors Map of field-specific validation error messages
      */
-    public ApiResponse(String code, Map<String, String> validationErrors) {
+    public ApiResponse(int code, Map<String, String> validationErrors) {
         this.code = code;
-        this.message = "Validation failed";  // default message for validation errors
-        this.error = (T) validationErrors;  // Cast Map<String, String> to T
+        this.message = "Validation failed";
+        this.error = (T) validationErrors;
     }
 
     /* Static Factory Methods */
@@ -88,7 +88,7 @@ public class ApiResponse<T> {
      * @param message Error description
      * @return ApiResponse instance with error details
      */
-    public static ApiResponse<?> error(String code, String message) {
+    public static ApiResponse<?> error(int code, String message) {
         return new ApiResponse<>(code, message);
     }
 
@@ -101,16 +101,16 @@ public class ApiResponse<T> {
      * @return ApiResponse instance with error details
      * @param <T> Type of the error data
      */
-    public static <T> ApiResponse<T> error(String code, String message, T data) {
+    public static <T> ApiResponse<T> error(int code, String message, T data) {
         return new ApiResponse<>(code, message, data);
     }
 
     // Manually defined getters and setters
-    public String getCode() {
+    public int getCode() {
         return code;
     }
 
-    public void setCode(String code) {
+    public void setCode(int code) {
         this.code = code;
     }
 

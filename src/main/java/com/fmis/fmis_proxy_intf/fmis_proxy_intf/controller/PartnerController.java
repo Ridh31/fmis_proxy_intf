@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
@@ -168,7 +169,7 @@ public class PartnerController {
         // If there are validation errors, return them in the response
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("400", validationErrors));
+                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
         }
 
         try {
@@ -178,8 +179,8 @@ public class PartnerController {
             if (authentication == null || !authentication.isAuthenticated()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
-                                "401",
-                                "Unauthorized: You must be logged in to create a partner."
+                                ApiResponseConstants.UNAUTHORIZED_CODE,
+                                ApiResponseConstants.UNAUTHORIZED_LOGIN_REQUIRED
                         ));
             }
 
@@ -190,8 +191,8 @@ public class PartnerController {
             if (userOptional.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
-                                "401",
-                                "Unauthorized: The authenticated user does not exist."
+                                ApiResponseConstants.UNAUTHORIZED_CODE,
+                                ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
                         ));
             }
 
@@ -203,8 +204,8 @@ public class PartnerController {
                 // Handle case where role does not exist
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
-                                "404",
-                                "Role not found for the authenticated user."
+                                ApiResponseConstants.NOT_FOUND_CODE,
+                                ApiResponseConstants.ROLE_NOT_FOUND
                         ));
             }
 
@@ -212,8 +213,8 @@ public class PartnerController {
             if (currentUser.getRole().getLevel() != 1) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new ApiResponse<>(
-                                "403",
-                                "Forbidden: You do not have permission to create a partner."
+                                ApiResponseConstants.FORBIDDEN_CODE,
+                                ApiResponseConstants.FORBIDDEN_CREATE_PARTNER
                         ));
             }
 
@@ -221,8 +222,8 @@ public class PartnerController {
             if (partnerService.findByCode(partner.getCode()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                "400",
-                                "Bad Request: Partner code '" + partner.getCode() + "' is already taken."
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.PARTNER_CODE_TAKEN
                         ));
             }
 
@@ -240,8 +241,8 @@ public class PartnerController {
             // Return successful response
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
-                            "201",
-                            "Partner created successfully!",
+                            ApiResponseConstants.CREATED_CODE,
+                            ApiResponseConstants.CREATED,
                             savedPartner
                     ));
 
@@ -249,8 +250,8 @@ public class PartnerController {
             // Handle any other unexpected errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            "500",
-                            "Internal Server Error: " + e.getMessage()
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
                     ));
         }
     }
@@ -290,15 +291,15 @@ public class PartnerController {
             if (partners.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
                         .body(new ApiResponse<>(
-                                "204",
-                                "No partners found."
+                                ApiResponseConstants.NO_CONTENT_CODE,
+                                ApiResponseConstants.NO_PARTNERS_FOUND
                         ));
             }
 
             // Return the paginated list of partners wrapped in a successful API response
             return ResponseEntity.ok(new ApiResponse<>(
-                    "200",
-                    "Partners fetched successfully.",
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.PARTNERS_FETCHED,
                     partners
             ));
 
@@ -306,8 +307,8 @@ public class PartnerController {
             // Handle any exceptions and return an internal server error response
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            "500",
-                            "An error occurred while fetching partners: " + e.getMessage()
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_FETCHING_PARTNERS + e.getMessage()
                     ));
         }
     }

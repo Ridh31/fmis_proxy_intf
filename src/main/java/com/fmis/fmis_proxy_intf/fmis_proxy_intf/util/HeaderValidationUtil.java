@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
@@ -16,13 +17,13 @@ public class HeaderValidationUtil {
 
         // Validate that the username is valid first
         if (username == null || username.trim().isEmpty()) {
-            return buildBadRequestResponse("Bad Request: 'Username' cannot be missing or empty.");
+            return buildBadRequestResponse(ApiResponseConstants.ERROR_USERNAME_MISSING_OR_EMPTY);
         }
 
         // Validate if username exists
         Optional<User> userOptional = userService.findByUsername(username);
         if (userOptional.isEmpty()) {
-            return buildUnauthorizedResponse("Unauthorized: The username provided was not found.");
+            return buildUnauthorizedResponse(ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND);
         }
 
         // Now proceed to validate the partnerCode
@@ -36,7 +37,7 @@ public class HeaderValidationUtil {
             Optional<User> partnerUserOptional = userService.findByPartnerIdAndUsername(partnerId, username);
 
             if (partnerUserOptional.isEmpty()) {
-                return buildUnauthorizedResponse("Unauthorized: Invalid partner code.");
+                return buildUnauthorizedResponse(ApiResponseConstants.INVALID_PARTNER_TOKEN);
             }
 
             // Decrypt the partner code and validate it
@@ -45,11 +46,11 @@ public class HeaderValidationUtil {
                     .get("decrypt").toString();
 
             if (!decryptedData.equals(foundUser.getPartner().getCode())) {
-                return buildForbiddenResponse("Forbidden: Partner code validation failed.");
+                return buildForbiddenResponse(ApiResponseConstants.FORBIDDEN_PARTNER_TOKEN);
             }
         } catch (Exception e) {
             // Catching all exceptions related to decryption or validation errors
-            return buildInternalServerErrorResponse("Internal Server Error: " + e.getMessage());
+            return buildInternalServerErrorResponse(ApiResponseConstants.ERROR_OCCURRED + e.getMessage());
         }
 
         // Return null if all validations pass
@@ -59,21 +60,21 @@ public class HeaderValidationUtil {
     // Helper methods for response construction
     private static ResponseEntity<ApiResponse<?>> buildBadRequestResponse(String message) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>("400", message));
+                .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, message));
     }
 
     private static ResponseEntity<ApiResponse<?>> buildUnauthorizedResponse(String message) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse<>("401", message));
+                .body(new ApiResponse<>(ApiResponseConstants.UNAUTHORIZED_CODE, message));
     }
 
     private static ResponseEntity<ApiResponse<?>> buildForbiddenResponse(String message) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiResponse<>("403", message));
+                .body(new ApiResponse<>(ApiResponseConstants.FORBIDDEN_CODE, message));
     }
 
     private static ResponseEntity<ApiResponse<?>> buildInternalServerErrorResponse(String message) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponse<>("500", message));
+                .body(new ApiResponse<>(ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE, message));
     }
 }

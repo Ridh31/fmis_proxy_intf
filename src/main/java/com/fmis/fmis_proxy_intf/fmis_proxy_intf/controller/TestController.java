@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Test;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TestService;
@@ -72,16 +73,16 @@ public class TestController {
                 // Return success response
                 return ResponseEntity.status(HttpStatus.CREATED)
                         .body(new ApiResponse<>(
-                                "201",
-                                "Access Successful.",
+                                ApiResponseConstants.CREATED_CODE,
+                                ApiResponseConstants.CREATED,
                                 fmisResponseBody
                         ));
             } else {
                 // Handle failure in sending data to FMIS
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                         .body(new ApiResponse<>(
-                                "502",
-                                "Failed to send data to FMIS: " + fmisResponse.getBody()
+                                ApiResponseConstants.BAD_GATEWAY_CODE,
+                                ApiResponseConstants.ERROR_SENDING_TO_FMIS + fmisResponse.getBody()
                         ));
             }
         }
@@ -89,8 +90,8 @@ public class TestController {
         // Return response if FMIS configuration is not found
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(
-                        "404",
-                        "FMIS Configuration Not Found.",
+                        ApiResponseConstants.NOT_FOUND_CODE,
+                        ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
                         null
                 ));
     }
@@ -108,7 +109,7 @@ public class TestController {
     public ResponseEntity<ApiResponse<?>> test() {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse<>(
-                        "200",
+                        ApiResponseConstants.SUCCESS_CODE,
                         "FMIS Interface Web Service."
                 ));
     }
@@ -145,6 +146,6 @@ public class TestController {
     public ResponseEntity<String> save(@RequestBody Test test) {
         testService.addTest(test);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body("Test entity added successfully.");
+                .body(ApiResponseConstants.CREATED);
     }
 }

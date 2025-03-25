@@ -2,6 +2,7 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.BankStatementDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
@@ -21,8 +22,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -210,7 +209,7 @@ public class BankStatementController {
         // If there are validation errors, return them in the response
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("400", validationErrors));
+                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
         }
 
         // Get the authenticated user's username
@@ -226,7 +225,7 @@ public class BankStatementController {
             // Set the createdBy and partnerId values
             Long userId = userService.findByUsername(username)
                     .map(User::getId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
 
             bankStatementDTO.setCreatedBy(userId);
 
@@ -289,24 +288,24 @@ public class BankStatementController {
                         bankStatementService.createBankStatement(partnerId, bankStatementDTO);
                         return ResponseEntity.status(HttpStatus.CREATED)
                                 .body(new ApiResponse<>(
-                                        "201",
-                                        "Bank statement saved successfully.",
+                                        ApiResponseConstants.CREATED_CODE,
+                                        ApiResponseConstants.CREATED,
                                         fmisResponseBody
                                 ));
                     } else {
                         // Handle failure in sending data to FMIS
                         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                 .body(new ApiResponse<>(
-                                        "502",
-                                        "Failed to send data to FMIS: " + fmisResponseBody
+                                        ApiResponseConstants.BAD_GATEWAY_CODE,
+                                        ApiResponseConstants.ERROR_SENDING_TO_FMIS + fmisResponseBody
                                 ));
                     }
                 } else {
                     // Handle case when FMIS URL is not found
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(new ApiResponse<>(
-                                    "404",
-                                    "Base URL not found"
+                                    ApiResponseConstants.NOT_FOUND_CODE,
+                                    ApiResponseConstants.BASE_URL_NOT_FOUND
                             ));
                 }
             }
@@ -314,16 +313,16 @@ public class BankStatementController {
             // Return error if no valid bank statement data is provided
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            "400",
-                            "Bad Request: No valid bank statement data provided."
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.NO_VALID_BANK_STATEMENT
                     ));
 
         } catch (Exception e) {
             // Handle any server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            "500",
-                            "Internal Server Error: " + e.getMessage()
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
                     ));
         }
     }
@@ -368,8 +367,8 @@ public class BankStatementController {
             if (bankStatements.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
                         .body(new ApiResponse<>(
-                                "204",
-                                "No bank statements found."
+                                ApiResponseConstants.NO_CONTENT_CODE,
+                                ApiResponseConstants.NO_BANK_STATEMENTS_FOUND
                         ));
             }
 
@@ -416,16 +415,17 @@ public class BankStatementController {
 
             // Return the paginated list of BankStatementDTO wrapped in a successful API response
             return ResponseEntity.ok(new ApiResponse<>(
-                    "200",
-                    "Bank statements fetched successfully.", bankStatementDTOPage
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.BANK_STATEMENTS_FETCHED,
+                    bankStatementDTOPage
             ));
 
         } catch (Exception e) {
             // Handle any exceptions and return an internal server error response
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            "500",
-                            "An error occurred while fetching bank statements: " + e.getMessage()
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_FETCHING_BANK_STATEMENTS + e.getMessage()
                     ));
         }
     }

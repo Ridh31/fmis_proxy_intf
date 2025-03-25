@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.impl;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.PartnerRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
@@ -75,7 +76,7 @@ public class PartnerServiceImpl implements PartnerService {
     public Long findIdByPublicKey(String publicKey) {
         return partnerRepository.findIdByPublicKey(publicKey)
                 .map(Partner::getId)
-                .orElseThrow(() -> new ResourceNotFoundException("Partner with the provided key not found."));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiResponseConstants.ERROR_PARTNER_TOKEN_NOT_FOUND));
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -66,7 +67,7 @@ public class ReDocController {
 
         } catch (IOException e) {
             // Handle errors related to reading the redoc.html file
-            String errorMessage = "Error occurred while reading the documentation file.";
+            String errorMessage = ApiResponseConstants.ERROR_READING_FILE;
 
             // Set response headers to indicate plain text content
             HttpHeaders headers = new HttpHeaders();
