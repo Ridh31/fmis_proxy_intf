@@ -1,19 +1,24 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
+/**
+ * This class contains examples of API requests for different use cases.
+ * These examples demonstrate how to send requests to the FMIS Proxy Interface API in various programming languages and tools.
+ */
 public class ApiRequestExamples {
 
     /**
-     * Example for creating a new partner in JSON format
+     * Example for creating a new partner in JSON format.
+     * This is a sample payload for making a POST request to create a new partner.
      *
-     * @cURL
-     * @JavaScript (Fetch API)
-     * @Python (requests)
-     * @Java (HttpURLConnection)
-     * @C# (HttpClient)
-     * @PHP (cURL)
-     * @Node.js (Axios)
-     * @Ruby (Net::HTTP)
-     * @Go (net/http)
+     * @cURL Example
+     * @JavaScript (Fetch API) Example
+     * @Python (requests) Example
+     * @Java (HttpURLConnection) Example
+     * @C# (HttpClient) Example
+     * @PHP (cURL) Example
+     * @Node.js (Axios) Example
+     * @Ruby (Net::HTTP) Example
+     * @Go (net/http) Example
      */
     public static final String CREATE_PARTNER_EXAMPLE = """
             {
@@ -22,7 +27,10 @@ public class ApiRequestExamples {
             }
             """;
 
-    // cURL Example for creating a new partner
+    /**
+     * cURL Example for creating a new partner.
+     * This shows how to use cURL to send a POST request with the partner data in JSON format.
+     */
     public static final String CREATE_PARTNER_CURL = """
             curl -X POST "https://dev-fmis-intf.fmis.gov.kh/api/v1/create-partner" \\
             -H "Content-Type: application/json" \\
@@ -32,7 +40,10 @@ public class ApiRequestExamples {
             }'
             """;
 
-    // JavaScript (Fetch) Example for creating a new partner
+    /**
+     * JavaScript (Fetch) Example for creating a new partner.
+     * This demonstrates how to use the Fetch API in JavaScript to send a POST request with JSON data.
+     */
     public static final String CREATE_PARTNER_JS_FETCH = """
             fetch('https://dev-fmis-intf.fmis.gov.kh/api/v1/create-partner', {
                 method: 'POST',
@@ -46,7 +57,11 @@ public class ApiRequestExamples {
             .then(data => console.log(data));
             """;
 
-    // Python (requests) Example for creating a new partner
+    /**
+     * Python (requests) Example for creating a new partner
+     * This example demonstrates how to send a POST request to the API using the Python `requests` library.
+     * It includes the URL, headers, and body data, and prints the JSON response from the server.
+     */
     public static final String CREATE_PARTNER_PYTHON = """
             import requests
             
@@ -61,10 +76,13 @@ public class ApiRequestExamples {
             print(response.json())
             """;
 
-    // Java (OkHttp) Example for creating a new partner
+    /**
+     * Java (OkHttp) Example for creating a new partner
+     * This example demonstrates how to send a POST request using the OkHttp library in Java.
+     * It sets the request body, adds the necessary headers, and executes the request to the server.
+     */
     public static final String CREATE_PARTNER_JAVA_OKHTTP = """
             OkHttpClient client = new OkHttpClient();
-            
             MediaType mediaType = MediaType.parse("application/json");
             RequestBody body = RequestBody.create(mediaType, "{\\"code\\":\\"PART123\\",\\"name\\":\\"Test Partner\\"}");
             
@@ -78,7 +96,11 @@ public class ApiRequestExamples {
             System.out.println(response.body().string());
             """;
 
-    // C# (HttpClient) Example for creating a new partner
+    /**
+     * C# (HttpClient) Example for creating a new partner
+     * This example shows how to use C#'s `HttpClient` to send a POST request with JSON data.
+     * It asynchronously sends the request, waits for the response, and then prints the result.
+     */
     public static final String CREATE_PARTNER_CSHARP = """
             using System;
             using System.Net.Http;
@@ -102,7 +124,11 @@ public class ApiRequestExamples {
             }
             """;
 
-    // PHP (cURL) Example for creating a new partner
+    /**
+     * PHP (cURL) Example for creating a new partner
+     * This example shows how to send a POST request in PHP using cURL.
+     * The data is encoded as JSON, the necessary headers are set, and the response is echoed.
+     */
     public static final String CREATE_PARTNER_PHP_CURL = """
             <?php
             $url = 'https://dev-fmis-intf.fmis.gov.kh/api/v1/create-partner';
@@ -121,10 +147,13 @@ public class ApiRequestExamples {
             ?>
             """;
 
-    // Node.js (Axios) Example for creating a new partner
+    /**
+     * Node.js (Axios) Example for creating a new partner
+     * This example shows how to send a POST request using the `Axios` library in Node.js.
+     * It sets the request body with the partner's data, sends the request, and logs the response.
+     */
     public static final String CREATE_PARTNER_NODEJS = """
             const axios = require('axios');
-            
             const url = 'https://dev-fmis-intf.fmis.gov.kh/api/v1/create-partner';
             const data = { code: 'PART123', name: 'Test Partner' };
             
@@ -133,11 +162,15 @@ public class ApiRequestExamples {
                 .catch(error => console.error(error));
             """;
 
-    // Ruby (Net::HTTP) Example for creating a new partner
+    /**
+     * Ruby (Net::HTTP) Example for creating a new partner
+     * This example demonstrates how to send a POST request in Ruby using the `Net::HTTP` library.
+     * It prepares the request, sets the necessary headers, sends the request, and prints the response body.
+     */
     public static final String CREATE_PARTNER_RUBY = """
             require 'net/http'
             require 'json'
-            
+
             url = URI('https://dev-fmis-intf.fmis.gov.kh/api/v1/create-partner')
             http = Net::HTTP.new(url.host, url.port)
             http.use_ssl = true
@@ -149,7 +182,11 @@ public class ApiRequestExamples {
             puts response.body
             """;
 
-    // Go (net/http) Example for creating a new partner
+    /**
+     * Go (net/http) Example for creating a new partner
+     * This example demonstrates how to send a POST request in Go using the `net/http` package.
+     * The request body is encoded as JSON, and the response status is printed after the request is executed.
+     */
     public static final String CREATE_PARTNER_GO = """
             package main
             
@@ -193,14 +230,22 @@ public class ApiRequestExamples {
             curl -X GET "https://your-api-url/list-partner?page=1&size=10"
             """;
 
-    // JavaScript (Fetch) Example for getting all partners with pagination
+    /**
+     * JavaScript (Fetch) Example for getting all partners with pagination
+     * This example shows how to use the Fetch API in JavaScript to send a GET request to the API.
+     * The query parameters for pagination (`page=1&size=10`) are passed in the URL.
+     */
     public static final String GET_ALL_PARTNERS_JS_FETCH = """
             fetch('https://your-api-url/list-partner?page=1&size=10')
                 .then(response => response.json())
                 .then(data => console.log(data));
             """;
 
-    // Python (requests) Example for getting all partners with pagination
+    /**
+     * Python (requests) Example for getting all partners with pagination
+     * This example demonstrates how to send a GET request using the Python `requests` library with query parameters.
+     * It includes pagination parameters (`page=1&size=10`) and prints the JSON response from the API.
+     */
     public static final String GET_ALL_PARTNERS_PYTHON = """
             import requests
             
@@ -211,7 +256,11 @@ public class ApiRequestExamples {
             print(response.json())
             """;
 
-    // Java (HttpURLConnection) Example for getting all partners with pagination
+    /**
+     * Java (HttpURLConnection) Example for getting all partners with pagination
+     * This example demonstrates how to send a GET request in Java using `HttpURLConnection`.
+     * It passes pagination parameters (`page=1&size=10`) in the URL and prints the response.
+     */
     public static final String GET_ALL_PARTNERS_JAVA_HTTPURLConnection = """
             import java.net.HttpURLConnection;
             import java.net.URL;
@@ -237,7 +286,11 @@ public class ApiRequestExamples {
             }
             """;
 
-    // C# (HttpClient) Example for getting all partners with pagination
+    /**
+     * C# (HttpClient) Example for getting all partners with pagination
+     * This example shows how to send a GET request in C# using `HttpClient` to fetch paginated data.
+     * The pagination parameters are passed as query parameters in the URL (`page=1&size=10`).
+     */
     public static final String GET_ALL_PARTNERS_CSHARP = """
             using System;
             using System.Net.Http;
@@ -257,11 +310,14 @@ public class ApiRequestExamples {
             }
             """;
 
-    // PHP (cURL) Example for getting all partners with pagination
+    /**
+     * PHP (cURL) Example for getting all partners with pagination
+     * This example demonstrates how to use PHP's `cURL` to send a GET request to fetch partners with pagination.
+     * It adds query parameters (`page=1&size=10`) to the URL and prints the response.
+     */
     public static final String GET_ALL_PARTNERS_PHP_CURL = """
             <?php
             $url = 'https://your-api-url/list-partner?page=1&size=10';
-            
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             
@@ -272,10 +328,13 @@ public class ApiRequestExamples {
             ?>
             """;
 
-    // Node.js (Axios) Example for getting all partners with pagination
+    /**
+     * Node.js (Axios) Example for getting all partners with pagination
+     * This example shows how to use `Axios` in Node.js to send a GET request with pagination parameters.
+     * The `params` object contains `page=1` and `size=10`, which are passed in the URL for the request.
+     */
     public static final String GET_ALL_PARTNERS_NODEJS = """
             const axios = require('axios');
-            
             const url = 'https://your-api-url/list-partner';
             const params = { page: 1, size: 10 };
             
@@ -284,7 +343,11 @@ public class ApiRequestExamples {
                 .catch(error => console.error(error));
             """;
 
-    // Ruby (Net::HTTP) Example for getting all partners with pagination
+    /**
+     * Ruby (Net::HTTP) Example for getting all partners with pagination
+     * This example demonstrates how to send a GET request in Ruby using `Net::HTTP`.
+     * It includes query parameters (`page=1&size=10`) for pagination and prints the response body.
+     */
     public static final String GET_ALL_PARTNERS_RUBY = """
             require 'net/http'
             require 'uri'
@@ -296,7 +359,11 @@ public class ApiRequestExamples {
             puts response.body
             """;
 
-    // Go (net/http) Example for getting all partners with pagination
+    /**
+     * Go (net/http) Example for getting all partners with pagination
+     * This example shows how to use the `net/http` package in Go to send a GET request with pagination.
+     * The query parameters (`page=1&size=10`) are added to the URL, and the response status is printed.
+     */
     public static final String GET_ALL_PARTNERS_GO = """
             package main
             
@@ -418,7 +485,12 @@ public class ApiRequestExamples {
             }'
             """;
 
-    // JavaScript (Fetch) Example for Import Bank Statement
+    /**
+     * JavaScript (Fetch) Example for Import Bank Statement
+     * This example shows how to use the Fetch API in JavaScript to send a POST request to import a bank statement.
+     * The request includes the necessary headers and body, which is formatted as JSON, containing bank statement information.
+     * The response is logged to the console in JSON format for easy inspection.
+     */
     public static final String IMPORT_BANK_STATEMENT_JS_FETCH = """
             fetch('https://dev-fmis-intf.fmis.gov.kh/api/v1/import-bank-statement', {
                 method: 'POST',
@@ -467,7 +539,12 @@ public class ApiRequestExamples {
             .then(data => console.log(data));
             """;
 
-    // Python (requests) Example for Import Bank Statement
+    /**
+     * Python (requests) Example for Import Bank Statement
+     * This Python example uses the `requests` library to send a POST request for importing a bank statement.
+     * It sends the required headers, such as `Content-Type` and `X-Partner-Token`, along with the JSON body containing the bank statement data.
+     * The response is then printed out as a JSON object.
+     */
     public static final String IMPORT_BANK_STATEMENT_PYTHON = """
             import requests
             
@@ -517,7 +594,12 @@ public class ApiRequestExamples {
             print(response.json())
             """;
 
-    // Java (HttpURLConnection) Example for Import Bank Statement
+    /**
+     * Java (HttpURLConnection) Example for Import Bank Statement
+     * This Java example demonstrates how to send a POST request using `HttpURLConnection` to import a bank statement.
+     * The request includes headers such as `Content-Type` and `X-Partner-Token`, and the body contains JSON data for the bank statement.
+     * The response is read and printed to the console.
+     */
     public static final String IMPORT_BANK_STATEMENT_JAVA_HTTPURLCONNECTION = """
         import java.net.HttpURLConnection;
         import java.net.URL;
@@ -585,7 +667,12 @@ public class ApiRequestExamples {
         }
         """;
 
-    // C# (HttpClient) Example for Import Bank Statement
+    /**
+     * C# (HttpClient) Example for Import Bank Statement
+     * This C# example demonstrates how to use `HttpClient` to send a POST request to import a bank statement.
+     * It includes the necessary headers (`Content-Type`, `X-Partner-Token`) and sends the data in JSON format.
+     * The response is captured and printed as a string.
+     */
     public static final String IMPORT_BANK_STATEMENT_CSHARP_HTTPCLIENT = """
         using System;
                 using System.Net.Http;
@@ -646,7 +733,11 @@ public class ApiRequestExamples {
                 }
     """;
 
-    // C# (HttpClient) Example for Import Bank Statement
+    /**
+     * This PHP example uses cURL to send a POST request to import a bank statement.
+     * It sets the necessary headers (`Content-Type` and `X-Partner-Token`) and sends the JSON data containing bank statement information.
+     * The response from the server is printed out.
+     */
     public static final String IMPORT_BANK_STATEMENT_PHP_CURL = """
             <?php
                 $url = 'https://dev-fmis-intf.fmis.gov.kh/api/v1/import-bank-statement';
@@ -703,16 +794,18 @@ public class ApiRequestExamples {
             ?>
     """;
 
-    // Node.js (Axios) Example for Import Bank Statement
+    /**
+     * This Node.js example uses Axios to send a POST request to import a bank statement.
+     * It includes necessary headers (`Content-Type` and `X-Partner-Token`), and sends the data as JSON format.
+     * The response data is logged to the console.
+     */
     public static final String IMPORT_BANK_STATEMENT_NODEJS = """
         const axios = require('axios');
-   
         const url = 'https://dev-fmis-intf.fmis.gov.kh/api/v1/import-bank-statement';
         const headers = {
             'Content-Type': 'application/json',
             'X-Partner-Token': 'String'  // Replace with actual partner token
         };
-
         const data = {
             data: {
                 CMB_BANKSTM_STG: [
@@ -755,7 +848,11 @@ public class ApiRequestExamples {
             .catch(error => console.error(error));
     """;
 
-    // Ruby (Net::HTTP) Example for Import Bank Statement
+    /**
+     * This Ruby example uses Net::HTTP to send a POST request to import a bank statement.
+     * It includes headers (`Content-Type` and `X-Partner-Token`) and sends the data as JSON format.
+     * The response body is printed out after the request completes.
+     */
     public static final String IMPORT_BANK_STATEMENT_RUBY = """
         require 'net/http'
         require 'uri'
@@ -808,7 +905,10 @@ public class ApiRequestExamples {
         puts response.body
     """;
 
-    // Go (net/http) Example for Import Bank Statement
+    /**
+     * This Go example uses the net/http package to send a POST request to import a bank statement.
+     * The headers and data are set in the request, and the response status is printed out.
+     */
     public static final String IMPORT_BANK_STATEMENT_GO = """
         package main
     

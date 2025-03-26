@@ -10,69 +10,112 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.Optional;
 
+/**
+ * Utility class for validating headers and verifying partner-related information.
+ * This includes validating the 'X-Partner-Token' header and verifying the associated partner code.
+ */
 public class HeaderValidationUtil {
 
-    // Method to validate the 'X-Partner-Token' header and check the partner code
+    /**
+     * Validates the 'X-Partner-Token' header and the associated partner code.
+     * This method ensures that the provided username is valid, exists in the system,
+     * and that the provided partner code is correctly decrypted and authorized.
+     *
+     * @param partnerCode The partner code provided in the 'X-Partner-Token' header.
+     * @param username The username associated with the request.
+     * @param partnerService Service to handle partner-related operations.
+     * @param userService Service to handle user-related operations.
+     * @return A ResponseEntity containing an appropriate error message if validation fails, or null if successful.
+     */
     public static ResponseEntity<ApiResponse<?>> validatePartnerCode(String partnerCode, String username, PartnerService partnerService, UserService userService) {
 
-        // Validate that the username is valid first
+        // Validate that the username is not null or empty
         if (username == null || username.trim().isEmpty()) {
             return buildBadRequestResponse(ApiResponseConstants.ERROR_USERNAME_MISSING_OR_EMPTY);
         }
 
-        // Validate if username exists
+        // Check if the user exists by their username
         Optional<User> userOptional = userService.findByUsername(username);
         if (userOptional.isEmpty()) {
             return buildUnauthorizedResponse(ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND);
         }
 
-        // Now proceed to validate the partnerCode
+        // Validate the partnerCode (must not be null or empty)
         if (partnerCode == null || partnerCode.trim().isEmpty()) {
             return buildBadRequestResponse("Bad Request: '" + HeaderConstants.X_PARTNER_TOKEN + "' header cannot be missing or empty.");
         }
 
         try {
-            // Retrieve partner ID and validate user authorization
+            // Retrieve the partner ID associated with the provided partner code
             Long partnerId = partnerService.findIdByPublicKey(partnerCode);
             Optional<User> partnerUserOptional = userService.findByPartnerIdAndUsername(partnerId, username);
 
+            // Ensure that the user is authorized to access this partner
             if (partnerUserOptional.isEmpty()) {
                 return buildUnauthorizedResponse(ApiResponseConstants.INVALID_PARTNER_TOKEN);
             }
 
-            // Decrypt the partner code and validate it
+            // Decrypt the partner code and validate it against the expected code
             User foundUser = partnerUserOptional.get();
             String decryptedData = RSAUtil.decrypt(partnerCode, foundUser.getPartner().getPrivateKey())
                     .get("decrypt").toString();
 
+            // Check if the decrypted partner code matches the expected value
             if (!decryptedData.equals(foundUser.getPartner().getCode())) {
                 return buildForbiddenResponse(ApiResponseConstants.FORBIDDEN_PARTNER_TOKEN);
             }
         } catch (Exception e) {
-            // Catching all exceptions related to decryption or validation errors
+            // Catch any exceptions related to decryption or validation errors
             return buildInternalServerErrorResponse(ApiResponseConstants.ERROR_OCCURRED + e.getMessage());
         }
 
-        // Return null if all validations pass
+        // Return null if all validations pass successfully
         return null;
     }
 
-    // Helper methods for response construction
+    /*
+     * Helper methods for constructing standardized response messages.
+     */
+
+    /**
+     * Builds a BAD_REQUEST response with a custom message.
+     *
+     * @param message The error message to be included in the response.
+     * @return A ResponseEntity with a 400 Bad Request status and the provided error message.
+     */
     private static ResponseEntity<ApiResponse<?>> buildBadRequestResponse(String message) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, message));
     }
 
+    /**
+     * Builds an UNAUTHORIZED response with a custom message.
+     *
+     * @param message The error message to be included in the response.
+     * @return A ResponseEntity with a 401 Unauthorized status and the provided error message.
+     */
     private static ResponseEntity<ApiResponse<?>> buildUnauthorizedResponse(String message) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(ApiResponseConstants.UNAUTHORIZED_CODE, message));
     }
 
+    /**
+     * Builds a FORBIDDEN response with a custom message.
+     *
+     * @param message The error message to be included in the response.
+     * @return A ResponseEntity with a 403 Forbidden status and the provided error message.
+     */
     private static ResponseEntity<ApiResponse<?>> buildForbiddenResponse(String message) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ApiResponse<>(ApiResponseConstants.FORBIDDEN_CODE, message));
     }
 
+    /**
+     * Builds an INTERNAL_SERVER_ERROR response with a custom message.
+     *
+     * @param message The error message to be included in the response.
+     * @return A ResponseEntity with a 500 Internal Server Error status and the provided error message.
+     */
     private static ResponseEntity<ApiResponse<?>> buildInternalServerErrorResponse(String message) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponse<>(ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE, message));
