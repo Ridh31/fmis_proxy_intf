@@ -70,39 +70,39 @@ public class BankStatementController {
                                     mediaType = "application/json",
                                     examples = {
                                             @ExampleObject(
-                                                    name = "cURL",
+                                                    name = ApiRequestExamples.CURL,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_CURL
                                             ),
                                             @ExampleObject(
-                                                    name = "JavaScript (Fetch API)",
+                                                    name = ApiRequestExamples.JAVASCRIPT,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_JS_FETCH
                                             ),
                                             @ExampleObject(
-                                                    name = "Python (requests)",
+                                                    name = ApiRequestExamples.PYTHON,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_PYTHON
                                             ),
                                             @ExampleObject(
-                                                    name = "Java (HttpURLConnection)",
+                                                    name = ApiRequestExamples.JAVA_HTTPURLCONNECTION,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_JAVA_HTTPURLCONNECTION
                                             ),
                                             @ExampleObject(
-                                                    name = "C# (HttpClient)",
+                                                    name = ApiRequestExamples.CSHARP,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_CSHARP_HTTPCLIENT
                                             ),
                                             @ExampleObject(
-                                                    name = "PHP (cURL)",
+                                                    name = ApiRequestExamples.PHP_CURL,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_PHP_CURL
                                             ),
                                             @ExampleObject(
-                                                    name = "Node.js (Axios)",
+                                                    name = ApiRequestExamples.NODEJS,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_NODEJS
                                             ),
                                             @ExampleObject(
-                                                    name = "Ruby (Net::HTTP)",
+                                                    name = ApiRequestExamples.RUBY,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_RUBY
                                             ),
                                             @ExampleObject(
-                                                    name = "Go (net/http)",
+                                                    name = ApiRequestExamples.GO,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_GO
                                             )
                                     }
@@ -111,84 +111,84 @@ public class BankStatementController {
             ),
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "201",
-                            description = "Bank statement saved successfully",
+                            responseCode = ApiResponseConstants.CREATED_CODE_STRING,
+                            description = ApiResponseConstants.CREATED,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
-                                            name = "Success Response",
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SUCCESS,
                                             value = ApiResponseExamples.IMPORT_BANK_STATEMENT_SUCCESS
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "400",
-                            description = "Bad Request - Missing 'X-Partner-Token' or validation error",
+                            responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
+                            description = ApiResponseConstants.BAD_REQUEST_MISSING_PARTNER_TOKEN,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = {
                                             @ExampleObject(
-                                                    name = "Missing X-Partner-Token",
+                                                    name = ApiResponseConstants.RESPONSE_TYPE_MISSING_PARTNER_TOKEN_HEADER,
                                                     value = ApiResponseExamples.IMPORT_BANK_STATEMENT_MISSING_PARTNER_TOKEN
                                             ),
                                             @ExampleObject(
-                                                    name = "Validation Error",
+                                                    name = ApiResponseConstants.RESPONSE_TYPE_VALIDATION_ERROR,
                                                     value = ApiResponseExamples.IMPORT_BANK_STATEMENT_VALIDATION_ERROR
                                             )
                                     }
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "401",
-                            description = "Unauthorized - Invalid partner code",
+                            responseCode = ApiResponseConstants.UNAUTHORIZED_CODE_STRING,
+                            description = ApiResponseConstants.INVALID_PARTNER_TOKEN,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
-                                            name = "Unauthorized Response",
+                                            name = ApiResponseConstants.RESPONSE_TYPE_UNAUTHORIZED,
                                             value = ApiResponseExamples.IMPORT_BANK_STATEMENT_UNAUTHORIZED
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "403",
-                            description = "Forbidden - Partner code validation failed",
+                            responseCode = ApiResponseConstants.FORBIDDEN_CODE_STRING,
+                            description = ApiResponseConstants.FORBIDDEN_PARTNER_TOKEN,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
-                                            name = "Forbidden Response",
+                                            name = ApiResponseConstants.RESPONSE_TYPE_FORBIDDEN,
                                             value = ApiResponseExamples.IMPORT_BANK_STATEMENT_FORBIDDEN
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "404",
-                            description = "Not Found - FMIS base URL not found",
+                            responseCode = ApiResponseConstants.NOT_FOUND_CODE_STRING,
+                            description = ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
-                                            name = "Not Found Response",
+                                            name = ApiResponseConstants.RESPONSE_TYPE_NOT_FOUND,
                                             value = ApiResponseExamples.IMPORT_BANK_STATEMENT_NOT_FOUND
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "502",
-                            description = "Bad Gateway - Failed to send data to FMIS",
+                            responseCode = ApiResponseConstants.BAD_GATEWAY_CODE_STRING,
+                            description = ApiResponseConstants.ERROR_SENDING_TO_FMIS,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
-                                            name = "FMIS Failure Response",
+                                            name = ApiResponseConstants.RESPONSE_TYPE_FMIS_FAILURE,
                                             value = ApiResponseExamples.IMPORT_BANK_STATEMENT_FMIS_FAILURE
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "500",
-                            description = "Internal Server Error - Unexpected failure",
+                            responseCode = ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE_STRING,
+                            description = ApiResponseConstants.INTERNAL_SERVER_ERROR,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
-                                            name = "Server Error Response",
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SERVER_ERROR,
                                             value = ApiResponseExamples.IMPORT_BANK_STATEMENT_SERVER_ERROR
                                     )
                             )

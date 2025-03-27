@@ -68,39 +68,39 @@ public class PartnerController {
                                     schema = @Schema(implementation = Partner.class),
                                     examples = {
                                             @ExampleObject(
-                                                    name = "cURL",
+                                                    name = ApiRequestExamples.CURL,
                                                     value = ApiRequestExamples.CREATE_PARTNER_CURL
                                             ),
                                             @ExampleObject(
-                                                    name = "JavaScript (Fetch API)",
+                                                    name = ApiRequestExamples.JAVASCRIPT,
                                                     value = ApiRequestExamples.CREATE_PARTNER_JS_FETCH
                                             ),
                                             @ExampleObject(
-                                                    name = "Python (requests)",
+                                                    name = ApiRequestExamples.PYTHON,
                                                     value = ApiRequestExamples.CREATE_PARTNER_PYTHON
                                             ),
                                             @ExampleObject(
-                                                    name = "Java (OkHttp)",
+                                                    name = ApiRequestExamples.JAVA_OKHTTP,
                                                     value = ApiRequestExamples.CREATE_PARTNER_JAVA_OKHTTP
                                             ),
                                             @ExampleObject(
-                                                    name = "C# (HttpClient)",
+                                                    name = ApiRequestExamples.CSHARP,
                                                     value = ApiRequestExamples.CREATE_PARTNER_CSHARP
                                             ),
                                             @ExampleObject(
-                                                    name = "PHP (cURL)",
+                                                    name = ApiRequestExamples.PHP_CURL,
                                                     value = ApiRequestExamples.CREATE_PARTNER_PHP_CURL
                                             ),
                                             @ExampleObject(
-                                                    name = "Node.js (Axios)",
+                                                    name = ApiRequestExamples.NODEJS,
                                                     value = ApiRequestExamples.CREATE_PARTNER_NODEJS
                                             ),
                                             @ExampleObject(
-                                                    name = "Ruby (Net::HTTP)",
+                                                    name = ApiRequestExamples.RUBY,
                                                     value = ApiRequestExamples.CREATE_PARTNER_RUBY
                                             ),
                                             @ExampleObject(
-                                                    name = "Go (net/http)",
+                                                    name = ApiRequestExamples.GO,
                                                     value = ApiRequestExamples.CREATE_PARTNER_GO
                                             )
                                     }
@@ -109,51 +109,56 @@ public class PartnerController {
             ),
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "201",
-                            description = "Partner created successfully",
+                            responseCode = ApiResponseConstants.CREATED_CODE_STRING,
+                            description = ApiResponseConstants.CREATED,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SUCCESS,
                                             value = ApiResponseExamples.CREATE_PARTNER_SUCCESS
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "400",
-                            description = "Bad Request: Validation errors or duplicate partner code",
+                            responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
+                            description = ApiResponseConstants.PARTNER_CODE_TAKEN,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_BAD_REQUEST,
                                             value = ApiResponseExamples.CREATE_PARTNER_BAD_REQUEST
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "401",
-                            description = "Unauthorized: User not logged in",
+                            responseCode = ApiResponseConstants.UNAUTHORIZED_CODE_STRING,
+                            description = ApiResponseConstants.UNAUTHORIZED_LOGIN_REQUIRED,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_UNAUTHORIZED,
                                             value = ApiResponseExamples.CREATE_PARTNER_UNAUTHORIZED
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "404",
-                            description = "Not Found: User not found",
+                            responseCode = ApiResponseConstants.NOT_FOUND_CODE_STRING,
+                            description = ApiResponseConstants.USER_NOT_FOUND,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_NOT_FOUND,
                                             value = ApiResponseExamples.CREATE_PARTNER_NOT_FOUND
                                     )
                             )
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "500",
-                            description = "Internal Server Error: Unexpected failure",
+                            responseCode = ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE_STRING,
+                            description = ApiResponseConstants.INTERNAL_SERVER_ERROR,
                             content = @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SERVER_ERROR,
                                             value = ApiResponseExamples.CREATE_PARTNER_SERVER_ERROR
                                     )
                             )

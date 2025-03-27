@@ -42,7 +42,7 @@ public class HeaderValidationUtil {
 
         // Validate the partnerCode (must not be null or empty)
         if (partnerCode == null || partnerCode.trim().isEmpty()) {
-            return buildBadRequestResponse("Bad Request: '" + HeaderConstants.X_PARTNER_TOKEN + "' header cannot be missing or empty.");
+            return buildBadRequestResponse(ApiResponseConstants.BAD_REQUEST_MISSING_PARTNER_TOKEN);
         }
 
         try {

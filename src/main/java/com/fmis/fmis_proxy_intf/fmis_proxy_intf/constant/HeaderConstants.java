@@ -14,6 +14,7 @@ public final class HeaderConstants {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String ACCEPT_HEADER = "Accept";
     public static final String USER_AGENT_HEADER = "User-Agent";
+    public static final String CONTENT_TYPE_JSON = "application/json";
 
     /**
      * Custom Headers
