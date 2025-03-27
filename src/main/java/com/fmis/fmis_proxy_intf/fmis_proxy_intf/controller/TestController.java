@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -112,6 +114,31 @@ public class TestController {
                         ApiResponseConstants.SUCCESS_CODE,
                         "FMIS Interface Web Service."
                 ));
+    }
+
+    /**
+     * Endpoint to verify connectivity and provide a basic response from the SARMIS system.
+     * This endpoint is used to confirm that the SARMIS system is up, running, and accessible.
+     *
+     * @return A successful {@link ApiResponse} containing a status code, message, and confirmation data.
+     */
+    @Operation(
+            summary = "Verify SARMIS Connectivity",
+            description = "Verifies that SARMIS can successfully access and interact with the endpoint. " +
+                    "Returns a success message confirming connectivity and readiness for integration."
+    )
+    @GetMapping("/test/sarmis")
+    public ResponseEntity<Map<String, Object>> testSarmis() {
+
+        // Prepare the response body with the desired fields
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Successful");
+        response.put("error", "0");
+        response.put("data", "Welcome!");
+
+        // Return the response with HTTP status 200 (OK)
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
     }
 
     /**
