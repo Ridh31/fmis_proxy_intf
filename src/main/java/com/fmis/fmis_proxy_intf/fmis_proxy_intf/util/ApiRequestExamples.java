@@ -46,8 +46,7 @@ public class ApiRequestExamples {
         "\"description\": \"Financial Management Information System\"," +
         "\"code\": \"FMIS\"" +
         "}";
-
-
+    
     /**
      * cURL Example for creating a new partner.
      * This shows how to use cURL to send a POST request with the partner data in JSON format.
