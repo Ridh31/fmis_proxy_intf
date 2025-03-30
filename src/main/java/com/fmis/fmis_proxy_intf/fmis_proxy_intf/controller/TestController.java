@@ -1,12 +1,17 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Test;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TestService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponseExamples;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
@@ -52,7 +57,45 @@ public class TestController {
      */
     @Operation(
             summary = "Test FMIS Connectivity",
-            description = "Tests the connectivity to FMIS and retrieves test data."
+            description = "Tests the connectivity to FMIS and retrieves test data.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.SUCCESS_CODE_STRING,
+                            description = ApiResponseConstants.SUCCESS,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    schema = @Schema(implementation = Map.class),
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SUCCESS,
+                                            value = ApiResponseExamples.FMIS_TEST_SUCCESS
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.BAD_GATEWAY_CODE_STRING,
+                            description = ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    schema = @Schema(implementation = Map.class),
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_FMIS_FAILURE,
+                                            value = ApiResponseExamples.FMIS_TEST_BAD_GATEWAY
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.NOT_FOUND_CODE_STRING,
+                            description = ApiResponseConstants.NOT_FOUND,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    schema = @Schema(implementation = Map.class),
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
+                                            value = ApiResponseExamples.FMIS_TEST_NO_CONFIG_FOUND
+                                    )
+                            )
+                    )
+            }
     )
     @GetMapping("/test/fmis")
     public ResponseEntity<ApiResponse<?>> testFmis() {
@@ -117,7 +160,21 @@ public class TestController {
      */
     @Operation(
             summary = "Basic Test",
-            description = "Verifies that the service is running by returning a simple success message."
+            description = "Verifies that the service is running by returning a simple success message.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.SUCCESS_CODE_STRING,
+                            description = ApiResponseConstants.SUCCESS,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    schema = @Schema(implementation = Map.class),
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SUCCESS,
+                                            value = ApiResponseExamples.BASIC_TEST
+                                    )
+                            )
+                    )
+            }
     )
     @GetMapping("/test")
     public ResponseEntity<ApiResponse<?>> test() {
@@ -137,7 +194,21 @@ public class TestController {
     @Operation(
             summary = "Verify SARMIS Connectivity",
             description = "Verifies that SARMIS can successfully access and interact with the endpoint. " +
-                    "Returns a success message confirming connectivity and readiness for integration."
+                    "Returns a success message confirming connectivity and readiness for integration.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.SUCCESS_CODE_STRING,
+                            description = ApiResponseConstants.SUCCESS,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    schema = @Schema(implementation = Map.class),
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SUCCESS,
+                                            value = ApiResponseExamples.SARMIS_TEST
+                                    )
+                            )
+                    )
+            }
     )
     @GetMapping("/test/sarmis")
     public ResponseEntity<Map<String, Object>> testSarmis() {

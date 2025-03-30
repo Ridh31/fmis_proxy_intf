@@ -6,6 +6,58 @@ public class ApiResponseExamples {
 
     /*
     |--------------------------------------------------------------------------
+    | Test Responses
+    |--------------------------------------------------------------------------
+    */
+    /**
+     * Example response for a basic test (200 OK).
+     * This response indicates that the FMIS Interface Web Service is running successfully.
+     */
+    public static final String BASIC_TEST = "{\n" +
+        "  \"code\": " + ApiResponseConstants.SUCCESS_CODE + ",\n" +
+        "  \"message\": \"FMIS Interface Web Service.\"\n" +
+        "}";
+
+    /**
+     * Example response for testing SARMIS connectivity (200 OK).
+     * This response indicates that SARMIS connectivity was successful with no errors.
+     */
+    public static final String SARMIS_TEST = "{\n" +
+        "  \"message\": \"Successful\",\n" +
+        "  \"error\": \"0\",\n" +
+        "  \"data\": \"Welcome!\"\n" +
+        "}";
+
+    /**
+     * Example response for a successful FMIS test (200 OK).
+     * This response indicates that the FMIS test was successful, returning XML data.
+     */
+    public static final String FMIS_TEST_SUCCESS = "{\n" +
+        "  \"code\": " + ApiResponseConstants.SUCCESS_CODE + ",\n" +
+        "  \"message\": \"" + ApiResponseConstants.SUCCESS + "\",\n" +
+        "  \"data\": \"<?xml version=\\\"1.0\\\"?>\\r\\n<response><data><item1>Hello FMIS Internface API Webservice</item1><item2>Your payload is: test</item2></data></response>\"\n" +
+        "}";
+
+    /**
+     * Example response when FMIS configuration is not found (404 Not Found).
+     * This response indicates that the FMIS configuration was not found in the system.
+     */
+    public static final String FMIS_TEST_NO_CONFIG_FOUND = "{\n" +
+        "  \"code\": " + ApiResponseConstants.NOT_FOUND_CODE + ",\n" +
+        "  \"message\": \"" + ApiResponseConstants.NO_FMIS_CONFIG_FOUND + "\"\n" +
+        "}";
+
+    /**
+     * Example response for a bad gateway error (502 Bad Gateway).
+     * This response indicates that the system was unable to connect to the FMIS server.
+     */
+    public static final String FMIS_TEST_BAD_GATEWAY = "{\n" +
+        "  \"code\": " + ApiResponseConstants.BAD_GATEWAY_CODE + ",\n" +
+        "  \"message\": \"" + ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + "\"\n" +
+        "}";
+
+    /*
+    |--------------------------------------------------------------------------
     | Partner Creation Responses
     |--------------------------------------------------------------------------
     */
