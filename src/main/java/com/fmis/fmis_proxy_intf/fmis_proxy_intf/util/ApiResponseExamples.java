@@ -127,7 +127,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_FMIS_FAILURE = "{\n" +
         "    \"code\": " + ApiResponseConstants.BAD_GATEWAY_CODE + ",\n" +
-        "    \"message\": \"" + ApiResponseConstants.ERROR_SENDING_TO_FMIS + "\"\n" +
+        "    \"message\": \"" + ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + "\"\n" +
         "}";
 
     /**

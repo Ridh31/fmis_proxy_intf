@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Controller for handling test-related endpoints.
@@ -73,18 +75,28 @@ public class TestController {
 
             if (fmisResponse.getStatusCode().is2xxSuccessful()) {
                 // Return success response
-                return ResponseEntity.status(HttpStatus.CREATED)
+                return ResponseEntity.status(HttpStatus.OK)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.CREATED_CODE,
-                                ApiResponseConstants.CREATED,
+                                ApiResponseConstants.SUCCESS_CODE,
+                                ApiResponseConstants.SUCCESS,
                                 fmisResponseBody
                         ));
             } else {
+                fmisResponseBody = Optional.ofNullable(fmisResponseBody).orElse("");
+
+                // Define the regex pattern to capture only the domain
+                Pattern pattern = Pattern.compile("(https?://[a-zA-Z0-9.-]+)");
+                Matcher matcher = pattern.matcher(fmisResponseBody);
+
+                // Extract the first match if found
+                String responseURL = matcher.find() ? matcher.group(1) : "";
+                String responseHost = !responseURL.isEmpty() ? " (" + responseURL + ")" : "";
+
                 // Handle failure in sending data to FMIS
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                         .body(new ApiResponse<>(
                                 ApiResponseConstants.BAD_GATEWAY_CODE,
-                                ApiResponseConstants.ERROR_SENDING_TO_FMIS + fmisResponse.getBody()
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + responseHost
                         ));
             }
         }

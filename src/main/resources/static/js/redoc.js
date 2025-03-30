@@ -185,16 +185,12 @@ document.addEventListener("DOMContentLoaded", function () {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td>420</td><td>Request quota reached</td></tr>
-                                <tr><td>421</td><td>IP address is not allowed to request</td></tr>
-                                <tr><td>500</td><td>Problem with facial recognition from requested image/video</td></tr>
-                                <tr><td>501</td><td>Problem detecting face from submitted ID card image</td></tr>
-                                <tr><td>502</td><td>Internal services error</td></tr>
-                                <tr><td>503</td><td>Problem with connection to MOI service</td></tr>
-                                <tr><td>504</td><td>Problem with data from MOI service</td></tr>
-                                <tr><td>505</td><td>Invalid request or internal server error</td></tr>
-                                <tr><td>506</td><td>OCR service error</td></tr>
-                                <tr><td>507</td><td>OCR service network problem</td></tr>
+                                <tr><td>400</td><td>Invalid request. Please check the input parameters.</td></tr>
+                                <tr><td>401</td><td>You are not authorized to perform this action.</td></tr>
+                                <tr><td>403</td><td>You do not have permission to access this resource.</td></tr>
+                                <tr><td>404</td><td>Requested resource not found.</td></tr>
+                                <tr><td>500</td><td>An unexpected error occurred. Please try again later.</td></tr>
+                                <tr><td>502</td><td>Could not connect to any target host.</td></tr>
                             </tbody>
                         </table>
                     </section>

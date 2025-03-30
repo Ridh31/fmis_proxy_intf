@@ -30,6 +30,8 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Tag(
         name = "Bank Statement",
@@ -173,7 +175,7 @@ public class BankStatementController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.BAD_GATEWAY_CODE_STRING,
-                            description = ApiResponseConstants.ERROR_SENDING_TO_FMIS,
+                            description = ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -293,11 +295,21 @@ public class BankStatementController {
                                         fmisResponseBody
                                 ));
                     } else {
+                        fmisResponseBody = Optional.ofNullable(fmisResponseBody).orElse("");
+
+                        // Define the regex pattern to capture only the domain
+                        Pattern pattern = Pattern.compile("(https?://[a-zA-Z0-9.-]+)");
+                        Matcher matcher = pattern.matcher(fmisResponseBody);
+
+                        // Extract the first match if found
+                        String responseURL = matcher.find() ? matcher.group(1) : "";
+                        String responseHost = !responseURL.isEmpty() ? " (" + responseURL + ")" : "";
+
                         // Handle failure in sending data to FMIS
                         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                 .body(new ApiResponse<>(
                                         ApiResponseConstants.BAD_GATEWAY_CODE,
-                                        ApiResponseConstants.ERROR_SENDING_TO_FMIS + fmisResponseBody
+                                        ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + responseHost
                                 ));
                     }
                 } else {

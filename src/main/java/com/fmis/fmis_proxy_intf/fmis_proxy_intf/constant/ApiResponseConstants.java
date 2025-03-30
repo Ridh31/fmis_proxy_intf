@@ -127,7 +127,7 @@ public final class ApiResponseConstants {
      */
     public static final int BAD_GATEWAY_CODE = 502;
     public static final String BAD_GATEWAY_CODE_STRING = "502";
-    public static final String ERROR_SENDING_TO_FMIS = "Failed to send data to FMIS: ";
+    public static final String BAD_GATEWAY_NOT_CONNECT = "Could not connect to any target host";
 
     /**
      * 503 Service Unavailable Error - Temporary service issues

@@ -26,7 +26,7 @@ public class ApiRequestExamples {
     private static final String IMPORT_BANK_STATEMENT_URL = BASE_URL + "/import-bank-statement";
 
     // Language constants
-    public static final String CURL = "cURL";  // cURL
+    public static final String CURL = "cURL";
     public static final String JAVASCRIPT = "JavaScript (Fetch API)";
     public static final String PYTHON = "Python (requests)";
     public static final String JAVA_OKHTTP = "Java (OkHttp)";
@@ -657,14 +657,10 @@ public class ApiRequestExamples {
      * @return the example as a JSON string, or "{}" if no example is found
      */
     public static String getExample(String endpoint) {
-        switch (endpoint) {
-            case "/api/v1/create-partner":
-                return PARTNER_JSON;
-
-            case "/api/v1/list-partner":
-                return GET_ALL_PARTNERS_CURL;
-            default:
-                return "{}";
-        }
+        return switch (endpoint) {
+            case "/api/v1/create-partner" -> PARTNER_JSON;
+            case "/api/v1/list-partner" -> GET_ALL_PARTNERS_CURL;
+            default -> "{}";
+        };
     }
 }
