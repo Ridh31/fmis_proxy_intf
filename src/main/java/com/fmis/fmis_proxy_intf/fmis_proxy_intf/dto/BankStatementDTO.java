@@ -42,6 +42,7 @@ public class BankStatementDTO {
     private JsonNode payloadJson;
 
     @Schema(hidden = true)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String xml;
 
     @Schema(hidden = true)
