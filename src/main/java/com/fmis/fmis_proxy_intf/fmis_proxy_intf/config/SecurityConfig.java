@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -90,7 +91,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            response.setContentType("application/json");
+                            response.setContentType(HeaderConstants.CONTENT_TYPE_JSON);
 
                             // Check if the exception is a BadCredentialsException
                             String message = ApiResponseConstants.UNAUTHORIZED_ACCESS;
@@ -107,7 +108,7 @@ public class SecurityConfig {
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpStatus.FORBIDDEN.value());
-                            response.setContentType("application/json");
+                            response.setContentType(HeaderConstants.CONTENT_TYPE_JSON);
                             String jsonResponse = String.format(
                                     "{\"code\":\"%d\", \"message\":\"%s\"}",
                                     HttpStatus.FORBIDDEN.value(),

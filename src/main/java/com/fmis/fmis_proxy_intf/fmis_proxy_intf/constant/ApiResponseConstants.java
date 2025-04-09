@@ -18,6 +18,11 @@ public final class ApiResponseConstants {
     public static final String RESPONSE_TYPE_FMIS_FAILURE = "FMIS Integration Failure";
     public static final String RESPONSE_TYPE_SERVER_ERROR = "Internal Server Error";
 
+    // Additional specific bad request response types
+    public static final String RESPONSE_TYPE_FILE_MISSING_OR_EMPTY = "Missing or Empty File";
+    public static final String RESPONSE_TYPE_INVALID_FILE_TYPE = "Invalid File Type";
+    public static final String RESPONSE_TYPE_FAILED_TO_PARSE_JSON = "Malformed or Unreadable JSON";
+
     /*
     |--------------------------------------------------------------------------
     | Success Messages and Status Codes
@@ -67,6 +72,9 @@ public final class ApiResponseConstants {
     public static final String ERROR_USERNAME_MISSING_OR_EMPTY = "Bad Request: 'Username' cannot be missing or empty.";
     public static final String EMAIL_TAKEN = "Bad Request: Email is already taken.";
     public static final String BAD_REQUEST_MISSING_PARTNER_TOKEN = "Bad Request: '" + HeaderConstants.X_PARTNER_TOKEN + "' header cannot be missing or empty.";
+    public static final String BAD_REQUEST_FILE_MISSING_OR_EMPTY = "Bad Request: File is missing or empty.";
+    public static final String BAD_REQUEST_INVALID_FILE_TYPE = "Bad Request: Invalid file type. Only JSON is allowed.";
+    public static final String BAD_REQUEST_FAILED_TO_PARSE_JSON = "Bad Request: Failed to read or parse JSON file.";
 
     /**
      * 401 Unauthorized Errors - Authentication issues
@@ -120,6 +128,8 @@ public final class ApiResponseConstants {
     public static final String ERROR_FETCHING_PARTNERS = "An error occurred while fetching partners: ";
     public static final String ERROR_READING_FILE = "Error occurred while reading the documentation file.";
     public static final String ERROR_PARTNER_TOKEN_NOT_FOUND = "Partner with the provided token not found.";
+    public static final String ERROR_FMIS_RESPONSE_PARSE = "Failed to parse FMIS XML response.";
+    public static final String ERROR_FMIS_RESPONSE_EMPTY = "No content received from FMIS response.";
 
     /**
      * 502 Bad Gateway Error - Issues communicating with external services

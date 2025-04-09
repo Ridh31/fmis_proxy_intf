@@ -64,7 +64,7 @@ public class PartnerController {
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = {
                             @Content(
-                                    mediaType = "application/json",
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     schema = @Schema(implementation = Partner.class),
                                     examples = {
                                             @ExampleObject(

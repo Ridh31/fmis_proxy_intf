@@ -1,5 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
+
 /**
  * This class contains examples of API requests for different use cases.
  * These examples demonstrate how to send requests to the FMIS Proxy Interface API in various programming languages and tools.
@@ -19,7 +21,7 @@ public class ApiRequestExamples {
     // Base URL and other constants
     private static final String PREFIX = "/api/v1";
     private static final String BASE_URL = "https://dev-fmis-intf.fmis.gov.kh" + PREFIX;
-    private static final String CONTENT_TYPE = "Content-Type: application/json";
+    private static final String CONTENT_TYPE = "Content-Type: " + HeaderConstants.CONTENT_TYPE_JSON;
     private static final String X_PARTNER_TOKEN = "X-Partner-Token: your_partner_token_here";
     public static final String CREATE_PARTNER_URL = BASE_URL + "/create-partner";
     private static final String GET_ALL_PARTNERS_URL = BASE_URL + "/list-partner";
@@ -90,7 +92,7 @@ public class ApiRequestExamples {
      */
     public static final String CREATE_PARTNER_JAVA_OKHTTP =
         "OkHttpClient client = new OkHttpClient();\n" +
-        "MediaType mediaType = MediaType.parse(\"application/json\");\n" +
+        "MediaType mediaType = MediaType.parse(\"" + HeaderConstants.CONTENT_TYPE_JSON + "\");\n" +
         "RequestBody body = RequestBody.create(mediaType, \"" + PARTNER_JSON + "\");\n\n" +
         "Request request = new Request.Builder()\n" +
         "    .url(\"" + CREATE_PARTNER_URL + "\")\n" +
@@ -118,7 +120,7 @@ public class ApiRequestExamples {
         "        using HttpClient client = new HttpClient();\n" +
         "        string url = \"" + CREATE_PARTNER_URL + "\";\n\n" +
         "        var json = \"" + PARTNER_JSON + "\";\n" +
-        "        var content = new StringContent(json, Encoding.UTF8, \"application/json\");\n\n" +
+        "        var content = new StringContent(json, Encoding.UTF8, \"" + HeaderConstants.CONTENT_TYPE_JSON + "\");\n\n" +
         "        client.DefaultRequestHeaders.Add(\"X-Partner-Token\", \"your_partner_token_here\");\n" +
         "        HttpResponseMessage response = await client.PostAsync(url, content);\n" +
         "        string result = await response.Content.ReadAsStringAsync();\n" +
@@ -338,9 +340,9 @@ public class ApiRequestExamples {
         const url = '%s/list-partner';
         const params = { page: 1, size: 10 };
         
-        axios.get(url, { 
+        axios.get(url, {
             params,
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'X-Partner-Token': '%s'
             }

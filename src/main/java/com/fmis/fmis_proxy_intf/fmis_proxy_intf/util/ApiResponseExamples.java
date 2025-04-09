@@ -187,7 +187,34 @@ public class ApiResponseExamples {
      * This response indicates that a general server error occurred while processing the bank statement import.
      */
     public static final String IMPORT_BANK_STATEMENT_SERVER_ERROR = "{\n" +
-            "    \"code\": " + ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE + ",\n" +
-            "    \"message\": \"" + ApiResponseConstants.INTERNAL_SERVER_ERROR + "\"\n" +
-            "}";
+        "    \"code\": " + ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE + ",\n" +
+        "    \"message\": \"" + ApiResponseConstants.INTERNAL_SERVER_ERROR + "\"\n" +
+        "}";
+
+    /**
+     * Example response for a missing or empty file error (400 Bad Request).
+     * This response indicates that the uploaded file is either missing or empty.
+     */
+    public static final String UPLOAD_BANK_STATEMENT_FILE_MISSING_OR_EMPTY_ERROR = "{\n" +
+        "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+        "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_FILE_MISSING_OR_EMPTY + "\"\n" +
+        "}";
+
+    /**
+     * Example response for an invalid file type error (400 Bad Request).
+     * This response indicates that the uploaded file type is invalid and only JSON files are allowed.
+     */
+    public static final String UPLOAD_BANK_STATEMENT_INVALID_FILE_TYPE_ERROR = "{\n" +
+        "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+        "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_INVALID_FILE_TYPE + "\"\n" +
+        "}";
+
+    /**
+     * Example response for a failed JSON parsing error (400 Bad Request).
+     * This response indicates that there was an issue parsing the uploaded JSON file, likely due to malformed JSON.
+     */
+    public static final String UPLOAD_BANK_STATEMENT_FAILED_TO_PARSE_JSON_ERROR = "{\n" +
+        "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+        "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_FAILED_TO_PARSE_JSON + "\"\n" +
+        "}";
 }
