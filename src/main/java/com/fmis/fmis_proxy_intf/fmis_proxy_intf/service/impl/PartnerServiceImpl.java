@@ -40,7 +40,44 @@ public class PartnerServiceImpl implements PartnerService {
     @Transactional
     @Override
     public Partner createPartner(Partner partner) {
+        // Generate the next identifier code
+        String nextIdentifier = generateNextIdentifier();
+
+        // Set the identifier in the partner object
+        partner.setIdentifier(nextIdentifier);
+
+        // Save the partner entity
         return partnerRepository.save(partner);
+    }
+
+    /**
+     * Generates the next identifier for the partner entity.
+     *
+     * @return The next identifier, formatted to 6 digits.
+     */
+    private String generateNextIdentifier() {
+
+        // Query the latest identifier in the database, sorted in descending order
+        String latestIdentifier = partnerRepository.findTopByOrderByIdentifierDesc();
+
+        // If no identifier exists, start with "000001"
+        if (latestIdentifier == null || latestIdentifier.isEmpty()) {
+            return "000001";
+        }
+
+        // Increment the numeric part of the identifier
+        int currentNumber;
+        try {
+            currentNumber = Integer.parseInt(latestIdentifier);
+        } catch (NumberFormatException e) {
+            // Handle the case where the identifier is not a valid number
+            throw new IllegalArgumentException("Invalid identifier format in the database.");
+        }
+
+        currentNumber++;
+
+        // Format to ensure the identifier is always 6 digits, padded with leading zeros
+        return String.format("%06d", currentNumber);
     }
 
     /**

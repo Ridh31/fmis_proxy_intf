@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +36,13 @@ public class Partner {
 
     @Lob
     private String description;
+
+    @Lob
+    @Column(name = "identifier", nullable = false, unique = true)
+    @JsonIgnore
+    @Schema(hidden = true)
+    @Size(min = 6, max = 6, message = "Identifier must be exactly 6 characters long.")
+    private String identifier;
 
     @Lob
     @Column(nullable = false, unique = true)
@@ -121,6 +129,14 @@ public class Partner {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     public String getPublicKey() {

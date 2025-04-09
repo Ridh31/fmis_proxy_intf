@@ -26,9 +26,16 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
+import org.w3c.dom.Node;
 
-import java.util.List;
+import org.w3c.dom.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -236,27 +243,32 @@ public class BankStatementController {
 
             Optional<Partner> partner = partnerService.findById(partnerId);
 
-            // Add CMB_BANK_CODE to all arrays in the data
-            if (bankStatementDTO.getData() != null) {
-                for (Map.Entry<String, Object> entry : bankStatementDTO.getData().entrySet()) {
+            // Use ifPresent to safely access the value if it's present
+            partner.ifPresent(p -> {
+                String identifier = p.getIdentifier();
 
-                    // Check if the value is a list
-                    if (entry.getValue() instanceof List<?>) {
-                        List<Map<String, Object>> list = (List<Map<String, Object>>) entry.getValue();
+                // Add CMB_BANK_CODE to all arrays in the data
+                if (bankStatementDTO.getData() != null) {
+                    for (Map.Entry<String, Object> entry : bankStatementDTO.getData().entrySet()) {
 
-                        // Add CMB_BANK_CODE to each object in the list
-                        for (Map<String, Object> item : list) {
-                            item.put("CMB_BANK_CODE", partnerCode);
-                        }
-                    } else {
-                        // Handle non-list entries by adding CMB_BANK_CODE to the object as null
-                        if (entry.getValue() instanceof Map) {
-                            Map<String, Object> mapValue = (Map<String, Object>) entry.getValue();
-                            mapValue.put("CMB_BANK_CODE", null);
+                        // Check if the value is a list
+                        if (entry.getValue() instanceof List<?>) {
+                            List<Map<String, Object>> list = (List<Map<String, Object>>) entry.getValue();
+
+                            // Add CMB_BANK_CODE to each object in the list
+                            for (Map<String, Object> item : list) {
+                                item.put("CMB_BANK_CODE", identifier);
+                            }
+                        } else {
+                            // Handle non-list entries by adding CMB_BANK_CODE to the object as null
+                            if (entry.getValue() instanceof Map) {
+                                Map<String, Object> mapValue = (Map<String, Object>) entry.getValue();
+                                mapValue.put("CMB_BANK_CODE", null);
+                            }
                         }
                     }
                 }
-            }
+            });
 
             // Convert the bank statement data to JSON
             ObjectMapper objectMapper = new ObjectMapper();
@@ -269,14 +281,14 @@ public class BankStatementController {
                 bankStatementDTO.setPayload(data);
 
                 // Convert JSON data to XML for FMIS
-                String xmlPayload = JsonToXmlUtil.convertJsonToXml(data);
+                String xmlPayload = JsonToXmlUtil.convertBankStatementJsonToXml(data);
                 bankStatementDTO.setXml(xmlPayload);
 
                 // Get FMIS configuration
                 Optional<FMIS> fmis = fmisService.getFmisUrlById(1L);
                 if (fmis.isPresent()) {
                     FMIS fmisConfig = fmis.get();
-                    String fmisURL = fmisConfig.getBaseURL() + "/INTF_CMB_BANKSTM_STG.v1/";
+                    String fmisURL = fmisConfig.getBaseURL() + "/BANKSTM_STG.v1/";
                     String fmisUsername = fmisConfig.getUsername();
                     String fmisPassword = fmisConfig.getPassword();
                     String fmisContentType = fmisConfig.getContentType();
@@ -288,11 +300,45 @@ public class BankStatementController {
                     if (fmisResponse.getStatusCode().is2xxSuccessful()) {
                         // Save the bank statement if FMIS response is successful
                         bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+
+                        // Parse the FMIS XML response manually
+                        Map<String, Object> fmisResponseData = new HashMap<>();
+
+                        if (fmisResponseBody != null) {
+                            try {
+                                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                                DocumentBuilder builder = factory.newDocumentBuilder();
+
+                                Document document = builder.parse(
+                                        new ByteArrayInputStream(fmisResponseBody.getBytes(StandardCharsets.UTF_8))
+                                );
+                                Element root = document.getDocumentElement();
+
+                                // Extract status code from <status code="200"/>
+                                Node statusNode = root.getElementsByTagName("status").item(0);
+                                if (statusNode instanceof Element) {
+                                    String code = ((Element) statusNode).getAttribute("code");
+                                    fmisResponseData.put("status", Integer.parseInt(code));
+                                }
+
+                                // Extract message from <message>...</message>
+                                Node messageNode = root.getElementsByTagName("message").item(0);
+                                if (messageNode != null) {
+                                    fmisResponseData.put("message", messageNode.getTextContent());
+                                }
+
+                            } catch (Exception e) {
+                                fmisResponseData.put("message", "Failed to parse FMIS response");
+                            }
+                        } else {
+                            fmisResponseData.put("message", "Empty response from FMIS");
+                        }
+
                         return ResponseEntity.status(HttpStatus.CREATED)
                                 .body(new ApiResponse<>(
                                         ApiResponseConstants.CREATED_CODE,
                                         ApiResponseConstants.CREATED,
-                                        fmisResponseBody
+                                        fmisResponseData
                                 ));
                     } else {
                         fmisResponseBody = Optional.ofNullable(fmisResponseBody).orElse("");

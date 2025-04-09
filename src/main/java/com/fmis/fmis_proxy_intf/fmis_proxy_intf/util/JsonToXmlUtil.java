@@ -15,7 +15,7 @@ public class JsonToXmlUtil {
      * @return The converted XML string.
      * @throws Exception if parsing or conversion fails.
      */
-    public static String convertJsonToXml(String jsonData) throws Exception {
+    public static String convertBankStatementJsonToXml(String jsonData) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = objectMapper.readTree(jsonData);
 
@@ -23,7 +23,7 @@ public class JsonToXmlUtil {
 
         // Adding the XML declaration at the top
         xmlBuilder.append("<?xml version=\"1.0\"?>\n");
-        xmlBuilder.append("<Data>");
+        xmlBuilder.append("<Data xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"src/conf/xml-resources/jaxb/AccountStatement/CMB_BANKSTM_STG.XSD.xsd\">\n");
 
         // Handle dynamic keys at the root level
         if (rootNode.isObject()) {
@@ -33,10 +33,10 @@ public class JsonToXmlUtil {
 
                 if (value.isArray()) {
                     // Handle arrays of objects
-                    value.forEach(item -> xmlBuilder.append(convertNodeToXml(item, key)));
+                    value.forEach(item -> xmlBuilder.append(convertBankStatementNodeToXml(item, key)));
                 } else {
                     // Handle single objects or primitive values
-                    xmlBuilder.append(convertNodeToXml(value, key));
+                    xmlBuilder.append(convertBankStatementNodeToXml(value, key));
                 }
             });
         }
@@ -52,9 +52,9 @@ public class JsonToXmlUtil {
      * @param nodeName The XML element name for this node.
      * @return The XML string representation of the node.
      */
-    private static String convertNodeToXml(JsonNode jsonNode, String nodeName) {
+    private static String convertBankStatementNodeToXml(JsonNode jsonNode, String nodeName) {
         StringBuilder xmlBuilder = new StringBuilder();
-        xmlBuilder.append("<").append(nodeName).append(">");
+        xmlBuilder.append("\t<").append(nodeName).append(">\n");
 
         if (jsonNode.isObject()) {
             jsonNode.fields().forEachRemaining(field -> {
@@ -62,20 +62,20 @@ public class JsonToXmlUtil {
                 JsonNode value = field.getValue();
 
                 if (value.isObject()) {
-                    xmlBuilder.append(convertNodeToXml(value, key));
+                    xmlBuilder.append(convertBankStatementNodeToXml(value, key));
                 } else if (value.isArray()) {
-                    value.forEach(item -> xmlBuilder.append(convertNodeToXml(item, key)));
+                    value.forEach(item -> xmlBuilder.append(convertBankStatementNodeToXml(item, key)));
                 } else {
-                    xmlBuilder.append("<").append(key).append(">")
-                            .append(escapeXml(value.asText()))
-                            .append("</").append(key).append(">");
+                    xmlBuilder.append("\t\t<").append(key).append(">")
+                            .append(escapeBankStatementXml(value.asText()))
+                            .append("</").append(key).append(">\n");
                 }
             });
         } else if (jsonNode.isValueNode()) {
-            xmlBuilder.append(escapeXml(jsonNode.asText()));
+            xmlBuilder.append("\t\t").append(escapeBankStatementXml(jsonNode.asText())).append("\n");
         }
 
-        xmlBuilder.append("</").append(nodeName).append(">");
+        xmlBuilder.append("\t</").append(nodeName).append(">\n");
         return xmlBuilder.toString();
     }
 
@@ -85,7 +85,7 @@ public class JsonToXmlUtil {
      * @param value The input string to escape.
      * @return The escaped XML-safe string.
      */
-    private static String escapeXml(String value) {
+    private static String escapeBankStatementXml(String value) {
         if (value == null) {
             return "";
         }

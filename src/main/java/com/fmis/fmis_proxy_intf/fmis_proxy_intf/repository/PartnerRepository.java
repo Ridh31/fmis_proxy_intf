@@ -57,4 +57,15 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
             nativeQuery = true
     )
     Page<Partner> getAllPartners(Pageable pageable);
+
+    /**
+     * Finds the latest identifier, ordered by descending value.
+     *
+     * @return The latest identifier.
+     */
+    @Query(
+            value = "SELECT pi2.identifier FROM partner_intf pi2 WHERE pi2.status = TRUE AND pi2.is_deleted = FALSE ORDER BY pi2.identifier DESC LIMIT 1",
+            nativeQuery = true
+    )
+    String findTopByOrderByIdentifierDesc();
 }
