@@ -312,8 +312,6 @@ public class BankStatementController {
                     String responseMessage;
 
                     if (fmisResponse.getStatusCode().is2xxSuccessful()) {
-                        // Save the bank statement if FMIS response is successful
-                        bankStatementService.createBankStatement(partnerId, bankStatementDTO);
 
                         // Parse the FMIS XML response manually
                         Map<String, Object> fmisResponseData = new HashMap<>();
@@ -333,6 +331,11 @@ public class BankStatementController {
                                 if (statusNode instanceof Element) {
                                     String code = ((Element) statusNode).getAttribute("code");
                                     fmisResponseData.put("status", Integer.parseInt(code));
+
+                                    // Save the bank statement if FMIS response is successful
+                                    if (code.equals("200") || code.equals("201")) {
+                                        bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+                                    }
                                 }
 
                                 // Extract message from <message>...</message>
