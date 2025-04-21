@@ -410,7 +410,7 @@ public class ApiRequestExamples {
      */
     public static final String BANK_STATEMENT_JSON = """
         {
-            "data": {
+            "Data": {
                 "CMB_BANKSTM_STG": [
                     {
                         "CMB_BSP_STMT_DT": "2022-12-31",

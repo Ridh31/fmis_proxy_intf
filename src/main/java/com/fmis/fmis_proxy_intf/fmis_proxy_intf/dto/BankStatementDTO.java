@@ -27,6 +27,7 @@ public class BankStatementDTO {
     private Long partnerId;
 
     @NotEmpty(message = "Data cannot be empty. Please provide a valid data.")
+    @JsonProperty("Data")
     private Map<String, Object> data;
 
     @Schema(hidden = true)
@@ -34,6 +35,9 @@ public class BankStatementDTO {
 
     @Schema(hidden = true)
     private String endpoint;
+
+    @Schema(hidden = true)
+    private String filename;
 
     @JsonIgnore
     private String payload;
@@ -140,6 +144,14 @@ public class BankStatementDTO {
 
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
     }
 
     public String getPayload() {

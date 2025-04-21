@@ -216,6 +216,7 @@ public class BankStatementController {
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
             @RequestBody BankStatementDTO bankStatementDTO,
             String endpoint,
+            String filename,
             BindingResult bindingResult) {
 
         // Check if endpoint is null or empty, and set a default value if necessary
@@ -289,6 +290,7 @@ public class BankStatementController {
             if (!data.isEmpty()) {
                 bankStatementDTO.setMethod("POST");
                 bankStatementDTO.setEndpoint(endpoint);
+                bankStatementDTO.setFilename(filename);
                 bankStatementDTO.setPayload(data);
 
                 // Convert JSON data to XML for FMIS
@@ -557,6 +559,8 @@ public class BankStatementController {
         }
 
         try {
+            String filename = file.getOriginalFilename();
+
             // Parse the uploaded file into a JsonNode
             ObjectMapper mapper = new ObjectMapper();
             JsonNode jsonNode = mapper.readTree(file.getInputStream());
@@ -568,7 +572,7 @@ public class BankStatementController {
             BindingResult bindingResult = new BeanPropertyBindingResult(dto, "bankStatementDTO");
 
             // Call the original createBankStatement method with the parsed DTO and binding result
-            return createBankStatement(partnerCode, dto, "api/upload-bank-statement", bindingResult);
+            return createBankStatement(partnerCode, dto, "api/upload-bank-statement", filename, bindingResult);
 
         } catch (IOException e) {
             // Handle parsing error (e.g., malformed JSON)

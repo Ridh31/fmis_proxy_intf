@@ -34,6 +34,9 @@ public class BankStatement {
     private String endpoint;
 
     @Lob
+    private String filename;
+
+    @Lob
     private String payload;
 
     @Lob
@@ -86,6 +89,14 @@ public class BankStatement {
 
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
     }
 
     public String getPayload() {

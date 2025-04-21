@@ -53,6 +53,7 @@ public class BankStatementServiceImpl implements BankStatementService {
         bankStatement.setPartner(partner);
         bankStatement.setMethod(bankStatementDTO.getMethod());
         bankStatement.setEndpoint(bankStatementDTO.getEndpoint());
+        bankStatement.setFilename(bankStatementDTO.getFilename());
         bankStatement.setPayload(bankStatementDTO.getPayload());
         bankStatement.setXml(bankStatementDTO.getXml());
         bankStatement.setCreatedBy(bankStatementDTO.getCreatedBy());
