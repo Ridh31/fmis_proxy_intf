@@ -310,7 +310,7 @@ public class BankStatementController {
                     ResponseEntity<String> fmisResponse = fmisService.sendXmlToFmis(fmisURL, fmisUsername, fmisPassword, xmlPayload);
                     String fmisResponseBody = fmisResponse.getBody();
 
-                    int responseCode;
+                    int responseCode = ApiResponseConstants.CREATED_CODE;
                     String responseMessage;
 
                     if (fmisResponse.getStatusCode().is2xxSuccessful()) {
@@ -333,10 +333,12 @@ public class BankStatementController {
                                 if (statusNode instanceof Element) {
                                     String code = ((Element) statusNode).getAttribute("code");
                                     fmisResponseData.put("status", Integer.parseInt(code));
+                                    responseCode = Integer.parseInt(code);
 
                                     // Save the bank statement if FMIS response is successful
                                     if (code.equals("200") || code.equals("201")) {
                                         bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+                                        responseCode = ApiResponseConstants.CREATED_CODE;
                                     }
                                 }
 
@@ -348,8 +350,6 @@ public class BankStatementController {
                                 } else {
                                     responseMessage = ApiResponseConstants.ERROR_FMIS_RESPONSE_EMPTY;
                                 }
-                                responseCode = ApiResponseConstants.CREATED_CODE;
-
                             } catch (Exception e) {
                                 responseMessage = ApiResponseConstants.ERROR_FMIS_RESPONSE_PARSE;
                                 fmisResponseData.put("message", responseMessage);
@@ -361,7 +361,11 @@ public class BankStatementController {
                             responseCode = ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE;
                         }
 
-                        return ResponseEntity.status(HttpStatus.CREATED)
+                        HttpStatus status = (responseCode == ApiResponseConstants.CREATED_CODE)
+                                ? HttpStatus.CREATED
+                                : HttpStatus.INTERNAL_SERVER_ERROR;
+
+                        return ResponseEntity.status(status)
                                 .body(new ApiResponse<>(
                                         responseCode,
                                         responseMessage
