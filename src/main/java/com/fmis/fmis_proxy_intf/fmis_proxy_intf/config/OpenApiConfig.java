@@ -1,8 +1,10 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +36,11 @@ import org.springframework.context.annotation.Configuration;
         tags = {
                 @Tag(name = "Overview", description = "FMIS - Proxy Interface API")
         }
+)
+@SecurityScheme(
+        name = "basicAuth",
+        type = SecuritySchemeType.HTTP,
+        scheme = "basic"
 )
 public class OpenApiConfig {
 }

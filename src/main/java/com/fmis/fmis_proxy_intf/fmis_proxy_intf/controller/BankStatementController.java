@@ -14,11 +14,14 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.ExternalDocumentation;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -77,12 +80,36 @@ public class BankStatementController {
      */
     @Operation(
             summary = "Import Bank Statement",
-            description = "Imports bank statement data after validation and sends it to FMIS.",
+            description = "Imports bank statement data by accessing the FMIS API via CamDX.\n\n" +
+                    "`http://10.10.52.16:8080/r1/CAMBODIA/GOV/CAMDX-2024031801/FMIS_INTF_API/import-bank`\n\n" +
+                    "The API requires Basic Authentication along with X-Road-Client and X-Partner-Token headers for verification.\n\n" +
+                    "Payload must follow the expected JSON structure and includes transaction details such as date format, amount, and account info.\n\n",
+            security = @SecurityRequirement(name = "basicAuth"),
+            parameters = {
+                    @Parameter(
+                            name = "X-Road-Client",
+                            in = ParameterIn.HEADER,
+                            required = true,
+                            description = "CamDX client identifier.",
+                            example = "{{CAMDX-CLIENT-ID}}"
+                    ),
+                    @Parameter(
+                            name = "X-Partner-Token",
+                            in = ParameterIn.HEADER,
+                            required = true,
+                            description = "The identifier of the partner, which is recognized and authorized by the provider.",
+                            example = "{{PARTNER-TOKEN}}"
+                    )
+            },
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = {
                             @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = {
+                                            @ExampleObject(
+                                                    name = "Bank Statement Example",
+                                                    value = ApiRequestExamples.BANK_STATEMENT_JSON
+                                            ),
                                             @ExampleObject(
                                                     name = ApiRequestExamples.CURL,
                                                     value = ApiRequestExamples.IMPORT_BANK_STATEMENT_CURL
@@ -209,14 +236,15 @@ public class BankStatementController {
                     )
             }
     )
+    @Hidden
     @PostMapping("/import-bank-statement")
     public ResponseEntity<ApiResponse<?>> createBankStatement(
             @Validated
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
             @RequestBody BankStatementDTO bankStatementDTO,
-            String endpoint,
-            String filename,
+            @Parameter(hidden = true) String endpoint,
+            @Parameter(hidden = true) String filename,
             BindingResult bindingResult) {
 
         // Check if endpoint is null or empty, and set a default value if necessary
@@ -537,6 +565,7 @@ public class BankStatementController {
                     )
             }
     )
+    @Hidden
     @PostMapping(value = "/upload-bank-statement", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<?>> uploadBankStatement(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
@@ -595,6 +624,167 @@ public class BankStatementController {
         }
     }
 
+    @Operation(
+            summary = "Import Bank Statement",
+            description = "Imports bank statement data by accessing the FMIS API via CamDX.\n\n" +
+                    "`http://10.10.52.16:8080/r1/CAMBODIA/GOV/CAMDX-2024031801/FMIS_INTF_API/import-bank`\n\n" +
+                    "The API requires Basic Authentication along with X-Road-Client and X-Partner-Token headers for verification.\n\n" +
+                    "Payload must follow the expected JSON structure and includes transaction details such as date format, amount, and account info.\n\n",
+            security = @SecurityRequirement(name = "basicAuth"),
+            parameters = {
+                    @Parameter(
+                            name = "X-Road-Client",
+                            in = ParameterIn.HEADER,
+                            required = true,
+                            description = "CamDX client identifier.",
+                            example = "{{CAMDX-CLIENT-ID}}"
+                    ),
+                    @Parameter(
+                            name = "X-Partner-Token",
+                            in = ParameterIn.HEADER,
+                            required = true,
+                            description = "The identifier of the partner, which is recognized and authorized by the provider.",
+                            example = "{{PARTNER-TOKEN}}"
+                    )
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = {
+                            @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "Bank Statement Example",
+                                                    value = ApiRequestExamples.BANK_STATEMENT_JSON
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.CURL,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_CURL
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.JAVASCRIPT,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_JS_FETCH
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.PYTHON,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_PYTHON
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.JAVA_HTTPURLCONNECTION,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_JAVA_HTTPURLCONNECTION
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.CSHARP,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_CSHARP_HTTPCLIENT
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.PHP_CURL,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_PHP_CURL
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.NODEJS,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_NODEJS
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.RUBY,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_RUBY
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiRequestExamples.GO,
+                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_GO
+                                            )
+                                    }
+                            )
+                    }
+            ),
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.CREATED_CODE_STRING,
+                            description = ApiResponseConstants.CREATED,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SUCCESS,
+                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_SUCCESS
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
+                            description = ApiResponseConstants.BAD_REQUEST_MISSING_PARTNER_TOKEN,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = ApiResponseConstants.RESPONSE_TYPE_MISSING_PARTNER_TOKEN_HEADER,
+                                                    value = ApiResponseExamples.IMPORT_BANK_STATEMENT_MISSING_PARTNER_TOKEN
+                                            ),
+                                            @ExampleObject(
+                                                    name = ApiResponseConstants.RESPONSE_TYPE_VALIDATION_ERROR,
+                                                    value = ApiResponseExamples.IMPORT_BANK_STATEMENT_VALIDATION_ERROR
+                                            )
+                                    }
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.UNAUTHORIZED_CODE_STRING,
+                            description = ApiResponseConstants.INVALID_PARTNER_TOKEN,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_UNAUTHORIZED,
+                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_UNAUTHORIZED
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.FORBIDDEN_CODE_STRING,
+                            description = ApiResponseConstants.FORBIDDEN_PARTNER_TOKEN,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_FORBIDDEN,
+                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_FORBIDDEN
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.NOT_FOUND_CODE_STRING,
+                            description = ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_NOT_FOUND,
+                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_NOT_FOUND
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.BAD_GATEWAY_CODE_STRING,
+                            description = ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_FMIS_FAILURE,
+                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_FMIS_FAILURE
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE_STRING,
+                            description = ApiResponseConstants.INTERNAL_SERVER_ERROR,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_SERVER_ERROR,
+                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_SERVER_ERROR
+                                    )
+                            )
+                    )
+            }
+    )
+    @PostMapping("/bank-statement-reference")
+    public void importBankStatementDoc() {}
+
     /**
      * Endpoint to fetch paginated bank statements.
      *
@@ -611,6 +801,7 @@ public class BankStatementController {
             summary = "Get Bank Statements",
             description = "Retrieves a paginated list of bank statements from the database."
     )
+    @Hidden
     @GetMapping("/list-bank-statement")
     public ResponseEntity<ApiResponse<?>> getBankStatements(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)

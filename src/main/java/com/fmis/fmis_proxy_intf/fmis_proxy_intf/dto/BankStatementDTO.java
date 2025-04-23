@@ -28,6 +28,7 @@ public class BankStatementDTO {
 
     @NotEmpty(message = "Data cannot be empty. Please provide a valid data.")
     @JsonProperty("Data")
+    @Schema(description = "The root wrapper for bank statement data.")
     private Map<String, Object> data;
 
     @Schema(hidden = true)

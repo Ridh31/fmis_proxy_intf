@@ -12,6 +12,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.HeaderValidationUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -69,6 +70,7 @@ public class AuthController {
             summary = "Register a New User",
             description = "Registers a new user if the username is available and the provided role and partner exist."
     )
+    @Hidden
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> register(
             @Validated @RequestBody UserDTO userDTO,
@@ -235,6 +237,7 @@ public class AuthController {
             summary = "Reset User Password",
             description = "Allows a Super Admin (Level 1) to reset a user's password by providing the username and new password."
     )
+    @Hidden
     @PutMapping("/reset-password")
     public ResponseEntity<ApiResponse<?>> resetPassword(@RequestParam String username, @RequestParam String password) {
         try {

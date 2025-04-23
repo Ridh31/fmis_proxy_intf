@@ -19,10 +19,13 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 public class ApiRequestExamples {
 
     // Base URL and other constants
+    private static final String CAMDX_BANK_STATEMENT_SERVICE_CODE = "/import-bank";
+    private static final String CAMDX_BANK_STATEMENT_URL = "http://10.10.52.16:8080/r1/CAMBODIA/GOV/CAMDX-2024031801/FMIS_INTF_API/" + CAMDX_BANK_STATEMENT_SERVICE_CODE;
     private static final String PREFIX = "/api/v1";
     private static final String BASE_URL = "https://dev-fmis-intf.fmis.gov.kh" + PREFIX;
     private static final String CONTENT_TYPE = "Content-Type: " + HeaderConstants.CONTENT_TYPE_JSON;
-    private static final String X_PARTNER_TOKEN = "X-Partner-Token: your_partner_token_here";
+    private static final String X_ROAD_CLIENT = "X-Road-Client: camdx_client_id";
+    private static final String X_PARTNER_TOKEN = "X-Partner-Token: partner_token";
     public static final String CREATE_PARTNER_URL = BASE_URL + "/create-partner";
     private static final String GET_ALL_PARTNERS_URL = BASE_URL + "/list-partner";
     private static final String IMPORT_BANK_STATEMENT_URL = BASE_URL + "/import-bank-statement";
@@ -413,27 +416,27 @@ public class ApiRequestExamples {
             "Data": {
                 "CMB_BANKSTM_STG": [
                     {
-                        "CMB_BSP_STMT_DT": "2022-12-31",
+                        "CMB_BSP_STMT_DT": "2025-01-01",
                         "CMB_BANK_ACCOUNT_N": "String",
                         "CMB_CURRENCY_CD": "String",
-                        "CMB_VALUE_DT": "2022-12-31",
+                        "CMB_VALUE_DT": "2025-01-01",
                         "CMB_BANK_STMT_TYPE": "String",
-                        "CMB_BSP_TRAN_AMT": 2000.0,
+                        "CMB_BSP_TRAN_AMT": 0.0,
                         "CMB_OPEN_BALANCE": 0.0,
                         "CMB_END_BALANCE": 0.0,
-                        "CMB_IMMEDIATE_BAL": 2000.0,
+                        "CMB_IMMEDIATE_BAL": 0.0,
                         "CMB_RECON_REF_ID": "String",
                         "CMB_CHECK_NUMBER": "String",
                         "CMB_DESCRLONG": "String",
                         "CMB_LETTER_NUMBER": "String"
                     },
                     {
-                        "CMB_BSP_STMT_DT": "2022-12-31",
+                        "CMB_BSP_STMT_DT": "2025-01-01",
                         "CMB_BANK_ACCOUNT_N": "String",
                         "CMB_CURRENCY_CD": "String",
-                        "CMB_VALUE_DT": "2022-12-31",
+                        "CMB_VALUE_DT": "2025-01-01",
                         "CMB_BANK_STMT_TYPE": "String",
-                        "CMB_BSP_TRAN_AMT": 2000.0,
+                        "CMB_BSP_TRAN_AMT": 0.0,
                         "CMB_OPEN_BALANCE": 0.0,
                         "CMB_END_BALANCE": 0.0,
                         "CMB_IMMEDIATE_BAL": 0.0,
@@ -449,30 +452,31 @@ public class ApiRequestExamples {
 
     /**
      * cURL Example for Import Bank Statement
-     * This shows how to use cURL to send a POST request with the bank statement data in JSON format.
+     * Demonstrates how to send a POST request with bank statement JSON payload using cURL,
+     * including headers required by CamDX and FMIS.
      */
     public static final String IMPORT_BANK_STATEMENT_CURL =
-        "curl -X POST \"" + BASE_URL + "/import-bank-statement\" \\\n" +
+        "curl -X POST \"" + CAMDX_BANK_STATEMENT_URL + "\" \\\n" +
         "-H \"" + CONTENT_TYPE + "\" \\\n" +
+        "-H \"" + X_ROAD_CLIENT + "\" \\\n" +
         "-H \"" + X_PARTNER_TOKEN + "\" \\\n" +
-        "-d '" + BANK_STATEMENT_JSON + "'\n";
+        "-u username:password \\\n" +
+        "-d '" + BANK_STATEMENT_JSON + "'";
 
     /**
      * JavaScript (Fetch) Example for Import Bank Statement
      * This example shows how to use the Fetch API in JavaScript to send a POST request to import a bank statement.
-     * The request includes the necessary headers and body, which is formatted as JSON, containing bank statement information.
-     * The response is logged to the console in JSON format for easy inspection.
+     * It includes required headers for CamDX and FMIS, and the bank statement payload is passed in JSON format.
      */
     public static final String IMPORT_BANK_STATEMENT_JS_FETCH =
-        "fetch('" + IMPORT_BANK_STATEMENT_URL + "', {\n" +
+        "fetch('" + CAMDX_BANK_STATEMENT_URL + "', {\n" +
         "    method: 'POST',\n" +
         "    headers: {\n" +
         "        'Content-Type': '" + CONTENT_TYPE + "',\n" +
+        "        'X-Road-Client': '" + X_ROAD_CLIENT + "',\n" +
         "        'X-Partner-Token': '" + X_PARTNER_TOKEN + "'\n" +
         "    },\n" +
-        "    body: JSON.stringify({\n" +
-        "        data: " + BANK_STATEMENT_JSON + "\n" +
-        "    })\n" +
+        "    body: JSON.stringify(" + BANK_STATEMENT_JSON + ")\n" +
         "})\n" +
         ".then(response => response.json())\n" +
         ".then(data => console.log(data));";
@@ -485,9 +489,10 @@ public class ApiRequestExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_PYTHON =
         "import requests\n\n" +
-        "url = '" + IMPORT_BANK_STATEMENT_URL + "'\n" +
+        "url = '" + CAMDX_BANK_STATEMENT_URL + "'\n" +
         "headers = {\n" +
         "    'Content-Type': '" + CONTENT_TYPE + "',\n" +
+        "    'X-Road-Client': '" + X_ROAD_CLIENT + "',\n" +
         "    'X-Partner-Token': '" + X_PARTNER_TOKEN + "'\n" +
         "}\n" +
         "data = {\n" +
@@ -509,10 +514,11 @@ public class ApiRequestExamples {
         "import java.io.InputStreamReader;\n\n" +
         "public class Main {\n" +
         "    public static void main(String[] args) throws Exception {\n" +
-        "        String url = '" + IMPORT_BANK_STATEMENT_URL + "';\n" +
+        "        String url = '" + CAMDX_BANK_STATEMENT_URL + "';\n" +
         "        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();\n" +
         "        con.setRequestMethod(\"POST\");\n" +
         "        con.setRequestProperty(\"Content-Type\", \"" + CONTENT_TYPE + "\");\n" +
+        "        con.setRequestProperty(\"X-Road-Client\", \"" + X_ROAD_CLIENT + "\");\n" +
         "        con.setRequestProperty(\"X-Partner-Token\", \"" + X_PARTNER_TOKEN + "\");\n" +
         "        con.setDoOutput(true);\n\n" +
         "        String jsonData = '" + BANK_STATEMENT_JSON + "';\n\n" +
@@ -545,8 +551,9 @@ public class ApiRequestExamples {
         "    static async Task Main()\n" +
         "    {\n" +
         "        using HttpClient client = new HttpClient();\n" +
-        "        string url = \"" + IMPORT_BANK_STATEMENT_URL + "\";\n" +
+        "        string url = \"" + CAMDX_BANK_STATEMENT_URL + "\";\n" +
         "        client.DefaultRequestHeaders.Add(\"X-Partner-Token\", \"" + X_PARTNER_TOKEN + "\");\n" +
+        "        client.DefaultRequestHeaders.Add(\"X-Road-Client\", \"" + X_ROAD_CLIENT + "\");\n" +
         "        var json = \"" + BANK_STATEMENT_JSON + "\";\n" +
         "\n" +
         "        var content = new StringContent(json, Encoding.UTF8, \"" + CONTENT_TYPE + "\");\n" +
@@ -561,11 +568,18 @@ public class ApiRequestExamples {
      * It sets the necessary headers (`Content-Type` and `X-Partner-Token`) and sends the JSON data containing bank statement information.
      * The response from the server is printed out.
      */
+    /**
+     * This PHP example uses cURL to send a POST request to import a bank statement.
+     * It sets the necessary headers (`Content-Type`, `X-Partner-Token`, and `X-Road-Client`)
+     * and sends the JSON data containing bank statement information.
+     * The response from the server is printed out.
+     */
     public static final String IMPORT_BANK_STATEMENT_PHP_CURL = "<?php\n" +
-        "    $url = '" + IMPORT_BANK_STATEMENT_URL + "';\n" +
+        "    $url = '" + CAMDX_BANK_STATEMENT_URL + "';\n" +
         "    $headers = [\n" +
         "        'Content-Type: " + CONTENT_TYPE + "',\n" +
-        "        'X-Partner-Token: " + X_PARTNER_TOKEN + "'\n" +
+        "        'X-Partner-Token: " + X_PARTNER_TOKEN + "',\n" +
+        "        'X-Road-Client: " + X_ROAD_CLIENT + "'\n" +
         "    ];\n" +
         "    $data = '" + BANK_STATEMENT_JSON + "';\n" +
         "\n" +
@@ -583,15 +597,17 @@ public class ApiRequestExamples {
 
     /**
      * This Node.js example uses Axios to send a POST request to import a bank statement.
-     * It includes necessary headers (`Content-Type` and `X-Partner-Token`), and sends the data as JSON format.
+     * It includes necessary headers (`Content-Type`, `X-Partner-Token`, and `X-Road-Client`),
+     * and sends the data as JSON format.
      * The response data is logged to the console.
      */
     public static final String IMPORT_BANK_STATEMENT_NODEJS =
         "const axios = require('axios');\n" +
-        "const url = '" + IMPORT_BANK_STATEMENT_URL + "';\n" +
+        "const url = '" + CAMDX_BANK_STATEMENT_URL + "';\n" +
         "const headers = {\n" +
         "    'Content-Type': '" + CONTENT_TYPE + "',\n" +
-        "    'X-Partner-Token': '" + X_PARTNER_TOKEN + "'\n" +
+        "    'X-Partner-Token': '" + X_PARTNER_TOKEN + "',\n" +
+        "    'X-Road-Client': '" + X_ROAD_CLIENT + "'\n" +
         "};\n" +
         "const data = " + BANK_STATEMENT_JSON + ";\n" +
         "\n" +
@@ -601,7 +617,7 @@ public class ApiRequestExamples {
 
     /**
      * This Ruby example uses Net::HTTP to send a POST request to import a bank statement.
-     * It includes headers (`Content-Type` and `X-Partner-Token`) and sends the data as JSON format.
+     * It includes headers (`Content-Type`, `X-Partner-Token`, and `X-Road-Client`) and sends the data as JSON format.
      * The response body is printed out after the request completes.
      */
     public static final String IMPORT_BANK_STATEMENT_RUBY =
@@ -609,8 +625,8 @@ public class ApiRequestExamples {
         "require 'uri'\n" +
         "require 'json'\n" +
         "\n" +
-        "url = URI.parse('" + IMPORT_BANK_STATEMENT_URL + "')\n" +
-        "header = {'Content-Type' => '" + CONTENT_TYPE + "', 'X-Partner-Token' => '" + X_PARTNER_TOKEN + "'}\n" +
+        "url = URI.parse('" + CAMDX_BANK_STATEMENT_URL + "')\n" +
+        "header = {'Content-Type' => '" + CONTENT_TYPE + "', 'X-Partner-Token' => '" + X_PARTNER_TOKEN + "', 'X-Road-Client' => '" + X_ROAD_CLIENT + "'}\n" +
         "data = " + BANK_STATEMENT_JSON + "\n" +
         "\n" +
         "uri = URI.parse(url)\n" +
@@ -622,7 +638,8 @@ public class ApiRequestExamples {
 
     /**
      * This Go example uses the net/http package to send a POST request to import a bank statement.
-     * The headers and data are set in the request, and the response status is printed out.
+     * The headers (`Content-Type`, `X-Partner-Token`, and `X-Road-Client`) and data are set in the request,
+     * and the response status is printed out.
      */
     public static final String IMPORT_BANK_STATEMENT_GO =
         "package main\n\n" +
@@ -633,7 +650,7 @@ public class ApiRequestExamples {
         "    \"log\"\n" +
         ")\n\n" +
         "func main() {\n" +
-        "    url := \"" + IMPORT_BANK_STATEMENT_URL + "\"\n" +
+        "    url := \"" + CAMDX_BANK_STATEMENT_URL + "\"\n" +
         "    jsonData := []byte(" + BANK_STATEMENT_JSON + ")\n" +
         "\n" +
         "    req, err := http.NewRequest(\"POST\", url, bytes.NewBuffer(jsonData))\n" +
@@ -642,6 +659,7 @@ public class ApiRequestExamples {
         "    }\n\n" +
         "    req.Header.Set(\"Content-Type\", \"" + CONTENT_TYPE + "\")\n" +
         "    req.Header.Set(\"X-Partner-Token\", \"" + X_PARTNER_TOKEN + "\")\n" +
+        "    req.Header.Set(\"X-Road-Client\", \"" + X_ROAD_CLIENT + "\")\n" +
         "\n" +
         "    client := &http.Client{}\n" +
         "    resp, err := client.Do(req)\n" +
