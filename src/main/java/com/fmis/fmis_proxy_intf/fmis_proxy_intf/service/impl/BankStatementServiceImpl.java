@@ -56,7 +56,9 @@ public class BankStatementServiceImpl implements BankStatementService {
         bankStatement.setFilename(bankStatementDTO.getFilename());
         bankStatement.setPayload(bankStatementDTO.getPayload());
         bankStatement.setXml(bankStatementDTO.getXml());
+        bankStatement.setMessage(bankStatementDTO.getMessage());
         bankStatement.setCreatedBy(bankStatementDTO.getCreatedBy());
+        bankStatement.setStatus(bankStatementDTO.getStatus());
 
         // Save and return the bank statement entity
         return bankStatementRepository.save(bankStatement);

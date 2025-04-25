@@ -365,7 +365,6 @@ public class BankStatementController {
 
                                     // Save the bank statement if FMIS response is successful
                                     if (code.equals("200") || code.equals("201")) {
-                                        bankStatementService.createBankStatement(partnerId, bankStatementDTO);
                                         responseCode = ApiResponseConstants.CREATED_CODE;
                                     }
                                 }
@@ -389,9 +388,21 @@ public class BankStatementController {
                             responseCode = ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE;
                         }
 
-                        HttpStatus status = (responseCode == ApiResponseConstants.CREATED_CODE)
-                                ? HttpStatus.CREATED
-                                : HttpStatus.INTERNAL_SERVER_ERROR;
+                        HttpStatus status;
+
+                        // Set importing status & message
+                        if (responseCode == ApiResponseConstants.CREATED_CODE) {
+                            status = HttpStatus.CREATED;
+                            bankStatementDTO.setStatus(true);
+                        } else {
+                            status = HttpStatus.INTERNAL_SERVER_ERROR;
+                            bankStatementDTO.setStatus(false);
+                        }
+
+                        bankStatementDTO.setMessage(responseMessage);
+
+                        // Import bank statement
+                        bankStatementService.createBankStatement(partnerId, bankStatementDTO);
 
                         return ResponseEntity.status(status)
                                 .body(new ApiResponse<>(

@@ -51,6 +51,10 @@ public class BankStatementDTO {
     private String xml;
 
     @Schema(hidden = true)
+    @JsonIgnore
+    private String message;
+
+    @Schema(hidden = true)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long createdBy;
 
@@ -177,6 +181,14 @@ public class BankStatementDTO {
 
     public void setXml(String xml) {
         this.xml = xml;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public Long getCreatedBy() {

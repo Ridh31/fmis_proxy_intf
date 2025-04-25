@@ -43,6 +43,10 @@ public class BankStatement {
     @JsonIgnore
     private String xml;
 
+    @Lob
+    @JsonIgnore
+    private String message;
+
     @Column(name = "created_by")
     @JsonIgnore
     private Long createdBy;
@@ -113,6 +117,14 @@ public class BankStatement {
 
     public void setXml(String xml) {
         this.xml = xml;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public Long getCreatedBy() {
