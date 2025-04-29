@@ -41,10 +41,10 @@ public class PartnerServiceImpl implements PartnerService {
     @Override
     public Partner createPartner(Partner partner) {
         // Generate the next identifier code
-        String nextIdentifier = generateNextIdentifier();
+        // String nextIdentifier = generateNextIdentifier();
 
         // Set the identifier in the partner object
-        partner.setIdentifier(nextIdentifier);
+        // partner.setIdentifier(nextIdentifier);
 
         // Save the partner entity
         return partnerRepository.save(partner);

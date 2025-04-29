@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
@@ -38,7 +39,11 @@ public class BankStatementDTO {
     private String endpoint;
 
     @Schema(hidden = true)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String filename;
+
+    private String bankAccountNumber;
+    private LocalDateTime statementDate;
 
     @JsonIgnore
     private String payload;
@@ -51,7 +56,6 @@ public class BankStatementDTO {
     private String xml;
 
     @Schema(hidden = true)
-    @JsonIgnore
     private String message;
 
     @Schema(hidden = true)
@@ -63,7 +67,6 @@ public class BankStatementDTO {
     private LocalDateTime createdDate;
 
     @Schema(hidden = true)
-    @JsonIgnore
     private Boolean status;
 
     @Schema(hidden = true)
@@ -159,6 +162,29 @@ public class BankStatementDTO {
         this.filename = filename;
     }
 
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
+    }
+
+    public LocalDateTime getStatementDate() {
+        return statementDate;
+    }
+
+    public void setStatementDate(LocalDateTime statementDate) {
+        this.statementDate = statementDate;
+    }
+
+    @JsonProperty("statementDate")
+    public String getFormattedStatementDate() {
+        return statementDate != null
+                ? statementDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                : null;
+    }
+
     public String getPayload() {
         return payload;
     }
@@ -213,6 +239,11 @@ public class BankStatementDTO {
 
     public void setStatus(Boolean status) {
         this.status = status;
+    }
+
+    @JsonProperty("status")
+    public String getStatusText() {
+        return Boolean.TRUE.equals(status) ? "Success" : "Error";
     }
 
     public Boolean getIsDeleted() {

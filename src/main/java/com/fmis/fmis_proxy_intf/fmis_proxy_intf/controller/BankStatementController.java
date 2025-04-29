@@ -14,7 +14,6 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +41,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -282,6 +284,7 @@ public class BankStatementController {
             bankStatementDTO.setPartnerId(partnerId);
 
             Optional<Partner> partner = partnerService.findById(partnerId);
+            final String[] statement = new String[2];
 
             // Use ifPresent to safely access the value if it's present
             partner.ifPresent(p -> {
@@ -298,6 +301,17 @@ public class BankStatementController {
                             // Add CMB_BANK_CODE to each object in the list
                             for (Map<String, Object> item : list) {
                                 item.put("CMB_BANK_CODE", identifier);
+
+                                String CMB_BPS_STMT_DT = item.get("CMB_BSP_STMT_DT").toString();
+                                String CMB_BANK_ACCOUNT_N = item.get("CMB_BANK_ACCOUNT_N").toString();
+
+                                if (!CMB_BPS_STMT_DT.isEmpty()) {
+                                    statement[0] = CMB_BPS_STMT_DT + " 00:00:00";
+                                }
+
+                                if (!CMB_BANK_ACCOUNT_N.isEmpty()) {
+                                    statement[1] = CMB_BANK_ACCOUNT_N;
+                                }
                             }
                         } else {
                             // Handle non-list entries by adding CMB_BANK_CODE to the object as null
@@ -310,6 +324,11 @@ public class BankStatementController {
                 }
             });
 
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime statementDate = LocalDateTime.parse(statement[0], formatter);
+            statementDate = statementDate.plusHours(7);
+            String bankAccountNumber = (!statement[1].isEmpty()) ? statement[1] : null;
+
             // Convert the bank statement data to JSON
             ObjectMapper objectMapper = new ObjectMapper();
             String data = objectMapper.writeValueAsString(bankStatementDTO.getData());
@@ -319,6 +338,8 @@ public class BankStatementController {
                 bankStatementDTO.setMethod("POST");
                 bankStatementDTO.setEndpoint(endpoint);
                 bankStatementDTO.setFilename(filename);
+                bankStatementDTO.setStatementDate(statementDate);
+                bankStatementDTO.setBankAccountNumber(bankAccountNumber);
                 bankStatementDTO.setPayload(data);
 
                 // Convert JSON data to XML for FMIS
@@ -812,11 +833,13 @@ public class BankStatementController {
             summary = "Get Bank Statements",
             description = "Retrieves a paginated list of bank statements from the database."
     )
-    @Hidden
     @GetMapping("/list-bank-statement")
     public ResponseEntity<ApiResponse<?>> getBankStatements(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
+            @RequestParam(required = false) String bankAccountNumber,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate statementDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate importedDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
@@ -831,16 +854,7 @@ public class BankStatementController {
 
         try {
             // Fetch the paginated list of bank statements from the service
-            Page<BankStatement> bankStatements = bankStatementService.getAllBankStatements(page, size);
-
-            // If no data is found, return a 204 No Content response
-            if (bankStatements.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.NO_CONTENT_CODE,
-                                ApiResponseConstants.NO_BANK_STATEMENTS_FOUND
-                        ));
-            }
+            Page<BankStatement> bankStatements = bankStatementService.getFilteredBankStatements(page, size, bankAccountNumber, statementDate, importedDate);
 
             // ObjectMapper for JSON conversion
             ObjectMapper objectMapper = new ObjectMapper();
@@ -856,7 +870,11 @@ public class BankStatementController {
                 dto.setPartnerId(bankStatement.getPartner().getId());
                 dto.setMethod(bankStatement.getMethod());
                 dto.setEndpoint(bankStatement.getEndpoint());
+                dto.setFilename(bankStatement.getFilename());
+                dto.setBankAccountNumber(bankStatement.getBankAccountNumber());
+                dto.setStatementDate(bankStatement.getStatementDate());
                 dto.setXml(bankStatement.getXml());
+                dto.setMessage(bankStatement.getMessage());
                 dto.setCreatedBy(bankStatement.getCreatedBy());
                 dto.setCreatedDate(bankStatement.getCreatedDate());
                 dto.setStatus(bankStatement.getStatus());

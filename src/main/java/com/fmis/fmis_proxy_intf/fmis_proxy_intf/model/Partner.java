@@ -39,8 +39,6 @@ public class Partner {
 
     @Lob
     @Column(name = "identifier", nullable = false, unique = true)
-    @JsonIgnore
-    @Schema(hidden = true)
     @Size(min = 6, max = 6, message = "Identifier must be exactly 6 characters long.")
     private String identifier;
 
@@ -52,7 +50,8 @@ public class Partner {
 
     @Lob
     @Column(name = "public_key", columnDefinition = "TEXT", nullable = false, unique = true)
-    @JsonIgnore
+    @JsonProperty("public_key")
+    @Schema(hidden = true)
     private String publicKey;
 
     @Lob

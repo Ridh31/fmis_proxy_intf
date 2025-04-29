@@ -12,8 +12,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 /**
- * Implementation of {@link BankStatementService} for handling bank statement operations.
+ * Implementation of {@link BankStatementService} to manage bank statement operations.
  */
 @Service
 public class BankStatementServiceImpl implements BankStatementService {
@@ -22,10 +24,10 @@ public class BankStatementServiceImpl implements BankStatementService {
     private final PartnerRepository partnerRepository;
 
     /**
-     * Constructs a new {@code BankStatementServiceImpl} with the given repositories.
+     * Constructor for {@code BankStatementServiceImpl}.
      *
-     * @param bankStatementRepository The repository for managing {@code BankStatement} entities.
-     * @param partnerRepository       The repository for managing {@code Partner} entities.
+     * @param bankStatementRepository Repository for {@code BankStatement} entities.
+     * @param partnerRepository       Repository for {@code Partner} entities.
      */
     public BankStatementServiceImpl(BankStatementRepository bankStatementRepository,
                                     PartnerRepository partnerRepository) {
@@ -34,26 +36,28 @@ public class BankStatementServiceImpl implements BankStatementService {
     }
 
     /**
-     * Creates a new bank statement associated with a specific user and partner.
+     * Creates a new bank statement associated with a specific partner.
      *
-     * @param partnerId The ID of the partner associated with the bank statement.
-     * @param bankStatementDTO The DTO containing bank statement details.
+     * @param partnerId       The ID of the partner.
+     * @param bankStatementDTO The DTO containing the bank statement details.
      * @return The saved {@code BankStatement} entity.
+     * @throws RuntimeException If the partner is not found.
      */
     @Transactional
     @Override
     public BankStatement createBankStatement(Long partnerId, BankStatementDTO bankStatementDTO) {
-
         // Retrieve the Partner entity or throw an exception if not found
         Partner partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new RuntimeException("Partner not found"));
 
-        // Convert DTO to Entity
+        // Convert the DTO to the BankStatement entity
         BankStatement bankStatement = new BankStatement();
         bankStatement.setPartner(partner);
         bankStatement.setMethod(bankStatementDTO.getMethod());
         bankStatement.setEndpoint(bankStatementDTO.getEndpoint());
         bankStatement.setFilename(bankStatementDTO.getFilename());
+        bankStatement.setBankAccountNumber(bankStatementDTO.getBankAccountNumber());
+        bankStatement.setStatementDate(bankStatementDTO.getStatementDate());
         bankStatement.setPayload(bankStatementDTO.getPayload());
         bankStatement.setXml(bankStatementDTO.getXml());
         bankStatement.setMessage(bankStatementDTO.getMessage());
@@ -65,15 +69,30 @@ public class BankStatementServiceImpl implements BankStatementService {
     }
 
     /**
-     * Fetches a page of active and non-deleted bank statements.
+     * Retrieves a paginated list of all active, non-deleted bank statements.
      *
      * @param page The page number to fetch (starting from 0).
      * @param size The size of each page (items per page).
-     * @return A Page of BankStatement entities.
+     * @return A {@link Page} of {@link BankStatement} entities.
      */
     @Override
     public Page<BankStatement> getAllBankStatements(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return bankStatementRepository.getAllBankStatements(pageable);
+    }
+
+    /**
+     * Retrieves a paginated list of filtered bank statements based on provided filters.
+     *
+     * @param page             The page number to fetch (starting from 0).
+     * @param size             The size of each page (items per page).
+     * @param bankAccountNumber The bank account number filter (optional).
+     * @param statementDate    The statement date filter (optional).
+     * @return A {@link Page} of {@link BankStatement} entities.
+     */
+    @Override
+    public Page<BankStatement> getFilteredBankStatements(int page, int size, String bankAccountNumber, LocalDate statementDate, LocalDate importedDate) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bankStatementRepository.findFilteredBankStatements(bankAccountNumber, statementDate, importedDate, pageable);
     }
 }

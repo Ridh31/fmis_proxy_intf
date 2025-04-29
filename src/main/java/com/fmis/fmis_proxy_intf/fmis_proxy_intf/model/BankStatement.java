@@ -37,6 +37,14 @@ public class BankStatement {
     private String filename;
 
     @Lob
+    @Column(name = "bank_account_number")
+    private String bankAccountNumber;
+
+    @Lob
+    @Column(name = "statement_date")
+    private LocalDateTime statementDate;
+
+    @Lob
     private String payload;
 
     @Lob
@@ -101,6 +109,22 @@ public class BankStatement {
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
+    }
+
+    public LocalDateTime getStatementDate() {
+        return statementDate;
+    }
+
+    public void setStatementDate(LocalDateTime statementDate) {
+        this.statementDate = statementDate;
     }
 
     public String getPayload() {

@@ -290,6 +290,38 @@ public class PartnerController {
             return partnerValidationResponse;
         }
 
+        // Get the user from the database based on the username
+        Optional<User> userOptional = userService.findByUsername(username);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.UNAUTHORIZED_CODE,
+                            ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
+                    ));
+        }
+
+        User currentUser = userOptional.get();
+
+        // Fetch the role of the authenticated user
+        Long roleId = currentUser.getRole().getId();
+        if (!roleService.existsById(roleId)) {
+            // Handle case where role does not exist
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.NOT_FOUND_CODE,
+                            ApiResponseConstants.ROLE_NOT_FOUND
+                    ));
+        }
+
+        // Check if the authenticated user is a Super Admin (level 1)
+        if (currentUser.getRole().getLevel() != 1) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.FORBIDDEN_CODE,
+                            ApiResponseConstants.FORBIDDEN
+                    ));
+        }
+
         try {
             // Fetch the paginated list of partners
             Page<Partner> partners = partnerService.getAllPartners(page, size);
