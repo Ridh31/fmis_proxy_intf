@@ -123,12 +123,34 @@ public class PartnerController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
+                            description = ApiResponseConstants.PARTNER_NAME_TAKEN,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_BAD_REQUEST,
+                                            value = ApiResponseExamples.CREATE_PARTNER_BAD_REQUEST_NAME_TAKEN
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
+                            description = ApiResponseConstants.PARTNER_IDENTIFIER_TAKEN,
+                            content = @Content(
+                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
+                                    examples = @ExampleObject(
+                                            name = ApiResponseConstants.RESPONSE_TYPE_BAD_REQUEST,
+                                            value = ApiResponseExamples.CREATE_PARTNER_BAD_REQUEST_IDENTIFIER_TAKEN
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
                             description = ApiResponseConstants.PARTNER_CODE_TAKEN,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
                                             name = ApiResponseConstants.RESPONSE_TYPE_BAD_REQUEST,
-                                            value = ApiResponseExamples.CREATE_PARTNER_BAD_REQUEST
+                                            value = ApiResponseExamples.CREATE_PARTNER_BAD_REQUEST_CODE_TAKEN
                                     )
                             )
                     ),
@@ -222,6 +244,24 @@ public class PartnerController {
                         .body(new ApiResponse<>(
                                 ApiResponseConstants.FORBIDDEN_CODE,
                                 ApiResponseConstants.FORBIDDEN_CREATE_PARTNER
+                        ));
+            }
+
+            // Check if the partner name already exists in the database
+            if (partnerService.findByName(partner.getName()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.PARTNER_NAME_TAKEN
+                        ));
+            }
+
+            // Check if the partner identifier already exists in the database
+            if (partnerService.findByIdentifier(partner.getIdentifier()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.PARTNER_IDENTIFIER_TAKEN
                         ));
             }
 

@@ -14,8 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 /**
- * Implementation of the {@link PartnerService} interface.
- * Provides methods to manage {@link Partner} entities.
+ * Service implementation for managing {@link Partner} entities.
  */
 @Service
 public class PartnerServiceImpl implements PartnerService {
@@ -23,68 +22,54 @@ public class PartnerServiceImpl implements PartnerService {
     private final PartnerRepository partnerRepository;
 
     /**
-     * Constructs a new {@code PartnerServiceImpl} with the given repository.
+     * Constructs a new {@code PartnerServiceImpl} with the specified repository.
      *
-     * @param partnerRepository The repository for managing {@code Partner} entities.
+     * @param partnerRepository the repository used for partner data access
      */
     public PartnerServiceImpl(PartnerRepository partnerRepository) {
         this.partnerRepository = partnerRepository;
     }
 
     /**
-     * Creates and saves a new {@code Partner} entity.
+     * Creates and saves a new {@link Partner} entity.
      *
-     * @param partner The {@code Partner} entity to be saved.
-     * @return The saved {@code Partner} entity.
+     * @param partner the partner entity to be saved
+     * @return the saved {@link Partner} entity
      */
     @Transactional
     @Override
     public Partner createPartner(Partner partner) {
-        // Generate the next identifier code
+        // If you plan to generate identifiers, uncomment and integrate below:
         // String nextIdentifier = generateNextIdentifier();
-
-        // Set the identifier in the partner object
         // partner.setIdentifier(nextIdentifier);
-
-        // Save the partner entity
         return partnerRepository.save(partner);
     }
 
     /**
-     * Generates the next identifier for the partner entity.
+     * Generates the next sequential identifier for a partner.
      *
-     * @return The next identifier, formatted to 6 digits.
+     * @return a six-digit formatted identifier string
      */
     private String generateNextIdentifier() {
-
-        // Query the latest identifier in the database, sorted in descending order
         String latestIdentifier = partnerRepository.findTopByOrderByIdentifierDesc();
 
-        // If no identifier exists, start with "000001"
         if (latestIdentifier == null || latestIdentifier.isEmpty()) {
             return "000001";
         }
 
-        // Increment the numeric part of the identifier
-        int currentNumber;
         try {
-            currentNumber = Integer.parseInt(latestIdentifier);
+            int currentNumber = Integer.parseInt(latestIdentifier);
+            return String.format("%06d", ++currentNumber);
         } catch (NumberFormatException e) {
-            // Handle the case where the identifier is not a valid number
-            throw new IllegalArgumentException("Invalid identifier format in the database.");
+            throw new IllegalArgumentException("Invalid identifier format in the database.", e);
         }
-
-        currentNumber++;
-
-        // Format to ensure the identifier is always 6 digits, padded with leading zeros
-        return String.format("%06d", currentNumber);
     }
 
     /**
-     * Finds a {@code Partner} by its ID.
+     * Retrieves a {@link Partner} by its ID.
      *
-     * @param id The ID of the {@code Partner}.
-     * @return An {@link Optional} containing the {@code Partner} if found, or empty if not found.
+     * @param id the partner ID
+     * @return an {@link Optional} containing the partner if found, otherwise empty
      */
     @Override
     public Optional<Partner> findById(Long id) {
@@ -92,10 +77,32 @@ public class PartnerServiceImpl implements PartnerService {
     }
 
     /**
-     * Finds a {@code Partner} by its unique code.
+     * Retrieves a {@link Partner} by its name.
      *
-     * @param code The unique code associated with the {@code Partner}.
-     * @return An {@link Optional} containing the {@code Partner} if found, or empty if not found.
+     * @param name the partner name
+     * @return an {@link Optional} containing the partner if found, otherwise empty
+     */
+    @Override
+    public Optional<Partner> findByName(String name) {
+        return partnerRepository.findByName(name);
+    }
+
+    /**
+     * Retrieves a {@link Partner} by its unique identifier.
+     *
+     * @param identifier the partner's identifier
+     * @return an {@link Optional} containing the partner if found, otherwise empty
+     */
+    @Override
+    public Optional<Partner> findByIdentifier(String identifier) {
+        return partnerRepository.findByIdentifier(identifier);
+    }
+
+    /**
+     * Retrieves a {@link Partner} by its unique code.
+     *
+     * @param code the partner's unique code
+     * @return an {@link Optional} containing the partner if found, otherwise empty
      */
     @Override
     public Optional<Partner> findByCode(String code) {
@@ -103,24 +110,25 @@ public class PartnerServiceImpl implements PartnerService {
     }
 
     /**
-     * Finds a {@code Partner} by its RSA public key.
+     * Retrieves the ID of a {@link Partner} using its RSA public key.
      *
-     * @param publicKey The RSA public key associated with the {@code Partner}.
-     * @return The ID of the {@code Partner} if found.
-     * @throws ResourceNotFoundException If the {@code Partner} is not found.
+     * @param publicKey the partner's RSA public key
+     * @return the ID of the matched partner
+     * @throws ResourceNotFoundException if no matching partner is found
      */
     @Override
     public Long findIdByPublicKey(String publicKey) {
         return partnerRepository.findIdByPublicKey(publicKey)
                 .map(Partner::getId)
-                .orElseThrow(() -> new ResourceNotFoundException(ApiResponseConstants.ERROR_PARTNER_TOKEN_NOT_FOUND));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(ApiResponseConstants.ERROR_PARTNER_TOKEN_NOT_FOUND));
     }
 
     /**
-     * Checks if a {@code Partner} exists by its ID.
+     * Checks if a {@link Partner} exists by its ID.
      *
-     * @param id The ID of the {@code Partner}.
-     * @return {@code true} if the {@code Partner} exists, otherwise {@code false}.
+     * @param id the partner ID
+     * @return {@code true} if the partner exists, otherwise {@code false}
      */
     @Override
     public boolean existsById(Long id) {
@@ -128,11 +136,11 @@ public class PartnerServiceImpl implements PartnerService {
     }
 
     /**
-     * Retrieves a paginated list of all partners.
+     * Retrieves a paginated list of active, non-deleted partners.
      *
-     * @param page The page number (starting from 0).
-     * @param size The number of records per page.
-     * @return A {@link Page} containing {@code Partner} entities.
+     * @param page the page number (zero-based)
+     * @param size the number of records per page
+     * @return a {@link Page} of {@link Partner} entities
      */
     @Override
     public Page<Partner> getAllPartners(int page, int size) {

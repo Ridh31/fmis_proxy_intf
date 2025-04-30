@@ -1,45 +1,66 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
 /**
- * Repository interface for performing CRUD operations on User entities.
+ * Repository interface for performing CRUD and custom queries on {@link User} entities.
+ * Extends {@link JpaRepository} to inherit standard database operations.
  */
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
-     * Finds a User by its username.
+     * Finds a user by their unique username.
      *
      * @param username the username of the user
-     * @return an Optional containing the User if found, or empty if not found
+     * @return an {@link Optional} containing the user if found, otherwise empty
      */
     Optional<User> findByUsername(String username);
 
     /**
-     * Finds a User by its email.
+     * Finds a user by their email address.
      *
-     * @param email the email of the user
-     * @return an Optional containing the User if found, or empty if not found
+     * @param email the email address of the user
+     * @return an {@link Optional} containing the user if found, otherwise empty
      */
     Optional<User> findByEmail(String email);
 
     /**
-     * Finds a User by its ID.
+     * Finds a user by their unique ID.
      *
      * @param id the ID of the user
-     * @return an Optional containing the User if found, or empty if not found
+     * @return an {@link Optional} containing the user if found, otherwise empty
      */
     Optional<User> findById(Long id);
 
     /**
-     * Finds a User by its partner ID and username.
+     * Finds a user by their partner ID and username.
      *
      * @param partnerId the partner ID associated with the user
-     * @param username the username of the user
-     * @return an Optional containing the User if found, or empty if not found
+     * @param username  the username of the user
+     * @return an {@link Optional} containing the user if found, otherwise empty
      */
     Optional<User> findByPartnerIdAndUsername(Long partnerId, String username);
+
+    /**
+     * Retrieves all enabled users in descending order of ID.
+     *
+     * @param pageable pagination and sorting information
+     * @return a {@link Page} of enabled users
+     */
+    @Query(value = """
+        SELECT
+            *
+        FROM
+            user u
+        WHERE
+            u.enabled = TRUE
+        ORDER BY u.id DESC
+        """, nativeQuery = true)
+    Page<User> getAllUsers(Pageable pageable);
 }

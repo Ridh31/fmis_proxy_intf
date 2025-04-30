@@ -7,56 +7,72 @@ import java.util.Optional;
 
 /**
  * Service interface for managing {@link Partner} entities.
- * Provides methods to create, retrieve, and check the existence of {@link Partner} entities based on different criteria.
+ * Provides methods for creation, retrieval, and existence checks based on various criteria.
  */
 public interface PartnerService {
 
     /**
-     * Creates and saves a new {@link Partner} entity.
+     * Creates and saves a new {@link Partner}.
      *
-     * @param partner The {@link Partner} object to be created.
-     * @return The created {@link Partner} entity.
+     * @param partner the partner entity to be created
+     * @return the saved {@link Partner} entity
      */
     Partner createPartner(Partner partner);
 
     /**
-     * Retrieves a {@link Partner} by its unique ID.
+     * Retrieves a partner by its unique ID.
      *
-     * @param id The ID of the {@link Partner}.
-     * @return An {@link Optional} containing the {@link Partner} if found, or empty if not found.
+     * @param id the ID of the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
      */
     Optional<Partner> findById(Long id);
 
     /**
-     * Retrieves a {@link Partner} by its unique code.
+     * Retrieves a partner by its name.
      *
-     * @param code The unique code associated with the {@link Partner}.
-     * @return An {@link Optional} containing the {@link Partner} if found, or empty if not found.
+     * @param name the name of the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
+     */
+    Optional<Partner> findByName(String name);
+
+    /**
+     * Retrieves a partner by its unique identifier.
+     *
+     * @param identifier the unique identifier of the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
+     */
+    Optional<Partner> findByIdentifier(String identifier);
+
+    /**
+     * Retrieves a partner by its unique code.
+     *
+     * @param code the unique code associated with the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
      */
     Optional<Partner> findByCode(String code);
 
     /**
-     * Retrieves the ID of a {@link Partner} by its RSA public key.
+     * Retrieves the ID of a partner by its RSA public key.
      *
-     * @param publicKey The RSA public key associated with the {@link Partner}.
-     * @return The ID of the {@link Partner} associated with the given RSA public key.
+     * @param publicKey the RSA public key associated with the partner
+     * @return the ID of the partner, or {@code null} if not found
      */
     Long findIdByPublicKey(String publicKey);
 
     /**
-     * Checks whether a {@link Partner} exists based on its ID.
+     * Checks if a partner exists by its ID.
      *
-     * @param id The ID of the {@link Partner}.
-     * @return {@code true} if the {@link Partner} exists, otherwise {@code false}.
+     * @param id the ID of the partner
+     * @return {@code true} if the partner exists, otherwise {@code false}
      */
     boolean existsById(Long id);
 
     /**
      * Retrieves a paginated list of all partners.
      *
-     * @param page The page number (starting from 0).
-     * @param size The number of records per page.
-     * @return A paginated list of {@link Partner} entities.
+     * @param page the page number (zero-based)
+     * @param size the number of records per page
+     * @return a {@link Page} of {@link Partner} entities
      */
     Page<Partner> getAllPartners(int page, int size);
 }

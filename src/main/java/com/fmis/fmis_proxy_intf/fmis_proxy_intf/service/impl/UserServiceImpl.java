@@ -3,16 +3,22 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.impl;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.UserRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+/**
+ * Service implementation for user-related operations and authentication.
+ */
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
 
@@ -20,9 +26,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Constructor to inject dependencies for user repository and password encoder.
+     * Constructs a new {@code UserServiceImpl} with the provided dependencies.
      *
-     * @param userRepository the repository for accessing user data
+     * @param userRepository  the repository for accessing user data
      * @param passwordEncoder the encoder for encrypting passwords
      */
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -33,19 +39,19 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     /**
      * Retrieves the username of the currently authenticated user.
      *
-     * @return the username of the authenticated user, or null if not authenticated
+     * @return the username if authenticated, otherwise {@code null}
      */
     @Override
     public String getAuthenticatedUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null ? authentication.getName() : null;
+        return (authentication != null) ? authentication.getName() : null;
     }
 
     /**
-     * Registers a new user by encoding their password and saving them to the database.
+     * Registers a new user by encoding their password and saving the entity.
      *
-     * @param user the user object containing user information
-     * @return the saved user with an encoded password
+     * @param user the user to register
+     * @return the saved user entity
      */
     @Override
     public User registerUser(User user) {
@@ -54,11 +60,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
-     * Loads a user by their username for authentication purposes.
+     * Loads user details by username for authentication purposes.
      *
-     * @param username the username of the user to be loaded
-     * @return UserDetails for the authenticated user
-     * @throws UsernameNotFoundException if the user is not found
+     * @param username the username to search for
+     * @return a {@link UserDetails} object representing the user
+     * @throws UsernameNotFoundException if the user does not exist
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -67,15 +73,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
-                .password(user.getPassword()) // Password already hashed
+                .password(user.getPassword())
                 .build();
     }
 
     /**
      * Finds a user by their username.
      *
-     * @param username the username of the user to find
-     * @return an Optional containing the user, or empty if not found
+     * @param username the username to search for
+     * @return an {@link Optional} of the user if found
      */
     @Override
     public Optional<User> findByUsername(String username) {
@@ -83,10 +89,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
-     * Finds a user by their email.
+     * Finds a user by their email address.
      *
-     * @param email the email of the user to find
-     * @return an Optional containing the user, or empty if not found
+     * @param email the email to search for
+     * @return an {@link Optional} of the user if found
      */
     @Override
     public Optional<User> findByEmail(String email) {
@@ -97,10 +103,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
-     * Finds a user by their ID.
+     * Finds a user by their unique ID.
      *
-     * @param id the ID of the user to find
-     * @return an Optional containing the user, or empty if not found
+     * @param id the user ID
+     * @return an {@link Optional} of the user if found
      */
     @Override
     public Optional<User> findById(Long id) {
@@ -108,10 +114,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
-     * Saves the provided user to the repository.
+     * Persists a user entity to the database.
      *
      * @param user the user to save
-     * @return the saved user
+     * @return the saved user entity
      */
     @Override
     public User save(User user) {
@@ -119,14 +125,27 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
-     * Finds a user by their partner ID and username.
+     * Finds a user by partner ID and username.
      *
-     * @param partnerId the partner ID associated with the user
-     * @param username the username of the user to find
-     * @return an Optional containing the user, or empty if not found
+     * @param partnerId the partner ID
+     * @param username  the username
+     * @return an {@link Optional} of the user if found
      */
     @Override
     public Optional<User> findByPartnerIdAndUsername(Long partnerId, String username) {
         return userRepository.findByPartnerIdAndUsername(partnerId, username);
+    }
+
+    /**
+     * Retrieves a paginated list of users.
+     *
+     * @param page the page number (0-based)
+     * @param size the number of records per page
+     * @return a {@link Page} of users
+     */
+    @Override
+    public Page<User> getAllUsers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.getAllUsers(pageable);
     }
 }

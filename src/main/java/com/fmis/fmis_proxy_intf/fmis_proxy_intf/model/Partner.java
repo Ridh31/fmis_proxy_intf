@@ -39,12 +39,14 @@ public class Partner {
 
     @Lob
     @Column(name = "identifier", nullable = false, unique = true)
-    @Size(min = 6, max = 6, message = "Identifier must be exactly 6 characters long.")
+    @NotEmpty(message = "Identifier cannot be empty. Please provide a valid code.")
+    @Size(min = 3, max = 6, message = "Identifier must be between 3 and 6 characters long.")
     private String identifier;
 
     @Lob
     @Column(nullable = false, unique = true)
     @NotEmpty(message = "Code cannot be empty. Please provide a valid code.")
+    @Size(min = 1, max = 50, message = "Identifier must be between 1 and 50 characters long.")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String code;
 

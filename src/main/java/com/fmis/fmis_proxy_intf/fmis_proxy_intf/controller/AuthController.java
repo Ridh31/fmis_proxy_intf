@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Controller for handling user authentication and registration operations.
@@ -287,6 +289,99 @@ public class AuthController {
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
                             ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * Endpoint to retrieve a paginated list of all users.
+     * Accessible only to Super Admin users.
+     *
+     * @param partnerCode The X-Partner-Token header value used for partner validation.
+     * @param page        The page number (default: 0).
+     * @param size        The number of items per page (default: 10).
+     * @return A paginated list of users or an appropriate HTTP response in case of error or access denial.
+     */
+    @Operation(
+            summary = "Get all users",
+            description = "Retrieves a paginated list of all users. This endpoint is accessible only to Super Admins."
+    )
+    @Hidden
+    @GetMapping("/list-user")
+    public ResponseEntity<ApiResponse<?>> getAllUsers(
+            @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
+            @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
+
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        // Retrieve the username of the authenticated user
+        String username = userService.getAuthenticatedUsername();
+
+        // Validate the provided X-Partner-Token header
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse =
+                HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        if (partnerValidationResponse != null) {
+            return partnerValidationResponse;
+        }
+
+        // Attempt to retrieve the current user by username
+        Optional<User> userOptional = userService.findByUsername(username);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new ApiResponse<>(
+                            ApiResponseConstants.UNAUTHORIZED_CODE,
+                            ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
+                    ));
+        }
+
+        User currentUser = userOptional.get();
+
+        // Verify that the user's role exists
+        Long roleId = currentUser.getRole().getId();
+        if (!roleService.existsById(roleId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse<>(
+                            ApiResponseConstants.NOT_FOUND_CODE,
+                            ApiResponseConstants.ROLE_NOT_FOUND
+                    ));
+        }
+
+        // Restrict access to only Super Admins (level 1)
+        if (currentUser.getRole().getLevel() != 1) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    new ApiResponse<>(
+                            ApiResponseConstants.FORBIDDEN_CODE,
+                            ApiResponseConstants.FORBIDDEN
+                    ));
+        }
+
+        try {
+            // Fetch paginated list of users
+            Page<User> users = userService.getAllUsers(page, size);
+
+            // Return 204 if no users found
+            if (users.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                        new ApiResponse<>(
+                                ApiResponseConstants.NO_CONTENT_CODE,
+                                ApiResponseConstants.NOT_FOUND
+                        ));
+            }
+
+            // Return successful response with user list
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.USERS_FETCHED,
+                    users
+            ));
+
+        } catch (Exception e) {
+            // Return 500 in case of an internal error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_FETCHING_PARTNERS + e.getMessage()
                     ));
         }
     }

@@ -80,9 +80,27 @@ public class ApiResponseExamples {
 
     /**
      * Example response for a bad request (400 Bad Request).
+     * This response occurs when the partner creation fails due to invalid data, e.g., duplicate partner name.
+     */
+    public static final String CREATE_PARTNER_BAD_REQUEST_NAME_TAKEN = "{\n" +
+        "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+        "    \"message\": \"" + ApiResponseConstants.PARTNER_NAME_TAKEN + "\"\n" +
+        "}";
+
+    /**
+     * Example response for a bad request (400 Bad Request).
+     * This response occurs when the partner creation fails due to invalid data, e.g., duplicate partner identifer.
+     */
+    public static final String CREATE_PARTNER_BAD_REQUEST_IDENTIFIER_TAKEN = "{\n" +
+        "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+        "    \"message\": \"" + ApiResponseConstants.PARTNER_IDENTIFIER_TAKEN + "\"\n" +
+        "}";
+
+    /**
+     * Example response for a bad request (400 Bad Request).
      * This response occurs when the partner creation fails due to invalid data, e.g., duplicate partner code.
      */
-    public static final String CREATE_PARTNER_BAD_REQUEST = "{\n" +
+    public static final String CREATE_PARTNER_BAD_REQUEST_CODE_TAKEN = "{\n" +
         "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
         "    \"message\": \"" + ApiResponseConstants.PARTNER_CODE_TAKEN + "\"\n" +
         "}";

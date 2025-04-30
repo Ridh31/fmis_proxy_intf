@@ -9,63 +9,92 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 /**
- * Repository interface for managing CRUD operations on Partner entities.
- * Extends {@link JpaRepository} to provide built-in methods for database interaction.
+ * Repository interface for managing CRUD operations on {@link Partner} entities.
+ * Extends {@link JpaRepository} to provide basic data access functionality.
  */
 public interface PartnerRepository extends JpaRepository<Partner, Integer> {
 
     /**
-     * Finds a Partner by its unique identifier.
+     * Finds a partner by its unique ID.
      *
-     * @param id The unique identifier of the partner.
-     * @return An {@link Optional} containing the Partner if found, or an empty {@link Optional} if not found.
+     * @param id the unique identifier of the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
      */
     Optional<Partner> findById(Long id);
 
     /**
-     * Finds a Partner by its unique code.
+     * Finds a partner by its name.
      *
-     * @param code The unique code associated with the partner.
-     * @return An {@link Optional} containing the Partner if found, or an empty {@link Optional} if not found.
+     * @param name the name of the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
+     */
+    Optional<Partner> findByName(String name);
+
+    /**
+     * Finds a partner by its unique identifier.
+     *
+     * @param identifier the identifier of the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
+     */
+    Optional<Partner> findByIdentifier(String identifier);
+
+    /**
+     * Finds a partner by its unique code.
+     *
+     * @param code the code associated with the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
      */
     Optional<Partner> findByCode(String code);
 
     /**
-     * Finds a Partner by its RSA public key.
+     * Finds a partner by its RSA public key.
      *
-     * @param publicKey The RSA public key associated with the partner.
-     * @return An {@link Optional} containing the Partner if found, or an empty {@link Optional} if not found.
+     * @param publicKey the RSA public key associated with the partner
+     * @return an {@link Optional} containing the partner if found, otherwise empty
      */
     Optional<Partner> findIdByPublicKey(String publicKey);
 
     /**
-     * Checks if a Partner with the specified ID exists.
+     * Checks if a partner with the given ID exists.
      *
-     * @param id The unique identifier of the partner.
-     * @return {@code true} if the Partner exists, {@code false} otherwise.
+     * @param id the ID of the partner
+     * @return {@code true} if the partner exists, otherwise {@code false}
      */
     boolean existsById(Long id);
 
     /**
-     * Retrieves all active and non-deleted Partners, sorted by ID in descending order.
+     * Retrieves all active and non-deleted partners, sorted by ID in descending order.
      *
-     * @param pageable The {@link Pageable} object containing pagination and sorting details.
-     * @return A {@link Page} of active and non-deleted Partners.
+     * @param pageable the pagination and sorting information
+     * @return a {@link Page} of active, non-deleted partners
      */
-    @Query(
-            value = "SELECT * FROM partner_intf pi2 WHERE pi2.status = TRUE AND pi2.is_deleted = FALSE ORDER BY pi2.id DESC",
-            nativeQuery = true
-    )
+    @Query(value = """
+        SELECT
+            *
+        FROM
+            partner_intf pi2
+        WHERE
+            pi2.status = TRUE
+            AND pi2.is_deleted = FALSE
+        ORDER BY pi2.id DESC
+        """, nativeQuery = true)
     Page<Partner> getAllPartners(Pageable pageable);
 
     /**
-     * Finds the latest identifier, ordered by descending value.
+     * Retrieves the latest identifier among active, non-deleted partners.
      *
-     * @return The latest identifier.
+     * @return the most recent partner identifier, or {@code null} if none exist
      */
-    @Query(
-            value = "SELECT pi2.identifier FROM partner_intf pi2 WHERE pi2.status = TRUE AND pi2.is_deleted = FALSE ORDER BY pi2.identifier DESC LIMIT 1",
-            nativeQuery = true
-    )
+    @Query(value = """
+        SELECT
+            pi2.identifier
+        FROM
+            partner_intf pi2
+        WHERE
+            pi2.status = TRUE
+            AND pi2.is_deleted = FALSE
+        ORDER BY pi2.identifier DESC
+        LIMIT 1
+        """, nativeQuery = true)
     String findTopByOrderByIdentifierDesc();
 }
