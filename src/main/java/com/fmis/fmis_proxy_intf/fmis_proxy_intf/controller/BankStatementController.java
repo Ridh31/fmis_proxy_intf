@@ -263,6 +263,15 @@ public class BankStatementController {
                     .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
         }
 
+        // Check if the 'Data' field is missing or empty
+        if (bankStatementDTO.getData() == null || bankStatementDTO.getData().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(
+                            400,
+                            "An error occurred due to a missing or invalid 'Data' field. Please ensure the data is correct and try again."
+                    ));
+        }
+
         // Get the authenticated user's username
         String username = userService.getAuthenticatedUsername();
 
@@ -286,44 +295,39 @@ public class BankStatementController {
             Optional<Partner> partner = partnerService.findById(partnerId);
             final String[] statement = new String[2];
 
-            // Use ifPresent to safely access the value if it's present
+            // Validate the bank statement data
+            try {
+                BodyValidationUtil.validateBankStatement(bankStatementDTO.getData());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                e.getMessage()
+                        ));
+            }
+
+            Map<String, Object> validatedData = bankStatementDTO.getData();
+            List<Map<String, Object>> statementList = (List<Map<String, Object>>) validatedData.get("CMB_BANKSTM_STG");
+
             partner.ifPresent(p -> {
                 String identifier = p.getIdentifier();
 
-                // Add CMB_BANK_CODE to all arrays in the data
-                if (bankStatementDTO.getData() != null) {
-                    for (Map.Entry<String, Object> entry : bankStatementDTO.getData().entrySet()) {
+                for (Map<String, Object> item : statementList) {
+                    item.put("CMB_BANK_CODE", identifier);
 
-                        // Check if the value is a list
-                        if (entry.getValue() instanceof List<?>) {
-                            List<Map<String, Object>> list = (List<Map<String, Object>>) entry.getValue();
+                    String statementDate = item.getOrDefault("CMB_BSP_STMT_DT", "").toString();
+                    String accountNumber = item.getOrDefault("CMB_BANK_ACCOUNT_N", "").toString();
 
-                            // Add CMB_BANK_CODE to each object in the list
-                            for (Map<String, Object> item : list) {
-                                item.put("CMB_BANK_CODE", identifier);
-
-                                String CMB_BPS_STMT_DT = item.get("CMB_BSP_STMT_DT").toString();
-                                String CMB_BANK_ACCOUNT_N = item.get("CMB_BANK_ACCOUNT_N").toString();
-
-                                if (!CMB_BPS_STMT_DT.isEmpty()) {
-                                    statement[0] = CMB_BPS_STMT_DT + " 00:00:00";
-                                }
-
-                                if (!CMB_BANK_ACCOUNT_N.isEmpty()) {
-                                    statement[1] = CMB_BANK_ACCOUNT_N;
-                                }
-                            }
-                        } else {
-                            // Handle non-list entries by adding CMB_BANK_CODE to the object as null
-                            if (entry.getValue() instanceof Map) {
-                                Map<String, Object> mapValue = (Map<String, Object>) entry.getValue();
-                                mapValue.put("CMB_BANK_CODE", null);
-                            }
-                        }
+                    if (!statementDate.isEmpty()) {
+                        statement[0] = statementDate + " 00:00:00";
+                    }
+                    if (!accountNumber.isEmpty()) {
+                        statement[1] = accountNumber;
                     }
                 }
             });
 
+            // Format the statement date
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             LocalDateTime statementDate = LocalDateTime.parse(statement[0], formatter);
             statementDate = statementDate.plusHours(7);
@@ -333,8 +337,8 @@ public class BankStatementController {
             ObjectMapper objectMapper = new ObjectMapper();
             String data = objectMapper.writeValueAsString(bankStatementDTO.getData());
 
-            // Check if the data is valid
             if (!data.isEmpty()) {
+                // Set the necessary fields in the bank statement DTO
                 bankStatementDTO.setMethod("POST");
                 bankStatementDTO.setEndpoint(endpoint);
                 bankStatementDTO.setFilename(filename);
@@ -363,7 +367,6 @@ public class BankStatementController {
                     String responseMessage;
 
                     if (fmisResponse.getStatusCode().is2xxSuccessful()) {
-
                         // Parse the FMIS XML response manually
                         Map<String, Object> fmisResponseData = new HashMap<>();
 
