@@ -147,4 +147,17 @@ public class PartnerServiceImpl implements PartnerService {
         Pageable pageable = PageRequest.of(page, size);
         return partnerRepository.getAllPartners(pageable);
     }
+
+    /**
+     * Updates and saves an existing {@link Partner} entity.
+     *
+     * @param partner the partner entity with updated information
+     * @return the updated {@link Partner} entity
+     */
+    @Transactional
+    @Override
+    public Partner updatePartner(Partner partner) {
+        return partnerRepository.save(partner);
+    }
+
 }

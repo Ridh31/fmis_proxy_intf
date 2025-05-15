@@ -48,6 +48,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByPartnerIdAndUsername(Long partnerId, String username);
 
     /**
+     * Checks if a user exists in the database based on their unique username.
+     *
+     * @param username the username of the user to check
+     * @return true if a user with the given username exists, false otherwise
+     */
+    boolean existsByUsername(String username);
+
+    /**
      * Retrieves all enabled users in descending order of ID.
      *
      * @param pageable pagination and sorting information

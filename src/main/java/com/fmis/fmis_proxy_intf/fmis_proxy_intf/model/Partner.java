@@ -87,9 +87,10 @@ public class Partner {
      * @param privateKey   RSA private key.
      * @param createdBy    ID of the user who created the partner.
      */
-    public Partner(String name, String description, String code, String publicKey, String privateKey, Long createdBy) {
+    public Partner(String name, String description, String identifier, String code, String publicKey, String privateKey, Long createdBy) {
         this.name = name;
         this.description = description;
+        this.identifier = identifier;
         this.code = code;
         this.publicKey = publicKey;
         this.privateKey = privateKey;

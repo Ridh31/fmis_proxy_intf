@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Optional;
@@ -39,4 +40,13 @@ public interface FmisService {
      * @return The response from the FMIS system.
      */
     ResponseEntity<String> getXmlFromFmis(String fmisURL, String fmisUsername, String fmisPassword);
+
+    /**
+     * Retrieves a paginated list of FMIS configurations.
+     *
+     * @param page The page number (0-based index).
+     * @param size The number of items per page.
+     * @return A {@link Page} of {@link FMIS} entities, representing the configuration list.
+     */
+    Page<FMIS> getConfig(int page, int size);
 }

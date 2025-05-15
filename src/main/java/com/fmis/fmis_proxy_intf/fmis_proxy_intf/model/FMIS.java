@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
@@ -32,14 +33,18 @@ public class FMIS {
     private String description;
 
     @Column(name = "created_by")
+    @JsonIgnore
     private Integer createdBy;
 
     @Column(name = "created_date")
+    @JsonIgnore
     private LocalDateTime createdDate = LocalDateTime.now();
 
+    @JsonIgnore
     private Boolean status = true;
 
     @Column(name = "is_deleted")
+    @JsonIgnore
     private Boolean isDeleted = false;
 
     // Getters and Setters

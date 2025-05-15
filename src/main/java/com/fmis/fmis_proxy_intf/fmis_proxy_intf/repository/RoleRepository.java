@@ -28,4 +28,12 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
      * @return true if the Role exists, false otherwise
      */
     boolean existsById(Long id);
+
+    /**
+     * Retrieves a Role entity by its unique name.
+     *
+     * @param name the name of the Role to retrieve
+     * @return an Optional containing the Role if found, or empty if not found
+     */
+    Optional<Role> findByName(String name);
 }

@@ -68,6 +68,7 @@ public final class ApiResponseConstants {
     public static final String BAD_REQUEST_CODE_STRING = "400";
     public static final String BAD_REQUEST = "Invalid request. Please check the input parameters.";
     public static final String NO_VALID_BANK_STATEMENT = "Bad Request: No valid bank statement data provided.";
+    public static final String NO_CONFIG_TO_UPDATE = "There is no FMIS configuration in the database to update.";
     public static final String PARTNER_NAME_TAKEN = "Bad Request: Partner name is already taken.";
     public static final String PARTNER_IDENTIFIER_TAKEN = "Bad Request: Partner identifier is already taken.";
     public static final String PARTNER_CODE_TAKEN = "Bad Request: Partner code is already taken.";
@@ -100,6 +101,7 @@ public final class ApiResponseConstants {
     public static final String FORBIDDEN_CODE_STRING = "403";
     public static final String FORBIDDEN = "You do not have permission to access this resource.";
     public static final String FORBIDDEN_CREATE_PARTNER = "Forbidden: You do not have permission to create a partner.";
+    public static final String FORBIDDEN_UPDATE_PARTNER = "Forbidden: You do not have permission to update a partner.";
     public static final String FORBIDDEN_RESET_PASSWORD = "You do not have permission to reset passwords.";
     public static final String FORBIDDEN_PARTNER_TOKEN = "Forbidden: Partner token validation failed.";
 

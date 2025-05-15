@@ -75,4 +75,12 @@ public interface PartnerService {
      * @return a {@link Page} of {@link Partner} entities
      */
     Page<Partner> getAllPartners(int page, int size);
+
+    /**
+     * Updates an existing {@link Partner} entity.
+     *
+     * @param partner the partner entity with updated fields
+     * @return the updated {@link Partner} entity
+     */
+    Partner updatePartner(Partner partner);
 }

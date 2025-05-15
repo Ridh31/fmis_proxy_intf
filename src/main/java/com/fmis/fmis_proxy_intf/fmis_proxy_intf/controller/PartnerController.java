@@ -391,4 +391,162 @@ public class PartnerController {
                     ));
         }
     }
+
+    /**
+     * Updates and saves an existing {@link Partner} entity.
+     * Accessible only to Super Admin users.
+     *
+     * This endpoint validates the input, checks user authentication and role,
+     * ensures there are no conflicts with other existing partners (by name, identifier, or code),
+     * and updates the partner details including re-generating RSA keys if the code is changed.
+     *
+     * @param id               the ID of the partner to update
+     * @param updatedPartner   the updated {@link Partner} object with new values
+     * @param bindingResult    the result of validation checks
+     * @return a {@link ResponseEntity} containing an {@link ApiResponse} object with status and data
+     */
+    @Operation(
+            summary = "Update an existing partner",
+            description = "Allows a Super Admin to update the details of an existing partner. Only users with role level 1 are authorized to perform this operation."
+    )
+    @Hidden
+    @PutMapping("/update-partner/{id}")
+    public ResponseEntity<ApiResponse<?>> updatePartner(
+            @PathVariable String id,
+            @Validated @RequestBody Partner updatedPartner,
+            BindingResult bindingResult) {
+
+        // Extract validation errors
+        Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+        if (!validationErrors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
+        }
+
+        long partnerId;
+        try {
+            partnerId = Long.parseLong(id);
+        } catch (NumberFormatException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            "Invalid partner ID. Must be a numeric value."
+                    ));
+        }
+
+        try {
+            // Authenticate user
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.UNAUTHORIZED_CODE,
+                                ApiResponseConstants.UNAUTHORIZED_LOGIN_REQUIRED
+                        ));
+            }
+
+            String username = authentication.getName();
+            Optional<User> userOptional = userService.findByUsername(username);
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.UNAUTHORIZED_CODE,
+                                ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
+                        ));
+            }
+
+            User currentUser = userOptional.get();
+
+            // Check role and access
+            Long roleId = currentUser.getRole().getId();
+            if (!roleService.existsById(roleId)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.NOT_FOUND_CODE,
+                                ApiResponseConstants.ROLE_NOT_FOUND
+                        ));
+            }
+
+            if (currentUser.getRole().getLevel() != 1) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.FORBIDDEN_CODE,
+                                ApiResponseConstants.FORBIDDEN_UPDATE_PARTNER
+                        ));
+            }
+
+            // Retrieve existing partner
+            Optional<Partner> existingPartnerOpt = partnerService.findById(partnerId);
+            if (existingPartnerOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.NOT_FOUND_CODE,
+                                ApiResponseConstants.NO_PARTNERS_FOUND
+                        ));
+            }
+
+            Partner existingPartner = existingPartnerOpt.get();
+
+            // Check for name conflict (if name has changed)
+            if (!existingPartner.getName().equalsIgnoreCase(updatedPartner.getName())
+                    && partnerService.findByName(updatedPartner.getName()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.PARTNER_NAME_TAKEN
+                        ));
+            }
+
+            // Check for identifier conflict
+            if (!existingPartner.getIdentifier().equalsIgnoreCase(updatedPartner.getIdentifier())
+                    && partnerService.findByIdentifier(updatedPartner.getIdentifier()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.PARTNER_IDENTIFIER_TAKEN
+                        ));
+            }
+
+            // Check for code conflict
+            if (!existingPartner.getCode().equalsIgnoreCase(updatedPartner.getCode())
+                    && partnerService.findByCode(updatedPartner.getCode()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.PARTNER_CODE_TAKEN
+                        ));
+            }
+
+            // Check if code has changed before setting it
+            boolean codeChanged = !existingPartner.getCode().equalsIgnoreCase(updatedPartner.getCode());
+
+            // Update partner fields
+            existingPartner.setName(updatedPartner.getName());
+            existingPartner.setCode(updatedPartner.getCode());
+            existingPartner.setIdentifier(updatedPartner.getIdentifier());
+            existingPartner.setDescription(updatedPartner.getDescription());
+
+            // Re-generate keys if code has changed
+            if (codeChanged) {
+                Map<String, Object> key = RSAUtil.generatePartnerKey(updatedPartner.getCode());
+                existingPartner.setPublicKey(key.get("public_key").toString());
+                existingPartner.setPrivateKey(key.get("private_key").toString());
+            }
+
+            // Save updated partner
+            Partner savedPartner = partnerService.updatePartner(existingPartner);
+
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.UPDATED, savedPartner
+            ));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
 }

@@ -1,9 +1,13 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.impl;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.FmisRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -107,5 +111,18 @@ public class FmisServiceImpl implements FmisService {
             // Handle general exceptions
             return ResponseEntity.status(500).body("Internal Server Error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Retrieves a paginated list of FMIS configuration.
+     *
+     * @param page The page number (0-based index).
+     * @param size The number of records per page.
+     * @return A {@link Page} containing FMIS configuration entities.
+     */
+    @Override
+    public Page<FMIS> getConfig(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return fmisRepository.getConfig(pageable);
     }
 }
