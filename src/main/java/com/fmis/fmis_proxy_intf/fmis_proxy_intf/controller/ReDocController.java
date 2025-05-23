@@ -46,13 +46,8 @@ public class ReDocController {
     @GetMapping("/docs")
     public ResponseEntity<byte[]> serveReDoc() {
         try {
-            // Load the redoc.html file from the classpath (static directory)
-            Resource resource = new ClassPathResource("static/redoc.html");
-
-            // Read the content of the redoc.html file as a String
+            Resource resource = new ClassPathResource("templates/redoc.html");
             String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
-
-            // Replace placeholders in the HTML with actual values from the application's properties
             content = content.replace("{{appTitle}}", applicationTitle)
                     .replace("{{appDescription}}", applicationDescription)
                     .replace("{{appVersion}}", applicationVersion)
@@ -62,18 +57,11 @@ public class ReDocController {
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
 
-            // Return the HTML content with 200 OK status
             return new ResponseEntity<>(content.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.OK);
-
         } catch (IOException e) {
-            // Handle errors related to reading the redoc.html file
             String errorMessage = ApiResponseConstants.ERROR_READING_FILE;
-
-            // Set response headers to indicate plain text content
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-
-            // Return an error response with a 500 Internal Server Error status
             return new ResponseEntity<>(errorMessage.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
