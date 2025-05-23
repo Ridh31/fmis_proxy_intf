@@ -267,8 +267,8 @@ public class BankStatementController {
         if (bankStatementDTO.getData() == null || bankStatementDTO.getData().isEmpty()) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(
-                            400,
-                            "An error occurred due to a missing or invalid 'Data' field. Please ensure the data is correct and try again."
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.BAD_REQUEST_INVALID_DATA
                     ));
         }
 
@@ -882,6 +882,7 @@ public class BankStatementController {
                 dto.setCreatedDate(bankStatement.getCreatedDate());
                 dto.setStatus(bankStatement.getStatus());
                 dto.setIsDeleted(bankStatement.getIsDeleted());
+                dto.setImportedBy(bankStatement.getPartner().getName());
 
                 // Convert payload string to JsonNode for API response
                 JsonNode payloadJson = null;

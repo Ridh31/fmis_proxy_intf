@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Role;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import org.springframework.data.domain.Page;
 
@@ -66,6 +67,15 @@ public interface UserService {
      * @return an {@link Optional} containing the user if found, or empty if not
      */
     Optional<User> findByPartnerIdAndUsername(Long partnerId, String username);
+
+    /**
+     * Checks whether the given user has administrative privileges.
+     * A user is considered an admin if their role level is 1 (Super Admin) or 2 (Admin).
+     *
+     * @param user the user to check
+     * @return true if the user is an admin or super admin; false otherwise
+     */
+    boolean isAdmin(User user);
 
     /**
      * Retrieves a paginated list of all enabled users.

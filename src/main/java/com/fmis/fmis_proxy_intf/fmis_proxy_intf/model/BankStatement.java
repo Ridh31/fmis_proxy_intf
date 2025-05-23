@@ -70,6 +70,9 @@ public class BankStatement {
     @JsonIgnore
     private Boolean isDeleted = false;
 
+    @Transient
+    private String importedBy;
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -181,5 +184,13 @@ public class BankStatement {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public String getImportedBy() {
+        return importedBy;
+    }
+
+    public void setImportedBy(String importedBy) {
+        this.importedBy = importedBy;
     }
 }

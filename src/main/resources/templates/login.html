@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/img/logo-fmis-v2-300x190-1.png" rel="shortcut icon">
+    <title>{{title}}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .left {
+            flex: 0.5;
+            background: #0078D7 url('/img/waving-blue.jpg') center center / cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .left h1 {
+            font-size: 2.5rem;
+        }
+
+        .left h2 {
+            font-size: 1.3rem;
+        }
+
+        .right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            user-select: none;
+        }
+
+        .login-box p {
+            color: #666;
+            margin-bottom: 2rem;
+            user-select: none;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1.5px solid #CCC;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .input-group input.error {
+            border-color: crimson;
+        }
+
+        .input-group .error-message {
+            color: crimson;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .login-btn {
+            background-color: #22A0DA;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            height: 44px;
+        }
+
+        .login-btn:hover {
+            background-color: #1A63D2;
+            transition: 0.5s;
+        }
+
+        .login-btn:disabled {
+            background-color: #A1D4F7;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            visibility: hidden;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .login-btn span {
+            display: inline-block;
+        }
+
+        .login-btn:disabled .spinner {
+            visibility: visible;
+        }
+
+        .login-btn:disabled span {
+            visibility: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .left {
+                height: 200px;
+            }
+
+            .right {
+                flex: none;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="left">
+        <div>
+            <img src="/img/logo-fmis-v2-300x190-1.png" alt="Logo" style="max-width: 150px; margin-bottom: 1rem;">
+            <h2>Financial Management Information System</h2>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="login-box">
+            <h2>{{heading}}</h2>
+            <p>FMIS Proxy Interface</p>
+
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username">
+                    <div id="username-error" class="error-message" style="display: none;">The Username field is required</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password">
+                    <div id="password-error" class="error-message" style="display: none;">The Password field is required</div>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <span id="button-text">Log in</span>
+                    <svg id="spinner" class="spinner" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+                        <rect x="0" y="10" width="4" height="10" fill="#FFFFFF" opacity="0.2">
+                            <animate attributeName="opacity" attributeType="XML" values="0.2; 1; .2" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                            <animate attributeName="height" attributeType="XML" values="10; 20; 10" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                            <animate attributeName="y" attributeType="XML" values="10; 5; 10" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                        </rect>
+                        <rect x="8" y="10" width="4" height="10" fill="#FFFFFF" opacity="0.2">
+                            <animate attributeName="opacity" attributeType="XML" values="0.2; 1; .2" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                            <animate attributeName="height" attributeType="XML" values="10; 20; 10" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                            <animate attributeName="y" attributeType="XML" values="10; 5; 10" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                            </rect>
+                        <rect x="16" y="10" width="4" height="10" fill="#FFFFFF" opacity="0.2">
+                            <animate attributeName="opacity" attributeType="XML" values="0.2; 1; .2" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                            <animate attributeName="height" attributeType="XML" values="10; 20; 10" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                            <animate attributeName="y" attributeType="XML" values="10; 5; 10" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                        </rect>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("login-form");
+        const username = document.getElementById("username");
+        const password = document.getElementById("password");
+        const usernameError = document.getElementById("username-error");
+        const passwordError = document.getElementById("password-error");
+        const loginBtn = document.querySelector(".login-btn");
+        const spinner = document.getElementById("spinner");
+        const buttonText = document.getElementById("button-text");
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault(); // prevent default form submission
+
+            let isValid = true;
+
+            // Reset previous error states
+            username.classList.remove("error");
+            password.classList.remove("error");
+            usernameError.style.display = "none";
+            passwordError.style.display = "none";
+
+            // Validate input
+            if (username.value.trim() === "") {
+                username.classList.add("error");
+                usernameError.style.display = "block";
+                isValid = false;
+            }
+
+            if (password.value.trim() === "") {
+                password.classList.add("error");
+                passwordError.style.display = "block";
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // Disable the button and show spinner
+            loginBtn.disabled = true;
+            spinner.style.display = "inline-block";
+            buttonText.style.display = "none";
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append("username", username.value.trim());
+            formData.append("password", password.value.trim());
+
+            try {
+                const response = await fetch(`${window.location.origin}/api/v1/auth/verify-admin`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.code === 200 && result.data === true) {
+                    document.cookie = "isAdmin=true; path=/; SameSite=Lax; Secure";
+                    document.cookie = `adminUsername=${username.value.trim()}; path=/; SameSite=Lax; Secure`;
+                    document.cookie = `adminPassword=${password.value.trim()}; path=/; SameSite=Lax; Secure`;
+                    window.location.href = "/api/v1/admin/bank-statement-log";
+                } else {
+                    username.classList.add("error");
+                    password.classList.add("error");
+                    usernameError.textContent = "Access denied: Invalid admin credentials.";
+                    usernameError.style.display = "block";
+                }
+
+            } catch (err) {
+                console.error("Error verifying admin: ", err);
+                username.classList.add("error");
+                password.classList.add("error");
+                usernameError.textContent = "An unexpected error occurred. Please try again.";
+                usernameError.style.display = "block";
+            } finally {
+                loginBtn.disabled = false;
+                spinner.style.display = "none";
+                buttonText.style.display = "inline";
+            }
+        });
+    });
+</script>
+</body>
+</html>

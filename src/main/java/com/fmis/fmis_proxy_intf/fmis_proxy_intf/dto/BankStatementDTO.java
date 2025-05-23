@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -63,7 +64,8 @@ public class BankStatementDTO {
     private Long createdBy;
 
     @Schema(hidden = true)
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm a")
     private LocalDateTime createdDate;
 
     @Schema(hidden = true)
@@ -72,6 +74,10 @@ public class BankStatementDTO {
     @Schema(hidden = true)
     @JsonIgnore
     private Boolean isDeleted;
+
+    @Schema(hidden = true)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String importedBy;
 
     // Constructors
     public BankStatementDTO() {
@@ -243,7 +249,7 @@ public class BankStatementDTO {
 
     @JsonProperty("status")
     public String getStatusText() {
-        return Boolean.TRUE.equals(status) ? "Success" : "Error";
+        return Boolean.TRUE.equals(status) ? "Processed" : "Failed";
     }
 
     public Boolean getIsDeleted() {
@@ -252,5 +258,20 @@ public class BankStatementDTO {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public String getImportedBy() {
+        return importedBy;
+    }
+
+    public void setImportedBy(String importedBy) {
+        this.importedBy = importedBy;
+    }
+
+    @JsonProperty("createdDateFormatted")
+    public String getCreatedDateFormatted() {
+        return createdDate != null
+                ? createdDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"))
+                : null;
     }
 }

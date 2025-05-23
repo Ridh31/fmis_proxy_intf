@@ -32,6 +32,8 @@ public final class ApiResponseConstants {
     public static final int SUCCESS_CODE = 200;
     public static final String SUCCESS_CODE_STRING = "200";
     public static final String SUCCESS = "The request has been processed successfully.";
+    public static final String ACCESS_GRANTED = "Access granted: Admin privileges verified.";
+    public static final String ACCESS_DENIED = "Access denied: Insufficient privileges.";
 
     /** HTTP Status Code [201] - Created: The resource has been created successfully */
     public static final int CREATED_CODE = 201;
@@ -79,6 +81,7 @@ public final class ApiResponseConstants {
     public static final String BAD_REQUEST_FILE_MISSING_OR_EMPTY = "Bad Request: File is missing or empty.";
     public static final String BAD_REQUEST_INVALID_FILE_TYPE = "Bad Request: Invalid file type. Only JSON is allowed.";
     public static final String BAD_REQUEST_FAILED_TO_PARSE_JSON = "Bad Request: Failed to read or parse JSON file.";
+    public static final String BAD_REQUEST_INVALID_DATA = "An error occurred due to a missing or invalid 'Data' field. Please ensure the data is correct and try again.";
 
     /**
      * 401 Unauthorized Errors - Authentication issues

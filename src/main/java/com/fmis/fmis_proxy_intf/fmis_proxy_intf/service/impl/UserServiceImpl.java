@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.impl;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Role;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.UserRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
@@ -134,6 +135,19 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public Optional<User> findByPartnerIdAndUsername(Long partnerId, String username) {
         return userRepository.findByPartnerIdAndUsername(partnerId, username);
+    }
+
+    /**
+     * Determines if the given user has administrative privileges.
+     * A user is considered an admin if their role level is 1 (Super Admin) or 2 (Admin).
+     *
+     * @param user the user whose role is to be checked
+     * @return true if the user is a Super Admin or Admin; false otherwise
+     */
+    @Override
+    public boolean isAdmin(User user) {
+        Role role = user.getRole();
+        return role != null && (role.getLevel() == 1 || role.getLevel() == 2);
     }
 
     /**

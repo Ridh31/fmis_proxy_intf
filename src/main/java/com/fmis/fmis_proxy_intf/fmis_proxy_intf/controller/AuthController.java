@@ -385,4 +385,69 @@ public class AuthController {
                     ));
         }
     }
+
+    /**
+     * Endpoint to verify whether the user is an Admin or Super Admin based on credentials.
+     * Returns a boolean flag along with appropriate status and message.
+     *
+     * @param username The username of the user to authenticate.
+     * @param password The password associated with the given username.
+     * @return A ResponseEntity containing an ApiResponse<Boolean> indicating admin status.
+     *         - 200 OK if valid credentials, with a message indicating access level.
+     *         - 401 Unauthorized if credentials are invalid.
+     *         - 500 Internal Server Error if an unexpected error occurs.
+     */
+    @Operation(
+            summary = "Admin Verification",
+            description = "Verify whether the user is an Admin or Super Admin based on provided credentials."
+    )
+    @Hidden
+    @PostMapping("/verify-admin")
+    public ResponseEntity<ApiResponse<Boolean>> verifyAdmin(
+            @RequestParam String username,
+            @RequestParam String password) {
+        try {
+            Optional<User> optionalUser = userService.findByUsername(username);
+
+            // Return 401 if user not found
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.UNAUTHORIZED_CODE,
+                                ApiResponseConstants.INVALID_CREDENTIALS,
+                                false
+                        ));
+            }
+
+            User user = optionalUser.get();
+
+            // Return 401 if password does not match
+            if (!passwordEncoder.matches(password, user.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.UNAUTHORIZED_CODE,
+                                ApiResponseConstants.INVALID_CREDENTIALS,
+                                false
+                        ));
+            }
+
+            // Check if user has admin role
+            boolean isAdmin = userService.isAdmin(user);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(
+                            ApiResponseConstants.SUCCESS_CODE,
+                            isAdmin ? ApiResponseConstants.ACCESS_GRANTED : ApiResponseConstants.ACCESS_DENIED,
+                            isAdmin
+                    )
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR,
+                            false
+                    ));
+        }
+    }
 }
