@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -160,4 +161,17 @@ public class PartnerServiceImpl implements PartnerService {
         return partnerRepository.save(partner);
     }
 
+    /**
+     * Retrieves a paginated list of partners where {@code isBank = true} and {@code isOwn = false},
+     * sorted by the {@code identifier} field in ascending order.
+     *
+     * @param page the page number to retrieve (0-based)
+     * @param size the number of records per page
+     * @return a {@link Page} of {@link Partner} entities matching the filter criteria
+     */
+    @Override
+    public Page<Partner> getFilteredBankPartners(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("identifier").ascending());
+        return partnerRepository.findByIsBankTrueAndIsOwnFalse(pageable);
+    }
 }

@@ -83,4 +83,16 @@ public interface PartnerService {
      * @return the updated {@link Partner} entity
      */
     Partner updatePartner(Partner partner);
+
+    /**
+     * Retrieves a paginated list of {@link Partner} entities that match the following criteria:
+     * - isBank is true
+     * - isOwn is false
+     * The results are sorted by the identifier field in ascending order.
+     *
+     * @param page the zero-based page index to retrieve
+     * @param size the number of records per page
+     * @return a {@link Page} of filtered {@link Partner} entities
+     */
+    Page<Partner> getFilteredBankPartners(int page, int size);
 }

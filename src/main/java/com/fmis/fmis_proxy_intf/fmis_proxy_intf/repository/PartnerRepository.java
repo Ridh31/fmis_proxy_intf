@@ -97,4 +97,15 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
         LIMIT 1
         """, nativeQuery = true)
     String findTopByOrderByIdentifierDesc();
+
+    /**
+     * Finds all {@link Partner} entities where:
+     * - isBank is true
+     * - isOwn is false
+     *
+     * Results are returned in a paginated format based on the provided {@link Pageable} object.
+     * @param pageable the pagination and sorting information
+     * @return a {@link Page} of {@link Partner} entities matching the criteria
+     */
+    Page<Partner> findByIsBankTrueAndIsOwnFalse(Pageable pageable);
 }

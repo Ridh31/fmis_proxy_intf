@@ -84,15 +84,28 @@ public class BankStatementServiceImpl implements BankStatementService {
     /**
      * Retrieves a paginated list of filtered bank statements based on provided filters.
      *
-     * @param page             The page number to fetch (starting from 0).
-     * @param size             The size of each page (items per page).
+     * @param page              The page number to fetch (starting from 0).
+     * @param size              The size of each page (items per page).
+     * @param partnerId         The partner id filter (optional).
      * @param bankAccountNumber The bank account number filter (optional).
-     * @param statementDate    The statement date filter (optional).
+     * @param statementDate     The statement date filter (optional).
+     * @param importedDate      The imported date filter (optional).
      * @return A {@link Page} of {@link BankStatement} entities.
      */
     @Override
-    public Page<BankStatement> getFilteredBankStatements(int page, int size, String bankAccountNumber, LocalDate statementDate, LocalDate importedDate) {
+    public Page<BankStatement> getFilteredBankStatements(
+            int page, int size,
+            Long partnerId,
+            String bankAccountNumber,
+            LocalDate statementDate,
+            LocalDate importedDate) {
+
         Pageable pageable = PageRequest.of(page, size);
-        return bankStatementRepository.findFilteredBankStatements(bankAccountNumber, statementDate, importedDate, pageable);
+        return bankStatementRepository.findFilteredBankStatements(
+                partnerId,
+                bankAccountNumber,
+                statementDate,
+                importedDate,
+                pageable);
     }
 }

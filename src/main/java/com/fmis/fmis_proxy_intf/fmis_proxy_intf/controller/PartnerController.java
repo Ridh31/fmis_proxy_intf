@@ -2,6 +2,7 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.PartnerDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
@@ -314,6 +315,7 @@ public class PartnerController {
             summary = "Get all partners",
             description = "Retrieves a paginated list of all partners."
     )
+    @Hidden
     @GetMapping("/list-partner")
     public ResponseEntity<ApiResponse<?>> getAllPartners(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
@@ -393,6 +395,97 @@ public class PartnerController {
     }
 
     /**
+     * Endpoint to retrieve a paginated list of all bank partners (No token).
+     *
+     * @param page The page number (default: 0).
+     * @param size The number of items per page (default: 10).
+     * @return A paginated list of bank partners.
+     */
+    @Operation(
+            summary = "Get all bank partners (No token)",
+            description = "Retrieves a paginated list of all bank partners."
+    )
+    @Hidden
+    @GetMapping("/list-bank-partner")
+    public ResponseEntity<ApiResponse<?>> getAllBankPartners(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        // Get the authenticated user's username
+        String username = userService.getAuthenticatedUsername();
+
+        // Get the user from the database based on the username
+        Optional<User> userOptional = userService.findByUsername(username);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.UNAUTHORIZED_CODE,
+                            ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
+                    ));
+        }
+
+        User currentUser = userOptional.get();
+
+        // Fetch the role of the authenticated user
+        Long roleId = currentUser.getRole().getId();
+        if (!roleService.existsById(roleId)) {
+            // Handle case where role does not exist
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.NOT_FOUND_CODE,
+                            ApiResponseConstants.ROLE_NOT_FOUND
+                    ));
+        }
+
+        // Privilege access
+        int level = currentUser.getRole().getLevel();
+        if (level != 1 && level != 2) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.FORBIDDEN_CODE,
+                            ApiResponseConstants.FORBIDDEN
+                    ));
+        }
+
+        try {
+            // Fetch the paginated list of partners
+            Page<Partner> partners = partnerService.getFilteredBankPartners(page, size);
+            Page<PartnerDTO> partnerDTO = partners.map(
+                    partner -> new PartnerDTO(
+                            partner.getId(),
+                            partner.getName(),
+                            partner.getDescription(),
+                            partner.getIdentifier()
+                    )
+            );
+
+            // If no partners are found, return a 204 No Content response
+            if (partners.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.NO_CONTENT_CODE,
+                                ApiResponseConstants.NO_PARTNERS_FOUND
+                        ));
+            }
+
+            // Return the paginated list of partners wrapped in a successful API response
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.PARTNERS_FETCHED,
+                    partnerDTO
+            ));
+
+        } catch (Exception e) {
+            // Handle any exceptions and return an internal server error response
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_FETCHING_PARTNERS + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
      * Updates and saves an existing {@link Partner} entity.
      * Accessible only to Super Admin users.
      *
@@ -430,7 +523,7 @@ public class PartnerController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.BAD_REQUEST_CODE,
-                            "Invalid partner ID. Must be a numeric value."
+                            ApiResponseConstants.BAD_REQUEST_PARTNER_ID_NOT_NUMERIC
                     ));
         }
 

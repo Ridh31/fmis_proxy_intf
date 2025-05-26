@@ -82,6 +82,7 @@ public final class ApiResponseConstants {
     public static final String BAD_REQUEST_INVALID_FILE_TYPE = "Bad Request: Invalid file type. Only JSON is allowed.";
     public static final String BAD_REQUEST_FAILED_TO_PARSE_JSON = "Bad Request: Failed to read or parse JSON file.";
     public static final String BAD_REQUEST_INVALID_DATA = "An error occurred due to a missing or invalid 'Data' field. Please ensure the data is correct and try again.";
+    public static final String BAD_REQUEST_PARTNER_ID_NOT_NUMERIC = "Invalid partner ID. Must be a numeric value.";
 
     /**
      * 401 Unauthorized Errors - Authentication issues

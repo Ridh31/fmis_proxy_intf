@@ -35,10 +35,17 @@ public interface BankStatementService {
      *
      * @param page              The page number to fetch (starting from 0).
      * @param size              The number of items per page.
+     * @param partnerId         The partner id to filter by (optional).
      * @param bankAccountNumber The bank account number to filter by (optional).
      * @param statementDate     The statement date to filter by (optional).
      * @param importedDate      The imported date to filter by (optional).
      * @return A {@link Page}   containing the filtered list of {@link BankStatement} entities.
      */
-    Page<BankStatement> getFilteredBankStatements(int page, int size, String bankAccountNumber, LocalDate statementDate, LocalDate importedDate);
+    Page<BankStatement> getFilteredBankStatements(
+            int page, int size,
+            Long partnerId,
+            String bankAccountNumber,
+            LocalDate statementDate,
+            LocalDate importedDate
+    );
 }

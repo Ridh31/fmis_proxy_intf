@@ -59,6 +59,14 @@ public class Partner {
     @JsonIgnore
     private String privateKey;
 
+    @Column(name = "is_own")
+    @JsonIgnore
+    private Boolean isOwn = false;
+
+    @Column(name = "is_bank")
+    @JsonIgnore
+    private Boolean isBank = false;
+
     @JsonIgnore
     private Long createdBy;
 
@@ -87,13 +95,15 @@ public class Partner {
      * @param privateKey   RSA private key.
      * @param createdBy    ID of the user who created the partner.
      */
-    public Partner(String name, String description, String identifier, String code, String publicKey, String privateKey, Long createdBy) {
+    public Partner(String name, String description, String identifier, String code, String publicKey, String privateKey, Boolean isOwn, Boolean isBank, Long createdBy) {
         this.name = name;
         this.description = description;
         this.identifier = identifier;
         this.code = code;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
+        this.isOwn = isOwn;
+        this.isBank = isBank;
         this.createdBy = createdBy;
         this.createdDate = LocalDateTime.now();
     }
@@ -153,6 +163,22 @@ public class Partner {
 
     public void setPrivateKey(String privateKey) {
         this.privateKey = privateKey;
+    }
+
+    public Boolean getIsOwn() {
+        return isOwn;
+    }
+
+    public void setIsOwn(Boolean isOwn) {
+        this.isOwn = isOwn;
+    }
+
+    public Boolean getIsBank() {
+        return isBank;
+    }
+
+    public void setIsBank(Boolean isBank) {
+        this.isBank = isBank;
     }
 
     public Long getCreatedBy() {

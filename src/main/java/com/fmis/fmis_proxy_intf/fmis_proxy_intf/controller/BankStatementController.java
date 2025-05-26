@@ -840,6 +840,7 @@ public class BankStatementController {
     public ResponseEntity<ApiResponse<?>> getBankStatements(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
+            @RequestParam(required = false) String bankId,
             @RequestParam(required = false) String bankAccountNumber,
             @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate statementDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate importedDate,
@@ -855,9 +856,22 @@ public class BankStatementController {
             return partnerValidationResponse;
         }
 
+        Long partnerId = null;
+        if (bankId != null && !bankId.trim().isEmpty()) {
+            try {
+                partnerId = Long.parseLong(bankId.trim());
+            } catch (NumberFormatException ex) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.BAD_REQUEST_PARTNER_ID_NOT_NUMERIC
+                        ));
+            }
+        }
+
         try {
             // Fetch the paginated list of bank statements from the service
-            Page<BankStatement> bankStatements = bankStatementService.getFilteredBankStatements(page, size, bankAccountNumber, statementDate, importedDate);
+            Page<BankStatement> bankStatements = bankStatementService.getFilteredBankStatements(page, size, partnerId, bankAccountNumber, statementDate, importedDate);
 
             // ObjectMapper for JSON conversion
             ObjectMapper objectMapper = new ObjectMapper();

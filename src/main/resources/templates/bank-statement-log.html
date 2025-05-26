@@ -54,6 +54,30 @@
             background-color: #0F5CC2;
         }
 
+        select {
+            padding: 0.6rem 1rem;
+            border-radius: 5px;
+            border: 1px solid #E4E4E4;
+            font-size: 14px;
+            background-color: white;
+            color: #333;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 16px 16px;
+            padding-right: 2rem;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #1A73E8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.25);
+        }
+
         .table-container {
             padding: 1.5rem;
             background-color: #FFFFFF;
@@ -192,8 +216,14 @@
 <h2>{{heading}}</h2>
 <div class="filter-bar">
     <label>
+        <span class="input-title">BANK PARTNER</span><br>
+        <select id="partnerSelect" title="Select a bank partner">
+            <option value="" selected disabled>── Select a Bank ──</option>
+        </select>
+    </label>
+    <label>
         <span class="input-title">BANK ACCOUNT NUMBER</span><br>
-        <input id="bankAccount" type="text" placeholder="e.g. 0000-00-123456-7N" title="Enter bank account number">
+        <input id="bankAccount" type="text" placeholder="e.g. ✗✗✗-✗✗..." title="Enter bank account number">
     </label>
     <label>
         <span class="input-title">STATEMENT DATE</span><br>
@@ -297,6 +327,45 @@
     }
 
     /**
+     * Asynchronously loads partner options into the select input.
+     *
+     * Fetches the list of partners from the public API endpoint using basic authentication,
+     * then populates the <select> dropdown (`#partnerSelect`) with each partner's identifier and name.
+     * Handles API errors gracefully and logs them to the console.
+     */
+    async function loadPartners() {
+        const partnerSelect = document.getElementById('partnerSelect');
+
+        try {
+            // Make a request to fetch the list of partners using basic auth
+            const response = await fetch(`${baseUrl}/api/v1/list-bank-partner`, {
+                headers: {
+                    'Authorization': `Basic ${basicAuth}`
+                }
+            });
+
+            // Throw an error if the response is not successful
+            if (!response.ok) {
+                throw new Error(`Failed to fetch partners: ${response.status}`);
+            }
+
+            // Parse the JSON response
+            const data = await response.json();
+            const partners = data?.data?.content || [];
+
+            // Populate the select dropdown with partner options
+            partners.forEach(partner => {
+                const option = document.createElement('option');
+                option.value = partner.id;
+                option.textContent = `${partner.identifier} – ${partner.name}`;
+                partnerSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Error loading partners:", error);
+        }
+    }
+
+    /**
      * Fetches paginated bank statement data from the API based on filter inputs,
      * aggregates all pages, and updates the table display.
      * Handles loading state, authorization headers, and errors gracefully.
@@ -306,12 +375,14 @@
         tbody.innerHTML = "";
         showLoading();
 
+        const bankId = document.getElementById('partnerSelect').value;
         const account = document.getElementById('bankAccount').value;
         const statementDate = document.getElementById('statementDate').value;
         const importedDate = document.getElementById('importedDate').value;
 
         const params = new URLSearchParams();
         params.append("size", 100);
+        if (bankId) params.append("bankId", bankId);
         if (account) params.append("bankAccountNumber", account);
         if (statementDate) params.append("statementDate", formatDate(statementDate));
         if (importedDate) params.append("importedDate", formatDate(importedDate));
@@ -532,6 +603,7 @@
     }
 
     // Initial fetch when page loads
+    loadPartners();
     fetchData();
 </script>
 </body>

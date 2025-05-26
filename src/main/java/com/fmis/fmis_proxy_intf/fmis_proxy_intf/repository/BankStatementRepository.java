@@ -50,23 +50,24 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
      * @return A {@link Page} of {@link BankStatement} entities.
      */
     @Query(value = """
-            SELECT
-                bs.*,
-                pi2.name AS imported_by,
-                pi2.name AS partner_identifier
-            FROM
-                bank_statement bs
-                LEFT JOIN partner_intf pi2
-                ON pi2.id = bs.partner_intf_id
-            WHERE bs.is_deleted = FALSE
-                AND (:bankAccountNumber IS NULL OR bs.bank_account_number = :bankAccountNumber)
-                AND (:statementDate IS NULL OR bs.statement_date >= :statementDate 
+        SELECT
+            bs.*,
+            pi2.name AS imported_by,
+            pi2.name AS partner_identifier
+        FROM
+            bank_statement bs
+            LEFT JOIN partner_intf pi2 ON pi2.id = bs.partner_intf_id
+        WHERE bs.is_deleted = FALSE
+            AND (:bankAccountNumber IS NULL OR bs.bank_account_number = :bankAccountNumber)
+            AND (:statementDate IS NULL OR bs.statement_date >= :statementDate 
                 AND bs.statement_date < DATE_ADD(:statementDate, INTERVAL 1 DAY))
-                AND (:importedDate IS NULL OR bs.created_date >= :importedDate 
+            AND (:importedDate IS NULL OR bs.created_date >= :importedDate 
                 AND bs.created_date < DATE_ADD(:importedDate, INTERVAL 1 DAY))
-            ORDER BY bs.id DESC
-            """, nativeQuery = true)
+            AND (:partnerId IS NULL OR bs.partner_intf_id = :partnerId)
+        ORDER BY bs.id DESC
+        """, nativeQuery = true)
     Page<BankStatement> findFilteredBankStatements(
+            @Param("partnerId") Long partnerId,
             @Param("bankAccountNumber") String bankAccountNumber,
             @Param("statementDate") LocalDate statementDate,
             @Param("importedDate") LocalDate importedDate,
