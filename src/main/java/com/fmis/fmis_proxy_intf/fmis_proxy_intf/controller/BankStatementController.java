@@ -844,6 +844,7 @@ public class BankStatementController {
             @RequestParam(required = false) String bankAccountNumber,
             @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate statementDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate importedDate,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
@@ -856,6 +857,7 @@ public class BankStatementController {
             return partnerValidationResponse;
         }
 
+        // Check partner id if exist
         Long partnerId = null;
         if (bankId != null && !bankId.trim().isEmpty()) {
             try {
@@ -869,9 +871,25 @@ public class BankStatementController {
             }
         }
 
+        // Check status value if exist
+        Boolean statusValue = null;
+        if (status != null && !status.trim().isEmpty()) {
+            if ("true".equalsIgnoreCase(status.trim())) {
+                statusValue = true;
+            } else if ("false".equalsIgnoreCase(status.trim())) {
+                statusValue = false;
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.BAD_REQUEST_INVALID_STATUS_VALUE
+                        ));
+            }
+        }
+
         try {
             // Fetch the paginated list of bank statements from the service
-            Page<BankStatement> bankStatements = bankStatementService.getFilteredBankStatements(page, size, partnerId, bankAccountNumber, statementDate, importedDate);
+            Page<BankStatement> bankStatements = bankStatementService.getFilteredBankStatements(page, size, partnerId, bankAccountNumber, statementDate, importedDate, statusValue);
 
             // ObjectMapper for JSON conversion
             ObjectMapper objectMapper = new ObjectMapper();

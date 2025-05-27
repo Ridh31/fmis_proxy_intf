@@ -82,15 +82,18 @@ public class BankStatementServiceImpl implements BankStatementService {
     }
 
     /**
-     * Retrieves a paginated list of filtered bank statements based on provided filters.
+     * Retrieves a paginated list of filtered bank statements based on the provided filters.
+     * Filters include partner ID, bank account number, statement date, imported date, and status.
+     * Only non-deleted bank statements are returned.
      *
      * @param page              The page number to fetch (starting from 0).
      * @param size              The size of each page (items per page).
-     * @param partnerId         The partner id filter (optional).
-     * @param bankAccountNumber The bank account number filter (optional).
-     * @param statementDate     The statement date filter (optional).
-     * @param importedDate      The imported date filter (optional).
-     * @return A {@link Page} of {@link BankStatement} entities.
+     * @param partnerId         The partner ID to filter by (optional).
+     * @param bankAccountNumber The bank account number to filter by (optional).
+     * @param statementDate     The statement date to filter by (optional).
+     * @param importedDate      The imported date to filter by (optional).
+     * @param status            The status (true/false) to filter by (optional).
+     * @return A {@link Page} of {@link BankStatement} entities matching the filter criteria.
      */
     @Override
     public Page<BankStatement> getFilteredBankStatements(
@@ -98,7 +101,8 @@ public class BankStatementServiceImpl implements BankStatementService {
             Long partnerId,
             String bankAccountNumber,
             LocalDate statementDate,
-            LocalDate importedDate) {
+            LocalDate importedDate,
+            Boolean status) {
 
         Pageable pageable = PageRequest.of(page, size);
         return bankStatementRepository.findFilteredBankStatements(
@@ -106,6 +110,7 @@ public class BankStatementServiceImpl implements BankStatementService {
                 bankAccountNumber,
                 statementDate,
                 importedDate,
+                status,
                 pageable);
     }
 }

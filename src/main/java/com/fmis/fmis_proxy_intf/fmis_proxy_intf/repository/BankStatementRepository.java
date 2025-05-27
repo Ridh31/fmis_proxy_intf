@@ -40,14 +40,16 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
     Page<BankStatement> getAllBankStatements(Pageable pageable);
 
     /**
-     * Retrieves bank statements filtered by bank account number and statement date.
-     * Returns only active and non-deleted bank statements.
+     * Retrieves bank statements filtered by optional parameters: bank account number,
+     * statement date, imported date, partner ID, and status. Returns only non-deleted bank statements.
      *
-     * @param bankAccountNumber The bank account number to filter by.
-     * @param statementDate     The statement date to filter by.
-     * @param importedDate      The imported date to filter by.
-     * @param pageable          The {@link Pageable} object for pagination and sorting.
-     * @return A {@link Page} of {@link BankStatement} entities.
+     * @param partnerId          The partner ID to filter by (optional).
+     * @param bankAccountNumber  The bank account number to filter by (optional).
+     * @param statementDate      The statement date to filter by (optional).
+     * @param importedDate       The imported date to filter by (optional).
+     * @param status             The status (true/false) to filter by (optional).
+     * @param pageable           The {@link Pageable} object for pagination and sorting.
+     * @return A {@link Page} of {@link BankStatement} entities matching the filter criteria.
      */
     @Query(value = """
         SELECT
@@ -64,6 +66,7 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
             AND (:importedDate IS NULL OR bs.created_date >= :importedDate 
                 AND bs.created_date < DATE_ADD(:importedDate, INTERVAL 1 DAY))
             AND (:partnerId IS NULL OR bs.partner_intf_id = :partnerId)
+            AND (:status IS NULL OR bs.status = :status)
         ORDER BY bs.id DESC
         """, nativeQuery = true)
     Page<BankStatement> findFilteredBankStatements(
@@ -71,5 +74,6 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
             @Param("bankAccountNumber") String bankAccountNumber,
             @Param("statementDate") LocalDate statementDate,
             @Param("importedDate") LocalDate importedDate,
+            @Param("status") Boolean status,
             Pageable pageable);
 }
