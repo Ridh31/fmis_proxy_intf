@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="/datatables/jquery.dataTables.min.css">
     <script src="/datatables/jquery.dataTables.min.js"></script>
     <script src="/jquery-ui/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="/flatpickr/flatpickr.min.css">
+    <script src="/flatpickr/flatpickr.js"></script>
     <title>{{title}}</title>
     <style>
         body {
@@ -233,11 +235,11 @@
     </label>
     <label>
         <span class="input-title">STATEMENT DATE</span><br>
-        <input id="statementDate" type="date" title="Select statement date">
+        <input id="statementDate" type="text" title="Select statement date" placeholder="ᴅᴅ / ᴍᴍ / ʏʏʏʏ">
     </label>
     <label>
         <span class="input-title">IMPORTED DATE</span><br>
-        <input id="importedDate" type="date" title="Select import date">
+        <input id="importedDate" type="text" title="Select import date" placeholder="ᴅᴅ / ᴍᴍ / ʏʏʏʏ">
     </label>
     <label>
         <span class="input-title">STATUS</span><br>
@@ -305,6 +307,16 @@
         modalContent.draggable({
             handle: ".modal-header",
             cursor: "move"
+        });
+
+        flatpickr("#statementDate", {
+            dateFormat: "d/m/Y",
+            allowInput: true
+        });
+
+        flatpickr("#importedDate", {
+            dateFormat: "d/m/Y",
+            allowInput: true
         });
     });
 
@@ -449,8 +461,8 @@
      * @returns {string} Formatted date as 'DD-MM-YYYY'.
      */
     function formatDate(input) {
-        const d = new Date(input);
-        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+        const [day, month, year] = input.split('/');
+        return `${day}-${month}-${year}`;
     }
 
     /**

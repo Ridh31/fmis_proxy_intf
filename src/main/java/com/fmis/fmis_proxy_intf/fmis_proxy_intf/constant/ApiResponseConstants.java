@@ -84,6 +84,7 @@ public final class ApiResponseConstants {
     public static final String BAD_REQUEST_INVALID_DATA = "An error occurred due to a missing or invalid 'Data' field. Please ensure the data is correct and try again.";
     public static final String BAD_REQUEST_PARTNER_ID_NOT_NUMERIC = "Invalid partner ID. Must be a numeric value.";
     public static final String BAD_REQUEST_INVALID_STATUS_VALUE = "Invalid status value. Allowed values are: true or false.";
+    public static final String ERROR_MISSING_REQUIRED_PARAM = "Missing or empty required parameter: ";
 
     /**
      * 401 Unauthorized Errors - Authentication issues

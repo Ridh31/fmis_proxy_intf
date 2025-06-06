@@ -155,6 +155,27 @@
 			<groupId>org.apache.httpcomponents.core5</groupId>
 			<artifactId>httpcore5</artifactId>
 		</dependency>
+
+		<!-- CamDigiKey Client Library -->
+		<dependency>
+			<groupId>kh.gov.camdx.camdigikey</groupId>
+			<artifactId>client</artifactId>
+			<version>3.0.0</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- Spring WebFlux -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+		<!-- Bouncy Castle -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.70</version>
+		</dependency>
 	</dependencies>
 
 	<build>
