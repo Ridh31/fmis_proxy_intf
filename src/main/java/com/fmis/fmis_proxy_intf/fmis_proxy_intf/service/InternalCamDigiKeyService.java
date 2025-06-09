@@ -1,6 +1,8 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
+import org.springframework.data.domain.Page;
+
 import java.util.Optional;
 
 /**
@@ -56,4 +58,21 @@ public interface InternalCamDigiKeyService {
      * @return An {@link Optional} containing the entity if found, otherwise empty.
      */
     Optional<InternalCamDigiKey> findById(Long id);
+
+    /**
+     * Retrieves an {@link InternalCamDigiKey} entity by its unique application key.
+     *
+     * @param appKey the application key used to look up the entity
+     * @return an {@link Optional} containing the found entity, or empty if no match is found
+     */
+    Optional<InternalCamDigiKey> findByAppKey(String appKey);
+
+    /**
+     * Retrieves a paginated list of active and non-deleted {@link InternalCamDigiKey} entities.
+     *
+     * @param page the page number (zero-based index)
+     * @param size the number of records per page
+     * @return a {@link Page} containing {@link InternalCamDigiKey} results
+     */
+    Page<InternalCamDigiKey> getAllInternalCamDigiKey(int page, int size);
 }

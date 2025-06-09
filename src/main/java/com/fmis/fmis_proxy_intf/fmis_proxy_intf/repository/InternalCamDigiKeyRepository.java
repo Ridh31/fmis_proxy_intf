@@ -1,7 +1,10 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
@@ -50,4 +53,30 @@ public interface InternalCamDigiKeyRepository extends JpaRepository<InternalCamD
      * @return An {@link Optional} containing the entity if found, otherwise empty.
      */
     Optional<InternalCamDigiKey> findById(Long id);
+
+    /**
+     * Retrieves an {@link InternalCamDigiKey} entity by its unique app key.
+     *
+     * @param appKey the unique application key to search for
+     * @return an {@link Optional} containing the matching entity, if found
+     */
+    Optional<InternalCamDigiKey> findByAppKey(String appKey);
+
+    /**
+     * Retrieves a paginated list of all active and non-deleted {@link InternalCamDigiKey} records.
+     *
+     * @param pageable the pagination information
+     * @return a page of {@link InternalCamDigiKey} entities
+     */
+    @Query(value = """
+        SELECT
+            *
+        FROM
+            internal_camdigikey ic
+        WHERE
+            ic.status = TRUE
+            AND ic.is_deleted = FALSE
+        ORDER BY ic.id DESC
+        """, nativeQuery = true)
+    Page<InternalCamDigiKey> getAllInternalCamDigiKey(Pageable pageable);
 }

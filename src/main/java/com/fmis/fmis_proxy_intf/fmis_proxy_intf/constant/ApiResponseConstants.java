@@ -86,6 +86,7 @@ public final class ApiResponseConstants {
     public static final String BAD_REQUEST_INVALID_FILE_TYPE = "Bad Request: Invalid file type. Only JSON is allowed.";
     public static final String BAD_REQUEST_FAILED_TO_PARSE_JSON = "Bad Request: Failed to read or parse JSON file.";
     public static final String BAD_REQUEST_INVALID_DATA = "An error occurred due to a missing or invalid 'Data' field. Please ensure the data is correct and try again.";
+    public static final String BAD_REQUEST_ID_NOT_NUMERIC = "Invalid ID. Must be a numeric value.";
     public static final String BAD_REQUEST_PARTNER_ID_NOT_NUMERIC = "Invalid partner ID. Must be a numeric value.";
     public static final String BAD_REQUEST_INVALID_STATUS_VALUE = "Invalid status value. Allowed values are: true or false.";
     public static final String ERROR_MISSING_REQUIRED_PARAM = "Missing or empty required parameter: ";
@@ -126,6 +127,7 @@ public final class ApiResponseConstants {
     public static final String NOT_FOUND = "Requested resource not found.";
     public static final String USER_NOT_FOUND = "User not found.";
     public static final String ROLE_NOT_FOUND = "Role not found.";
+    public static final String HOST_NOT_FOUND = "Host not found.";
     public static final String BASE_URL_NOT_FOUND = "Base URL not found.";
     public static final String NO_PARTNERS_FOUND = "No partners found.";
     public static final String NO_BANK_STATEMENTS_FOUND = "No bank statements found.";
