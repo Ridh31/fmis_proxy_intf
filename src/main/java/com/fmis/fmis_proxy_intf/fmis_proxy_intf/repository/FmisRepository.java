@@ -1,7 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
