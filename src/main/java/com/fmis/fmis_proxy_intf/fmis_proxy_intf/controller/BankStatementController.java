@@ -63,11 +63,23 @@ public class BankStatementController {
     private final FmisService fmisService;
     private final BankStatementService bankStatementService;
 
+    /**
+     * Constructor for {@code BankStatementController} with required service dependencies.
+     * Uses constructor injection to initialize services needed for partner management, user operations,
+     * FMIS integration, and bank statement processing.
+     *
+     * @param partnerService       service for managing partner-related operations
+     * @param userService          service for managing user-related operations
+     * @param fmisService          service for FMIS-related integration and operations
+     * @param bankStatementService service for handling bank statement processing and business logic
+     */
     @Autowired
-    public BankStatementController(PartnerService partnerService,
-                                   UserService userService,
-                                   FmisService fmisService,
-                                   BankStatementService bankStatementService) {
+    public BankStatementController(
+            PartnerService partnerService,
+            UserService userService,
+            FmisService fmisService,
+            BankStatementService bankStatementService
+    ) {
         this.partnerService = partnerService;
         this.userService = userService;
         this.fmisService = fmisService;

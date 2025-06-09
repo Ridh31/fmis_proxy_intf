@@ -60,7 +60,8 @@ public class SecurityConfig {
                                 "/api/v1/create-partner",
                                 "/api/v1/list-partner",
                                 "/api/v1/import-bank-statement",
-                                "/api/v1/list-bank-statement"
+                                "/api/v1/list-bank-statement",
+                                "api/v1/internal/camdigikey/import-host"
                         ).authenticated()
                         .requestMatchers(
                                 "/api/v1/open-api/**",

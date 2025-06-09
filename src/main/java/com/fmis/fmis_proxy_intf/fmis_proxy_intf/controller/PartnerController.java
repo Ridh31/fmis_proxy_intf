@@ -19,15 +19,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Map;
 import java.util.Optional;
+
+import static com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper.castToApiResponse;
 
 /**
  * Controller for managing partner-related operations.
@@ -44,15 +43,27 @@ public class PartnerController {
     private final PartnerService partnerService;
     private final UserService userService;
     private final RoleService roleService;
+    private final AuthorizationHelper authorizationHelper;
 
-    @Value("${application-base-url}")
-    private String baseUrl;
-
-    // Constructor injection for the services
-    public PartnerController(PartnerService partnerService, UserService userService, RoleService roleService) {
+    /**
+     * Constructs a new {@code PartnerController} with the required service dependencies.
+     * Uses constructor-based dependency injection to ensure all components are initialized.
+     *
+     * @param partnerService         the service responsible for partner operations
+     * @param userService            the service responsible for user authentication and retrieval
+     * @param roleService            the service responsible for role management and validation
+     * @param authorizationHelper    utility class to handle user authorization and role validation
+     */
+    public PartnerController(
+            PartnerService partnerService,
+            UserService userService,
+            RoleService roleService,
+            AuthorizationHelper authorizationHelper
+    ) {
         this.partnerService = partnerService;
         this.userService = userService;
         this.roleService = roleService;
+        this.authorizationHelper = authorizationHelper;
     }
 
     /**
@@ -191,102 +202,43 @@ public class PartnerController {
             }
     )
     @PostMapping("/create-partner")
-    public ResponseEntity<ApiResponse<?>> createPartner(@Validated @RequestBody Partner partner, BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse<?>> createPartner(
+            @Validated @RequestBody Partner partner,
+            BindingResult bindingResult) {
 
-        // Extract validation errors using the utility method
+        // Validate request body fields
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
-
-        // If there are validation errors, return them in the response
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            validationErrors
+                    ));
         }
 
         try {
-            // Retrieve the currently authenticated user's username
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            // Perform authentication and authorization checks
+            Object validationResult = authorizationHelper.validate(partner);
 
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.UNAUTHORIZED_CODE,
-                                ApiResponseConstants.UNAUTHORIZED_LOGIN_REQUIRED
-                        ));
+            if (validationResult instanceof ResponseEntity) {
+                return castToApiResponse(validationResult);
             }
 
-            String username = authentication.getName();
-
-            // Get the user from the database based on the username
-            Optional<User> userOptional = userService.findByUsername(username);
-            if (userOptional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.UNAUTHORIZED_CODE,
-                                ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
-                        ));
-            }
-
-            User currentUser = userOptional.get();
-
-            // Fetch the role of the authenticated user
-            Long roleId = currentUser.getRole().getId();
-            if (!roleService.existsById(roleId)) {
-                // Handle case where role does not exist
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.NOT_FOUND_CODE,
-                                ApiResponseConstants.ROLE_NOT_FOUND
-                        ));
-            }
-
-            // Check if the authenticated user is a Super Admin (level 1)
-            if (currentUser.getRole().getLevel() != 1) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.FORBIDDEN_CODE,
-                                ApiResponseConstants.FORBIDDEN_CREATE_PARTNER
-                        ));
-            }
-
-            // Check if the partner name already exists in the database
-            if (partnerService.findByName(partner.getName()).isPresent()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.PARTNER_NAME_TAKEN
-                        ));
-            }
-
-            // Check if the partner identifier already exists in the database
-            if (partnerService.findByIdentifier(partner.getIdentifier()).isPresent()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.PARTNER_IDENTIFIER_TAKEN
-                        ));
-            }
-
-            // Check if the partner code already exists in the database
-            if (partnerService.findByCode(partner.getCode()).isPresent()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.PARTNER_CODE_TAKEN
-                        ));
-            }
+            // Retrieve the authenticated user
+            User currentUser = (User) validationResult;
 
             // Generate RSA keys based on the partner code
-            Map<String, Object> key = RSAUtil.generatePartnerKey(partner.getCode());
+            Map<String, Object> generatedKeys = RSAUtil.generatePartnerKey(partner.getCode());
 
-            // Set the generated keys and the createdBy user ID in the partner entity
-            partner.setPublicKey(key.get("public_key").toString());
-            partner.setPrivateKey(key.get("private_key").toString());
+            // Populate partner entity with generated keys and creator info
+            partner.setPublicKey(generatedKeys.get("public_key").toString());
+            partner.setPrivateKey(generatedKeys.get("private_key").toString());
             partner.setCreatedBy(currentUser.getId());
 
-            // Save the new partner in the database
+            // Persist the new partner
             Partner savedPartner = partnerService.createPartner(partner);
 
-            // Return successful response
+            // Return success response
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.CREATED_CODE,
@@ -295,7 +247,7 @@ public class PartnerController {
                     ));
 
         } catch (Exception e) {
-            // Handle any other unexpected errors
+            // Handle unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
@@ -323,52 +275,35 @@ public class PartnerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        // Get the authenticated user's username
+        // Get authenticated username
         String username = userService.getAuthenticatedUsername();
 
-        // Validate that the X-Partner-Token is not missing or empty
-        ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        // Validate header: X-Partner-Token
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse =
+                HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+
         if (partnerValidationResponse != null) {
             return partnerValidationResponse;
         }
 
-        // Get the user from the database based on the username
-        Optional<User> userOptional = userService.findByUsername(username);
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.UNAUTHORIZED_CODE,
-                            ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
-                    ));
+        // Validate user authentication
+        Object userValidation = authorizationHelper.validateUser();
+        if (userValidation instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(userValidation);
         }
 
-        User currentUser = userOptional.get();
+        User currentUser = (User) userValidation;
 
-        // Fetch the role of the authenticated user
-        Long roleId = currentUser.getRole().getId();
-        if (!roleService.existsById(roleId)) {
-            // Handle case where role does not exist
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.NOT_FOUND_CODE,
-                            ApiResponseConstants.ROLE_NOT_FOUND
-                    ));
-        }
-
-        // Check if the authenticated user is a Super Admin (level 1)
-        if (currentUser.getRole().getLevel() != 1) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.FORBIDDEN_CODE,
-                            ApiResponseConstants.FORBIDDEN
-                    ));
+        // Check for admin-level access (level 1 or 2)
+        ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
+        if (adminValidation != null) {
+            return AuthorizationHelper.castToApiResponse(adminValidation);
         }
 
         try {
-            // Fetch the paginated list of partners
+            // Fetch partners
             Page<Partner> partners = partnerService.getAllPartners(page, size);
 
-            // If no partners are found, return a 204 No Content response
             if (partners.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
                         .body(new ApiResponse<>(
@@ -377,7 +312,6 @@ public class PartnerController {
                         ));
             }
 
-            // Return the paginated list of partners wrapped in a successful API response
             return ResponseEntity.ok(new ApiResponse<>(
                     ApiResponseConstants.SUCCESS_CODE,
                     ApiResponseConstants.PARTNERS_FETCHED,
@@ -385,7 +319,6 @@ public class PartnerController {
             ));
 
         } catch (Exception e) {
-            // Handle any exceptions and return an internal server error response
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
@@ -411,44 +344,22 @@ public class PartnerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        // Get the authenticated user's username
-        String username = userService.getAuthenticatedUsername();
-
-        // Get the user from the database based on the username
-        Optional<User> userOptional = userService.findByUsername(username);
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.UNAUTHORIZED_CODE,
-                            ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
-                    ));
+        // Validate user authentication
+        Object userValidation = authorizationHelper.validateUser();
+        if (userValidation instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(userValidation);
         }
 
-        User currentUser = userOptional.get();
+        User currentUser = (User) userValidation;
 
-        // Fetch the role of the authenticated user
-        Long roleId = currentUser.getRole().getId();
-        if (!roleService.existsById(roleId)) {
-            // Handle case where role does not exist
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.NOT_FOUND_CODE,
-                            ApiResponseConstants.ROLE_NOT_FOUND
-                    ));
-        }
-
-        // Privilege access
-        int level = currentUser.getRole().getLevel();
-        if (level != 1 && level != 2) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.FORBIDDEN_CODE,
-                            ApiResponseConstants.FORBIDDEN
-                    ));
+        // Validate admin or privileged role (level 1 or 2)
+        ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
+        if (adminValidation != null) {
+            return AuthorizationHelper.castToApiResponse(adminValidation);
         }
 
         try {
-            // Fetch the paginated list of partners
+            // Fetch and map filtered bank partners
             Page<Partner> partners = partnerService.getFilteredBankPartners(page, size);
             Page<PartnerDTO> partnerDTO = partners.map(
                     partner -> new PartnerDTO(
@@ -459,7 +370,7 @@ public class PartnerController {
                     )
             );
 
-            // If no partners are found, return a 204 No Content response
+            // Handle empty result
             if (partners.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
                         .body(new ApiResponse<>(
@@ -468,7 +379,7 @@ public class PartnerController {
                         ));
             }
 
-            // Return the paginated list of partners wrapped in a successful API response
+            // Return success response
             return ResponseEntity.ok(new ApiResponse<>(
                     ApiResponseConstants.SUCCESS_CODE,
                     ApiResponseConstants.PARTNERS_FETCHED,
@@ -476,7 +387,7 @@ public class PartnerController {
             ));
 
         } catch (Exception e) {
-            // Handle any exceptions and return an internal server error response
+            // Handle unexpected error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
@@ -509,13 +420,14 @@ public class PartnerController {
             @Validated @RequestBody Partner updatedPartner,
             BindingResult bindingResult) {
 
-        // Extract validation errors
+        // Handle validation errors
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
         }
 
+        // Validate partner ID format
         long partnerId;
         try {
             partnerId = Long.parseLong(id);
@@ -528,47 +440,20 @@ public class PartnerController {
         }
 
         try {
-            // Authenticate user
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.UNAUTHORIZED_CODE,
-                                ApiResponseConstants.UNAUTHORIZED_LOGIN_REQUIRED
-                        ));
+            // Validate authenticated user
+            Object userValidation = authorizationHelper.validateUser();
+            if (userValidation instanceof ResponseEntity) {
+                return AuthorizationHelper.castToApiResponse(userValidation);
+            }
+            User currentUser = (User) userValidation;
+
+            // Validate admin or privileged role
+            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
+            if (adminValidation != null) {
+                return AuthorizationHelper.castToApiResponse(adminValidation);
             }
 
-            String username = authentication.getName();
-            Optional<User> userOptional = userService.findByUsername(username);
-            if (userOptional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.UNAUTHORIZED_CODE,
-                                ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
-                        ));
-            }
-
-            User currentUser = userOptional.get();
-
-            // Check role and access
-            Long roleId = currentUser.getRole().getId();
-            if (!roleService.existsById(roleId)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.NOT_FOUND_CODE,
-                                ApiResponseConstants.ROLE_NOT_FOUND
-                        ));
-            }
-
-            if (currentUser.getRole().getLevel() != 1) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.FORBIDDEN_CODE,
-                                ApiResponseConstants.FORBIDDEN_UPDATE_PARTNER
-                        ));
-            }
-
-            // Retrieve existing partner
+            // Fetch existing partner
             Optional<Partner> existingPartnerOpt = partnerService.findById(partnerId);
             if (existingPartnerOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -580,7 +465,7 @@ public class PartnerController {
 
             Partner existingPartner = existingPartnerOpt.get();
 
-            // Check for name conflict (if name has changed)
+            // Uniqueness validations
             if (!existingPartner.getName().equalsIgnoreCase(updatedPartner.getName())
                     && partnerService.findByName(updatedPartner.getName()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -590,7 +475,6 @@ public class PartnerController {
                         ));
             }
 
-            // Check for identifier conflict
             if (!existingPartner.getIdentifier().equalsIgnoreCase(updatedPartner.getIdentifier())
                     && partnerService.findByIdentifier(updatedPartner.getIdentifier()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -600,7 +484,6 @@ public class PartnerController {
                         ));
             }
 
-            // Check for code conflict
             if (!existingPartner.getCode().equalsIgnoreCase(updatedPartner.getCode())
                     && partnerService.findByCode(updatedPartner.getCode()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -610,31 +493,32 @@ public class PartnerController {
                         ));
             }
 
-            // Check if code has changed before setting it
-            boolean codeChanged = !existingPartner.getCode().equalsIgnoreCase(updatedPartner.getCode());
-
             // Update partner fields
+            boolean codeChanged = !existingPartner.getCode().equalsIgnoreCase(updatedPartner.getCode());
             existingPartner.setName(updatedPartner.getName());
             existingPartner.setCode(updatedPartner.getCode());
             existingPartner.setIdentifier(updatedPartner.getIdentifier());
             existingPartner.setDescription(updatedPartner.getDescription());
 
-            // Re-generate keys if code has changed
+            // Regenerate keys if code changed
             if (codeChanged) {
                 Map<String, Object> key = RSAUtil.generatePartnerKey(updatedPartner.getCode());
                 existingPartner.setPublicKey(key.get("public_key").toString());
                 existingPartner.setPrivateKey(key.get("private_key").toString());
             }
 
-            // Save updated partner
+            // Save updates
             Partner savedPartner = partnerService.updatePartner(existingPartner);
 
+            // Respond success
             return ResponseEntity.ok(new ApiResponse<>(
                     ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.UPDATED, savedPartner
+                    ApiResponseConstants.UPDATED,
+                    savedPartner
             ));
 
         } catch (Exception e) {
+            // Handle unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,

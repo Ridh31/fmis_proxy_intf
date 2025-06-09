@@ -49,11 +49,23 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UserService userService,
-                          RoleService roleService,
-                          PartnerService partnerService,
-                          AuthenticationManager authenticationManager,
-                          PasswordEncoder passwordEncoder) {
+    /**
+     * Constructs a new {@code AuthController} with the necessary services and utilities.
+     * Uses constructor-based dependency injection to initialize components required for authentication and authorization.
+     *
+     * @param userService            the service for managing user-related operations
+     * @param roleService            the service for managing role-related operations
+     * @param partnerService         the service for partner management
+     * @param authenticationManager  the Spring Security component for handling authentication
+     * @param passwordEncoder        the component responsible for encoding user passwords
+     */
+    public AuthController(
+            UserService userService,
+            RoleService roleService,
+            PartnerService partnerService,
+            AuthenticationManager authenticationManager,
+            PasswordEncoder passwordEncoder
+    ) {
         this.userService = userService;
         this.roleService = roleService;
         this.partnerService = partnerService;
@@ -171,15 +183,6 @@ public class AuthController {
             @RequestBody User user,
             BindingResult bindingResult) {
 
-        // Extract validation errors using the utility method
-        Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
-
-        // If there are validation errors, return them in the response
-        if (!validationErrors.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
-        }
-
         // Get the authenticated user's username
         String username = user.getUsername();
 
@@ -187,6 +190,15 @@ public class AuthController {
         ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
         if (partnerValidationResponse != null) {
             return partnerValidationResponse;
+        }
+
+        // Extract validation errors using the utility method
+        Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return them in the response
+        if (!validationErrors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
         }
 
         try {

@@ -31,6 +31,11 @@ public class PageController {
 
     private final UserService userService;
 
+    /**
+     * Constructor for {@code PageController} that injects the {@code UserService}.
+     *
+     * @param userService service used to manage user-related operations
+     */
     public PageController(UserService userService) {
         this.userService = userService;
     }
