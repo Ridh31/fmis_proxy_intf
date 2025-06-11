@@ -90,6 +90,8 @@ public final class ApiResponseConstants {
     public static final String BAD_REQUEST_PARTNER_ID_NOT_NUMERIC = "Invalid partner ID. Must be a numeric value.";
     public static final String BAD_REQUEST_INVALID_STATUS_VALUE = "Invalid status value. Allowed values are: true or false.";
     public static final String ERROR_MISSING_REQUIRED_PARAM = "Missing or empty required parameter: ";
+    public static final String ERROR_NO_CONFIGURATION_FOUND = "No configuration found for the provided input.";
+    public static final String EXTERNAL_BAD_REQUEST = "The request sent to the external server was invalid.";
 
     /**
      * 401 Unauthorized Errors - Authentication issues
@@ -132,6 +134,7 @@ public final class ApiResponseConstants {
     public static final String NO_PARTNERS_FOUND = "No partners found.";
     public static final String NO_BANK_STATEMENTS_FOUND = "No bank statements found.";
     public static final String NO_FMIS_CONFIG_FOUND = "FMIS Configuration Not Found.";
+    public static final String EXTERNAL_RESOURCE_NOT_FOUND = "The requested resource was not found on the external server.";
 
     /**
      * 500 Internal Server Error - Server issues
@@ -147,6 +150,8 @@ public final class ApiResponseConstants {
     public static final String ERROR_PARTNER_TOKEN_NOT_FOUND = "Partner with the provided token not found.";
     public static final String ERROR_FMIS_RESPONSE_PARSE = "Failed to parse FMIS XML response.";
     public static final String ERROR_FMIS_RESPONSE_EMPTY = "No content received from FMIS response.";
+    public static final String EXTERNAL_SERVER_ERROR = "An internal error occurred on the external server.";
+    public static final String EXTERNAL_CLIENT_ERROR = "An error occurred while communicating with the external server.";
 
     /**
      * 502 Bad Gateway Error - Issues communicating with external services

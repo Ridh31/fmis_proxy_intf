@@ -1,5 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
@@ -9,12 +11,18 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +36,8 @@ import java.util.Optional;
 @RequestMapping("/api/v1/internal/camdigikey")
 public class InternalCamDigiKeyController {
 
+    @Autowired
+    private RestTemplate restTemplate;
     private final InternalCamDigiKeyService internalCamDigiKeyService;
     private final AuthorizationHelper authorizationHelper;
 
@@ -37,7 +47,10 @@ public class InternalCamDigiKeyController {
      * @param internalCamDigiKeyService Service for CamDigiKey operations.
      * @param authorizationHelper       Helper for user authorization and validation.
      */
-    public InternalCamDigiKeyController(InternalCamDigiKeyService internalCamDigiKeyService, AuthorizationHelper authorizationHelper) {
+    public InternalCamDigiKeyController(
+            InternalCamDigiKeyService internalCamDigiKeyService,
+            AuthorizationHelper authorizationHelper
+    ) {
         this.internalCamDigiKeyService = internalCamDigiKeyService;
         this.authorizationHelper = authorizationHelper;
     }
@@ -173,7 +186,7 @@ public class InternalCamDigiKeyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR + e.getMessage()
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
                     ));
         }
     }
@@ -297,6 +310,324 @@ public class InternalCamDigiKeyController {
 
         } catch (Exception e) {
             // Handle unexpected exceptions
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * Retrieves a login token from an external service using the provided appKey.
+     *
+     * @param appKey the application key identifying the target system
+     * @return ResponseEntity with the login token or appropriate error message
+     */
+    @GetMapping("/login-token")
+    public ResponseEntity<ApiResponse<?>> getLoginToken(@RequestParam(required = false) String appKey) {
+
+        // Validate input
+        if (appKey == null || appKey.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+                    ));
+        }
+
+        try {
+            // Lookup host configuration by appKey
+            Optional<InternalCamDigiKey> host = internalCamDigiKeyService.findByAppKey(appKey);
+
+            if (host.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + appKey + ")"
+                        ));
+            }
+
+            // Prepare URL for external service
+            String endpoint = "/api/v1/portal/camdigikey/login-token";
+            String url = host.get().getAccessURL() + endpoint;
+
+            try {
+                ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode data = root.path("data");
+
+                return ResponseEntity.ok(new ApiResponse<>(
+                        ApiResponseConstants.SUCCESS_CODE,
+                        ApiResponseConstants.SUCCESS,
+                        data
+                ));
+
+            } catch (HttpClientErrorException e) {
+                // Handle 4xx errors
+                int rawStatusCode = e.getStatusCode().value();
+                HttpStatus status = HttpStatus.resolve(rawStatusCode);
+                if (status == null) status = HttpStatus.BAD_REQUEST;
+
+                String message = switch (status) {
+                    case NOT_FOUND -> ApiResponseConstants.EXTERNAL_RESOURCE_NOT_FOUND;
+                    case BAD_REQUEST -> ApiResponseConstants.EXTERNAL_BAD_REQUEST;
+                    default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
+                };
+
+                return ResponseEntity.status(status)
+                        .body(new ApiResponse<>(
+                                status.value(),
+                                message,
+                                rawStatusCode + " - " + status.getReasonPhrase()
+                        ));
+
+            } catch (HttpServerErrorException e) {
+                // Handle 5xx errors from external server
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_GATEWAY_CODE,
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                                e.getStatusCode() + " - " + e.getStatusText()
+                        ));
+
+            } catch (ResourceAccessException e) {
+                // Handle unreachable external host
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
+                                ApiResponseConstants.SERVICE_UNAVAILABLE,
+                                e.getMessage()
+                        ));
+
+            } catch (Exception e) {
+                // Handle unexpected external error
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                                ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                        ));
+            }
+
+        } catch (Exception e) {
+            // Handle unexpected internal error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
+
+    @GetMapping("/get-user-access-token")
+    public ResponseEntity<ApiResponse<?>> getUserAccessToken(
+            @RequestParam(required = false) String appKey,
+            @RequestParam(required = false) String authCode) {
+
+        // Validate input
+        if (appKey == null || appKey.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+                    ));
+        }
+
+        if (authCode == null || authCode.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "authCode"
+                    ));
+        }
+
+        try {
+            // Lookup host configuration by appKey
+            Optional<InternalCamDigiKey> host = internalCamDigiKeyService.findByAppKey(appKey);
+
+            if (host.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + appKey + ")"
+                        ));
+            }
+
+            // Prepare URL for external service
+            String endpoint = "/api/v1/portal/camdigikey/get-user-access-token";
+            String params = "?authCode=" + authCode;
+            String url = host.get().getAccessURL() + endpoint + params;
+
+            try {
+                ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode data = root.path("data");
+
+                return ResponseEntity.ok(new ApiResponse<>(
+                        ApiResponseConstants.SUCCESS_CODE,
+                        ApiResponseConstants.SUCCESS,
+                        data
+                ));
+
+            } catch (HttpClientErrorException e) {
+                // Handle 4xx errors
+                int rawStatusCode = e.getStatusCode().value();
+                HttpStatus status = HttpStatus.resolve(rawStatusCode);
+                if (status == null) status = HttpStatus.BAD_REQUEST;
+
+                String message = switch (status) {
+                    case NOT_FOUND -> ApiResponseConstants.EXTERNAL_RESOURCE_NOT_FOUND;
+                    case BAD_REQUEST -> ApiResponseConstants.EXTERNAL_BAD_REQUEST;
+                    default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
+                };
+
+                return ResponseEntity.status(status)
+                        .body(new ApiResponse<>(
+                                status.value(),
+                                message,
+                                rawStatusCode + " - " + status.getReasonPhrase()
+                        ));
+
+            } catch (HttpServerErrorException e) {
+                // Handle 5xx errors from external server
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_GATEWAY_CODE,
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                                e.getStatusCode() + " - " + e.getStatusText()
+                        ));
+
+            } catch (ResourceAccessException e) {
+                // Handle unreachable external host
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
+                                ApiResponseConstants.SERVICE_UNAVAILABLE,
+                                e.getMessage()
+                        ));
+
+            } catch (Exception e) {
+                // Handle unexpected external error
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                                ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                        ));
+            }
+
+        } catch (Exception e) {
+            // Handle unexpected internal error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
+
+    @GetMapping("/validate-jwt")
+    public ResponseEntity<ApiResponse<?>> validateJwt(
+            @RequestParam(required = false) String appKey,
+            @RequestParam(required = false) String jwt) {
+
+        // Validate input
+        if (appKey == null || appKey.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+                    ));
+        }
+
+        if (jwt == null || jwt.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "jwt"
+                    ));
+        }
+
+        try {
+            // Lookup host configuration by appKey
+            Optional<InternalCamDigiKey> host = internalCamDigiKeyService.findByAppKey(appKey);
+
+            if (host.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + appKey + ")"
+                        ));
+            }
+
+            // Prepare URL for external service
+            String endpoint = "/api/v1/portal/camdigikey/validate-jwt";
+            String params = "?jwt=" + jwt;
+            String url = host.get().getAccessURL() + endpoint + params;
+
+            try {
+                ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode data = objectMapper.readTree(response.getBody());
+
+                return ResponseEntity.ok(new ApiResponse<>(
+                        ApiResponseConstants.SUCCESS_CODE,
+                        ApiResponseConstants.SUCCESS,
+                        data
+                ));
+
+            } catch (HttpClientErrorException e) {
+                // Handle 4xx errors
+                int rawStatusCode = e.getStatusCode().value();
+                HttpStatus status = HttpStatus.resolve(rawStatusCode);
+                if (status == null) status = HttpStatus.BAD_REQUEST;
+
+                String message = switch (status) {
+                    case NOT_FOUND -> ApiResponseConstants.EXTERNAL_RESOURCE_NOT_FOUND;
+                    case BAD_REQUEST -> ApiResponseConstants.EXTERNAL_BAD_REQUEST;
+                    default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
+                };
+
+                return ResponseEntity.status(status)
+                        .body(new ApiResponse<>(
+                                status.value(),
+                                message,
+                                rawStatusCode + " - " + status.getReasonPhrase()
+                        ));
+
+            } catch (HttpServerErrorException e) {
+                // Handle 5xx errors from external server
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_GATEWAY_CODE,
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                                e.getStatusCode() + " - " + e.getStatusText()
+                        ));
+
+            } catch (ResourceAccessException e) {
+                // Handle unreachable external host
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
+                                ApiResponseConstants.SERVICE_UNAVAILABLE,
+                                e.getMessage()
+                        ));
+
+            } catch (Exception e) {
+                // Handle unexpected external error
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                                ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                        ));
+            }
+
+        } catch (Exception e) {
+            // Handle unexpected internal error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,

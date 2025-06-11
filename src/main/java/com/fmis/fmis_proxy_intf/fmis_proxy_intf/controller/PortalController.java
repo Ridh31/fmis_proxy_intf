@@ -43,7 +43,7 @@ public class PortalController {
      * @param jwt the JWT token to validate (must not be null or empty)
      * @return ResponseEntity containing validation result or error message
      */
-    @PostMapping("/camdigikey/validate-jwt")
+    @GetMapping("/camdigikey/validate-jwt")
     public ResponseEntity<Map<String, Object>> validateJwt(@RequestParam(required = false) String jwt) {
         if (jwt == null || jwt.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
