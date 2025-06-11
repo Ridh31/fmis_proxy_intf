@@ -14,8 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -421,62 +419,90 @@ public class InternalCamDigiKeyController {
         }
     }
 
+    /**
+     * Retrieves a user access token from an external authentication service using the provided appKey and authCode.
+     * It then validates the received token and returns the user's information payload if valid.
+     *
+     * @param appKey   the unique application key used to find the external service configuration
+     * @param authCode the authorization code received from the authentication step
+     * @return ResponseEntity containing the user payload if successful or an appropriate error message
+     */
     @GetMapping("/get-user-access-token")
     public ResponseEntity<ApiResponse<?>> getUserAccessToken(
             @RequestParam(required = false) String appKey,
             @RequestParam(required = false) String authCode) {
 
-        // Validate input
+        // Input validation
         if (appKey == null || appKey.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
-                    ));
+            return ResponseEntity.badRequest().body(new ApiResponse<>(
+                    ApiResponseConstants.BAD_REQUEST_CODE,
+                    ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+            ));
         }
 
         if (authCode == null || authCode.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "authCode"
-                    ));
+            return ResponseEntity.badRequest().body(new ApiResponse<>(
+                    ApiResponseConstants.BAD_REQUEST_CODE,
+                    ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "authCode"
+            ));
         }
 
         try {
-            // Lookup host configuration by appKey
+            // Retrieve service configuration
             Optional<InternalCamDigiKey> host = internalCamDigiKeyService.findByAppKey(appKey);
-
             if (host.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + appKey + ")"
-                        ));
+                return ResponseEntity.badRequest().body(new ApiResponse<>(
+                        ApiResponseConstants.BAD_REQUEST_CODE,
+                        ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + " (" + appKey + ")"
+                ));
             }
 
-            // Prepare URL for external service
+            // Build external request URL
             String endpoint = "/api/v1/portal/camdigikey/get-user-access-token";
             String params = "?authCode=" + authCode;
             String url = host.get().getAccessURL() + endpoint + params;
 
             try {
+                // Call external service to get access token
                 ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode root = objectMapper.readTree(response.getBody());
                 JsonNode data = root.path("data");
+                String accessToken = data.path("accessToken").asText();
 
+                // Validate the token
+                ResponseEntity<ApiResponse<?>> jwtResponse = validateJwt(appKey, accessToken);
+                ApiResponse<?> jwtBody = jwtResponse.getBody();
+
+                if (jwtBody == null || jwtBody.getData() == null) {
+                    return ResponseEntity.badRequest().body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.ERROR_JWT_VALIDATION_FAILED,
+                            root.path("message")
+                    ));
+                }
+
+                JsonNode jwtRoot = objectMapper.convertValue(jwtBody.getData(), JsonNode.class);
+                JsonNode payload = jwtRoot.path("payload");
+
+                // Check payload status
+                if (!payload.path("status").asBoolean()) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(
+                            ApiResponseConstants.UNAUTHORIZED_CODE,
+                            ApiResponseConstants.ERROR_ACCESS_TOKEN_INVALID_OR_EXPIRED
+                    ));
+                }
+
+                // Return successful response
                 return ResponseEntity.ok(new ApiResponse<>(
                         ApiResponseConstants.SUCCESS_CODE,
                         ApiResponseConstants.SUCCESS,
-                        data
+                        payload
                 ));
 
             } catch (HttpClientErrorException e) {
-                // Handle 4xx errors
-                int rawStatusCode = e.getStatusCode().value();
-                HttpStatus status = HttpStatus.resolve(rawStatusCode);
+                // Handle client-side HTTP errors (4xx)
+                HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
                 if (status == null) status = HttpStatus.BAD_REQUEST;
 
                 String message = switch (status) {
@@ -485,50 +511,53 @@ public class InternalCamDigiKeyController {
                     default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
                 };
 
-                return ResponseEntity.status(status)
-                        .body(new ApiResponse<>(
-                                status.value(),
-                                message,
-                                rawStatusCode + " - " + status.getReasonPhrase()
-                        ));
+                return ResponseEntity.status(status).body(new ApiResponse<>(
+                        status.value(),
+                        message,
+                        e.getResponseBodyAsString()
+                ));
 
             } catch (HttpServerErrorException e) {
-                // Handle 5xx errors from external server
-                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_GATEWAY_CODE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
-                                e.getStatusCode() + " - " + e.getStatusText()
-                        ));
+                // Handle server-side HTTP errors (5xx)
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ApiResponse<>(
+                        ApiResponseConstants.BAD_GATEWAY_CODE,
+                        ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                        e.getStatusCode() + " - " + e.getStatusText()
+                ));
 
             } catch (ResourceAccessException e) {
-                // Handle unreachable external host
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                ApiResponseConstants.SERVICE_UNAVAILABLE,
-                                e.getMessage()
-                        ));
+                // Handle unreachable host or timeout
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ApiResponse<>(
+                        ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
+                        ApiResponseConstants.SERVICE_UNAVAILABLE,
+                        e.getMessage()
+                ));
 
             } catch (Exception e) {
-                // Handle unexpected external error
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
-                        ));
+                // Handle unexpected errors during external request
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(
+                        ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                        ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                ));
             }
 
         } catch (Exception e) {
-            // Handle unexpected internal error
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
-                    ));
+            // Catch-all for any other server errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(
+                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                    ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+            ));
         }
     }
 
+    /**
+     * Validates a JSON Web Token (JWT) against an external authentication service using the provided appKey.
+     * The method checks the validity and integrity of the JWT and returns the validation result or an error message.
+     *
+     * @param appKey the unique application key used to find the external service configuration
+     * @param jwt    the JSON Web Token to be validated
+     * @return ResponseEntity containing the validation result if successful or an appropriate error message
+     */
     @GetMapping("/validate-jwt")
     public ResponseEntity<ApiResponse<?>> validateJwt(
             @RequestParam(required = false) String appKey,

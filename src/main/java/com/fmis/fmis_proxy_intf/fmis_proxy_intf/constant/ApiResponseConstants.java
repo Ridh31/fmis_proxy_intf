@@ -92,6 +92,7 @@ public final class ApiResponseConstants {
     public static final String ERROR_MISSING_REQUIRED_PARAM = "Missing or empty required parameter: ";
     public static final String ERROR_NO_CONFIGURATION_FOUND = "No configuration found for the provided input.";
     public static final String EXTERNAL_BAD_REQUEST = "The request sent to the external server was invalid.";
+    public static final String ERROR_JWT_VALIDATION_FAILED = "JWT validation failed: no response, token expired or invalid.";
 
     /**
      * 401 Unauthorized Errors - Authentication issues
@@ -105,6 +106,7 @@ public final class ApiResponseConstants {
     public static final String UNAUTHORIZED_USER_NOT_FOUND = "Unauthorized: The user does not exist.";
     public static final String INVALID_CREDENTIALS = "Invalid username or password.";
     public static final String INVALID_PARTNER_TOKEN = "Unauthorized: Invalid partner token.";
+    public static final String ERROR_ACCESS_TOKEN_INVALID_OR_EXPIRED = "Access token is invalid or expired.";
 
     /**
      * 403 Forbidden Errors - Insufficient permissions
