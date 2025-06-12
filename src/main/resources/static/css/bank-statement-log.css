@@ -1,0 +1,205 @@
+body {
+    font-family: "Segoe UI", sans-serif;
+    background-color: #F6F8FA;
+    margin: 0;
+    padding: 2rem;
+}
+
+h2 {
+    color: #A45617;
+    font-size: 1.3rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.input-title {
+    color: #CCC;
+    font-size: 12px;
+}
+
+input, .filter-button {
+    padding: 0.6rem 1rem;
+    border-radius: 5px;
+    border: 1px solid #E4E4E4;
+    font-size: 14px;
+}
+
+.filter-button {
+    background-color: #1A73E8;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.filter-button:hover {
+    background-color: #0F5CC2;
+}
+
+.select {
+    padding: 0.6rem 2rem 0.6rem 1rem;
+    border-radius: 5px;
+    border: 1px solid #E4E4E4;
+    font-size: 14px;
+    background-color: white;
+    color: #333;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 16px 16px;
+}
+
+input:focus,
+select:focus,
+.select:focus {
+    outline: none;
+    border-color: #1A73E8;
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.25);
+}
+
+.table-container {
+    padding: 1.5rem;
+    background-color: #FFFFFF;
+    border-radius: 7px;
+    border: 1px solid #E4E4E4;
+    margin-top: 1rem;
+    overflow-x: auto;
+}
+
+#logTable {
+    border: 1px solid #E4E4E4;
+    font-size: 14px;
+}
+
+.dataTable tbody tr.odd {
+    background-color: #FFFFFF;
+}
+
+.dataTable tbody tr.even {
+    background-color: #F0F2F5;
+}
+
+table.dataTable thead > tr > th {
+    font-weight: 600;
+}
+
+.dataTables_length, .dataTables_filter {
+    margin-bottom: 1rem;
+}
+
+.dataTables_paginate {
+    margin-top: 1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #FFFFFF;
+    border-radius: 2px;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px 16px;
+    text-align: left;
+}
+
+th {
+    background-color: #F1F3F5;
+    font-weight: 600;
+}
+
+tr:nth-child(even) {
+    background-color: #F0F2F5;
+}
+
+tr:hover {
+    background-color: #EEF2F7;
+}
+
+.success {
+    color: #2E7D32;
+    font-weight: 500;
+}
+
+.error {
+    color: #C62828;
+    font-weight: 500;
+}
+
+.info {
+    color: #1A73E8;
+    font-weight: 500;
+}
+
+.view-link {
+    color: #1A73E8;
+    cursor: pointer;
+}
+
+.view-link:hover {
+    color: #E88C1A;
+}
+
+.modal {
+    overflow: auto;
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 0.2rem;
+    right: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 2rem;
+    color: #8B8B8B;
+    z-index: 10;
+}
+
+#modalTitle {
+    margin-top: 0;
+    font-size: 1.25rem;
+    color: #A45617;
+    user-select: none;
+}
+
+#modalBody {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 0.5rem;
+}
+
+.credentials {
+    display: none;
+}
