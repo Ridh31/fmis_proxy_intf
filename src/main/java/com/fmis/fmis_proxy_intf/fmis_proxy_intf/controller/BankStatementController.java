@@ -321,15 +321,33 @@ public class BankStatementController {
             Map<String, Object> validatedData = bankStatementDTO.getData();
             List<Map<String, Object>> statementList = (List<Map<String, Object>>) validatedData.get("CMB_BANKSTM_STG");
 
+            final String[] expectedAccountNumber = {null};
+            final String[] inconsistentAccountNumber = {null};
+            final int[] inconsistentEntryIndex = {-1};
+
+            // Check and process statement list if partner is present
             partner.ifPresent(p -> {
                 String identifier = p.getIdentifier();
 
-                for (Map<String, Object> item : statementList) {
+                for (int i = 0; i < statementList.size(); i++) {
+                    Map<String, Object> item = statementList.get(i);
                     item.put("CMB_BANK_CODE", identifier);
 
                     String statementDate = item.getOrDefault("CMB_BSP_STMT_DT", "").toString();
                     String accountNumber = item.getOrDefault("CMB_BANK_ACCOUNT_N", "").toString();
 
+                    // Set the expected account number if not already set
+                    if (expectedAccountNumber[0] == null && !accountNumber.isEmpty()) {
+                        expectedAccountNumber[0] = accountNumber;
+                    }
+                    // Detect mismatch with expected account number
+                    else if (!accountNumber.equals(expectedAccountNumber[0])) {
+                        inconsistentAccountNumber[0] = accountNumber;
+                        inconsistentEntryIndex[0] = i + 1;
+                        break;
+                    }
+
+                    // Populate statement details if present
                     if (!statementDate.isEmpty()) {
                         statement[0] = statementDate + " 00:00:00";
                     }
@@ -338,6 +356,22 @@ public class BankStatementController {
                     }
                 }
             });
+
+            // Respond with error if mismatch was detected
+            if (inconsistentAccountNumber[0] != null) {
+                String errorMsg = String.format(
+                        ApiResponseConstants.BAD_REQUEST_ACCOUNT_NUMBER_MISMATCH,
+                        expectedAccountNumber[0],
+                        inconsistentAccountNumber[0],
+                        inconsistentEntryIndex[0]
+                );
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                errorMsg
+                        ));
+            }
 
             // Format the statement date
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
