@@ -95,7 +95,6 @@ public final class ApiResponseConstants {
     public static final String ERROR_JWT_VALIDATION_FAILED = "JWT validation failed: no response, token expired or invalid.";
     public static final String BAD_REQUEST_ACCOUNT_NUMBER_MISMATCH = "The bank account number field (CMB_BANK_ACCOUNT_N) mismatch: provided '%s', but found '%s'. (Entry: %d)";
 
-
     /**
      * 401 Unauthorized Errors - Authentication issues
      * HTTP Status Code [401] - Unauthorized: The user is not authorized to perform the action
