@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 
+import static org.apache.commons.lang3.StringUtils.isNumeric;
+
 /**
  * Utility class to validate bank statement data.
  * It checks if the required fields are present in the provided data.
@@ -51,6 +53,13 @@ public class BodyValidationUtil {
             "CMB_LETTER_NUMBER"
         };
 
+        String[] numericFields = {
+            "CMB_BSP_TRAN_AMT",
+            "CMB_OPEN_BALANCE",
+            "CMB_END_BALANCE",
+            "CMB_IMMEDIATE_BAL"
+        };
+
         // Check each statement in the array
         for (int i = 0; i < bankStmtNode.size(); i++) {
             JsonNode stmt = bankStmtNode.get(i);
@@ -60,6 +69,17 @@ public class BodyValidationUtil {
                 if (!stmt.has(key)) {
                     // Adding the entry number (i+1 to start from 1 instead of 0)
                     throw new IllegalArgumentException("The bank statement field (" + key + ") is missing. (Entry: " + (i + 1) + ")");
+                }
+            }
+
+            // Check numeric fields
+            for (String numericKey : numericFields) {
+                JsonNode valueNode = stmt.get(numericKey);
+                if (!valueNode.isNumber()) {
+                    // Try parsing string numbers
+                    if (!valueNode.isTextual() || !isNumeric(valueNode.asText())) {
+                        throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be numeric. (Entry: " + (i + 1) + ")");
+                    }
                 }
             }
         }
