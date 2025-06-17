@@ -30,9 +30,6 @@ import org.springframework.context.annotation.Configuration;
                         url = "https://fmis.gov.kh"
                 )
         ),
-        servers = {
-                @Server(url = "https://dev-fmis-intf.fmis.gov.kh", description = "Development")
-        },
         tags = {
                 @Tag(name = "Overview", description = "FMIS - Proxy Interface API")
         }

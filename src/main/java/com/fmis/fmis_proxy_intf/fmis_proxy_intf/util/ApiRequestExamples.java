@@ -20,9 +20,9 @@ public class ApiRequestExamples {
 
     // Base URL and other constants
     private static final String CAMDX_BANK_STATEMENT_SERVICE_CODE = "/import-bank";
-    private static final String CAMDX_BANK_STATEMENT_URL = "http://10.10.52.16:8080/r1/CAMBODIA/GOV/CAMDX-2024031801/FMIS_INTF_API/" + CAMDX_BANK_STATEMENT_SERVICE_CODE;
+    private static final String CAMDX_BANK_STATEMENT_URL = "{{CAMDX_URL}}/r1/CAMBODIA/GOV/CAMDX-2024031801/FMIS_INTF_API/" + CAMDX_BANK_STATEMENT_SERVICE_CODE;
     private static final String PREFIX = "/api/v1";
-    private static final String BASE_URL = "https://dev-fmis-intf.fmis.gov.kh" + PREFIX;
+    private static final String BASE_URL = "{{FMIS_URL}}" + PREFIX;
     private static final String CONTENT_TYPE = "Content-Type: " + HeaderConstants.CONTENT_TYPE_JSON;
     private static final String X_ROAD_CLIENT = "X-Road-Client: camdx_client_id";
     private static final String X_PARTNER_TOKEN = "X-Partner-Token: partner_token";

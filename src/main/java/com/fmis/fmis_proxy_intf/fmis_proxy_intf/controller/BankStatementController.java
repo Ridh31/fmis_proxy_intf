@@ -8,10 +8,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.BankStatement;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.BankStatementService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.*;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -62,28 +59,32 @@ public class BankStatementController {
     private final UserService userService;
     private final FmisService fmisService;
     private final BankStatementService bankStatementService;
+    private final TelegramNotificationService telegramNotificationService;
 
     /**
-     * Constructor for {@code BankStatementController} with required service dependencies.
-     * Uses constructor injection to initialize services needed for partner management, user operations,
-     * FMIS integration, and bank statement processing.
+     * Constructs a {@code BankStatementController} with the required service dependencies.
+     * Initializes services for handling partners, users, FMIS integration,
+     * bank statement processing, and Telegram notifications.
      *
-     * @param partnerService       service for managing partner-related operations
-     * @param userService          service for managing user-related operations
-     * @param fmisService          service for FMIS-related integration and operations
-     * @param bankStatementService service for handling bank statement processing and business logic
+     * @param partnerService              service for managing partner operations
+     * @param userService                 service for managing user operations
+     * @param fmisService                 service for FMIS integration
+     * @param bankStatementService        service for bank statement processing
+     * @param telegramNotificationService service for sending Telegram notifications
      */
     @Autowired
     public BankStatementController(
             PartnerService partnerService,
             UserService userService,
             FmisService fmisService,
-            BankStatementService bankStatementService
+            BankStatementService bankStatementService,
+            TelegramNotificationService telegramNotificationService
     ) {
         this.partnerService = partnerService;
         this.userService = userService;
         this.fmisService = fmisService;
         this.bankStatementService = bankStatementService;
+        this.telegramNotificationService = telegramNotificationService;
     }
 
     /**
@@ -95,7 +96,7 @@ public class BankStatementController {
     @Operation(
             summary = "Import Bank Statement",
             description = "Imports bank statement data by accessing the FMIS API via CamDX.\n\n" +
-                    "`http://10.10.52.16:8080/r1/CAMBODIA/GOV/CAMDX-2024031801/FMIS_INTF_API/import-bank`\n\n" +
+                    "`{{CAMDX_URL}}/r1/CAMBODIA/GOV/CAMDX-2024031801/FMIS_INTF_API/import-bank`\n\n" +
                     "The API requires Basic Authentication along with X-Road-Client and X-Partner-Token headers for verification.\n\n" +
                     "Payload must follow the expected JSON structure and includes transaction details such as date format, amount, and account info.\n\n",
             security = @SecurityRequirement(name = "basicAuth"),
@@ -250,7 +251,6 @@ public class BankStatementController {
                     )
             }
     )
-    @Hidden
     @PostMapping("/import-bank-statement")
     public ResponseEntity<ApiResponse<?>> createBankStatement(
             @Validated
@@ -439,6 +439,9 @@ public class BankStatementController {
 
                         // Import bank statement
                         bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+
+                        // Send notification to Telegram Bot
+                        telegramNotificationService.sendBankInterfaceMessage(responseMessage);
 
                         return ResponseEntity.status(status)
                                 .body(new ApiResponse<>(
@@ -670,167 +673,6 @@ public class BankStatementController {
                     ));
         }
     }
-
-    @Operation(
-            summary = "Import Bank Statement",
-            description = "Imports bank statement data by accessing the FMIS API via CamDX.\n\n" +
-                    "`http://10.10.52.16:8080/r1/CAMBODIA/GOV/CAMDX-2024031801/FMIS_INTF_API/import-bank`\n\n" +
-                    "The API requires Basic Authentication along with X-Road-Client and X-Partner-Token headers for verification.\n\n" +
-                    "Payload must follow the expected JSON structure and includes transaction details such as date format, amount, and account info.\n\n",
-            security = @SecurityRequirement(name = "basicAuth"),
-            parameters = {
-                    @Parameter(
-                            name = "X-Road-Client",
-                            in = ParameterIn.HEADER,
-                            required = true,
-                            description = "CamDX client identifier.",
-                            example = "{{CAMDX-CLIENT-ID}}"
-                    ),
-                    @Parameter(
-                            name = "X-Partner-Token",
-                            in = ParameterIn.HEADER,
-                            required = true,
-                            description = "The identifier of the partner, which is recognized and authorized by the provider.",
-                            example = "{{PARTNER-TOKEN}}"
-                    )
-            },
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    content = {
-                            @Content(
-                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
-                                    examples = {
-                                            @ExampleObject(
-                                                    name = "Bank Statement Example",
-                                                    value = ApiRequestExamples.BANK_STATEMENT_JSON
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.CURL,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_CURL
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.JAVASCRIPT,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_JS_FETCH
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.PYTHON,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_PYTHON
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.JAVA_HTTPURLCONNECTION,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_JAVA_HTTPURLCONNECTION
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.CSHARP,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_CSHARP_HTTPCLIENT
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.PHP_CURL,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_PHP_CURL
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.NODEJS,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_NODEJS
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.RUBY,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_RUBY
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiRequestExamples.GO,
-                                                    value = ApiRequestExamples.IMPORT_BANK_STATEMENT_GO
-                                            )
-                                    }
-                            )
-                    }
-            ),
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = ApiResponseConstants.CREATED_CODE_STRING,
-                            description = ApiResponseConstants.CREATED,
-                            content = @Content(
-                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
-                                    examples = @ExampleObject(
-                                            name = ApiResponseConstants.RESPONSE_TYPE_SUCCESS,
-                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_SUCCESS
-                                    )
-                            )
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
-                            description = ApiResponseConstants.BAD_REQUEST_MISSING_PARTNER_TOKEN,
-                            content = @Content(
-                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
-                                    examples = {
-                                            @ExampleObject(
-                                                    name = ApiResponseConstants.RESPONSE_TYPE_MISSING_PARTNER_TOKEN_HEADER,
-                                                    value = ApiResponseExamples.IMPORT_BANK_STATEMENT_MISSING_PARTNER_TOKEN
-                                            ),
-                                            @ExampleObject(
-                                                    name = ApiResponseConstants.RESPONSE_TYPE_VALIDATION_ERROR,
-                                                    value = ApiResponseExamples.IMPORT_BANK_STATEMENT_VALIDATION_ERROR
-                                            )
-                                    }
-                            )
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = ApiResponseConstants.UNAUTHORIZED_CODE_STRING,
-                            description = ApiResponseConstants.INVALID_PARTNER_TOKEN,
-                            content = @Content(
-                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
-                                    examples = @ExampleObject(
-                                            name = ApiResponseConstants.RESPONSE_TYPE_UNAUTHORIZED,
-                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_UNAUTHORIZED
-                                    )
-                            )
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = ApiResponseConstants.FORBIDDEN_CODE_STRING,
-                            description = ApiResponseConstants.FORBIDDEN_PARTNER_TOKEN,
-                            content = @Content(
-                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
-                                    examples = @ExampleObject(
-                                            name = ApiResponseConstants.RESPONSE_TYPE_FORBIDDEN,
-                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_FORBIDDEN
-                                    )
-                            )
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = ApiResponseConstants.NOT_FOUND_CODE_STRING,
-                            description = ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
-                            content = @Content(
-                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
-                                    examples = @ExampleObject(
-                                            name = ApiResponseConstants.RESPONSE_TYPE_NOT_FOUND,
-                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_NOT_FOUND
-                                    )
-                            )
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = ApiResponseConstants.BAD_GATEWAY_CODE_STRING,
-                            description = ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
-                            content = @Content(
-                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
-                                    examples = @ExampleObject(
-                                            name = ApiResponseConstants.RESPONSE_TYPE_FMIS_FAILURE,
-                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_FMIS_FAILURE
-                                    )
-                            )
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE_STRING,
-                            description = ApiResponseConstants.INTERNAL_SERVER_ERROR,
-                            content = @Content(
-                                    mediaType = HeaderConstants.CONTENT_TYPE_JSON,
-                                    examples = @ExampleObject(
-                                            name = ApiResponseConstants.RESPONSE_TYPE_SERVER_ERROR,
-                                            value = ApiResponseExamples.IMPORT_BANK_STATEMENT_SERVER_ERROR
-                                    )
-                            )
-                    )
-            }
-    )
-    @PostMapping("/bank-statement-reference")
-    public void importBankStatementDoc() {}
 
     /**
      * Endpoint to fetch paginated bank statements.
