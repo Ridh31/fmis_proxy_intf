@@ -440,8 +440,37 @@ public class BankStatementController {
                         // Import bank statement
                         bankStatementService.createBankStatement(partnerId, bankStatementDTO);
 
-                        // Send notification to Telegram Bot
-                        telegramNotificationService.sendBankInterfaceMessage(responseMessage);
+                        // Construct notification to Telegram Bot
+                        String partnerName = partner.map(Partner::getName).orElse("Unknown Partner");
+                        String partnerIdentifier = partner.map(Partner::getIdentifier).orElse("Unknown Identifier");
+                        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                        String telegramStatementDate = statementDate.format(outputFormatter);
+                        String telegramImportedDate = LocalDate.now().format(outputFormatter);
+                        String telegramImportedStatus = (responseCode == 201) ? "Processed" : "Failed";
+                        String announcementEmoji = (responseCode == 201) ? "📢" : "⚠️";
+                        String statusEmoji = (responseCode == 201) ? "✅" : "❌";
+
+                        String requestMessage =
+                                "📨 <b>New Request</b>\n\n" +
+                                "From: <b>" +TelegramUtil.escapeHtml(partnerName) + "</b>\n" +
+                                "Action: Import Bank Statement\n" +
+                                "Time: <code>" + LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma")) + "</code>";
+
+                        String telegramMessage =
+                                requestMessage + "\n\n" +
+                                announcementEmoji + " <b>Bank Statement Update</b>\n\n" +
+                                "• Identifier: <code>" + TelegramUtil.escapeHtml(partnerIdentifier) + "</code>\n" +
+                                "• Account Number: <code>" + TelegramUtil.escapeHtml(bankAccountNumber != null ? bankAccountNumber : "N/A") + "</code>\n" +
+                                "• Statement Date: <code>" + telegramStatementDate + "</code>\n" +
+                                "• Imported On: <code>" + telegramImportedDate + "</code>\n" +
+                                "• Status: <b>" + telegramImportedStatus + "</b> " + statusEmoji + "\n" +
+                                "• Message: " + TelegramUtil.escapeHtml(responseMessage != null ? responseMessage : "");
+
+                        // Only send if not successful
+                        if (responseCode != 201) {
+                            // Send notification to Telegram Bot
+                            telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+                        }
 
                         return ResponseEntity.status(status)
                                 .body(new ApiResponse<>(

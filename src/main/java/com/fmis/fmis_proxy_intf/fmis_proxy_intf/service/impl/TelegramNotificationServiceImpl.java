@@ -1,12 +1,10 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.impl;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.bot.BankInterfaceNotification;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TelegramNotificationService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 /**
  * Implementation of {@link TelegramNotificationService} that sends messages
@@ -15,35 +13,36 @@ import java.util.Map;
 @Service
 public class TelegramNotificationServiceImpl implements TelegramNotificationService {
 
-    @Value("${bank.interface.telegram.bot.token}")
-    private String botToken;
+    private final BankInterfaceNotification bankTelegramBot;
 
-    @Value("${bank.interface.telegram.chat.id}")
-    private String chatId;
-
-    private final RestTemplate restTemplate;
-
-    public TelegramNotificationServiceImpl(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    /**
+     * Constructs a {@code TelegramNotificationServiceImpl} with the required bot dependency.
+     * Initializes the service for sending messages via the configured Telegram bot.
+     *
+     * @param bankTelegramBot the Telegram bot used to send messages
+     */
+    public TelegramNotificationServiceImpl(BankInterfaceNotification bankTelegramBot) {
+        this.bankTelegramBot = bankTelegramBot;
     }
 
     /**
-     * Sends a message to the configured Telegram chat via the bot.
+     * Sends a message to the configured Telegram chat(s) via the bot.
      *
-     * @param message the message text to send
+     * @param telegramMessage the message text to send
      */
     @Override
-    public void sendBankInterfaceMessage(String message) {
-        String url = "https://api.telegram.org/bot" + botToken + "/sendMessage";
+    public void sendBankInterfaceMessage(String telegramMessage) {
+        for (String chatId : bankTelegramBot.getChatIds()) {
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId);
+            message.setText(telegramMessage);
+            message.setParseMode("Markdown");
 
-        Map<String, String> params = new HashMap<>();
-        params.put("chat_id", chatId);
-        params.put("text", message);
-
-        try {
-            restTemplate.postForObject(url, params, String.class);
-        } catch (Exception e) {
-            System.err.println("Failed to send telegram message: " + e.getMessage());
+            try {
+                bankTelegramBot.execute(message);
+            } catch (TelegramApiException e) {
+                System.err.println("Failed to send Telegram message to chat ID " + chatId + ": " + e.getMessage());
+            }
         }
     }
 }

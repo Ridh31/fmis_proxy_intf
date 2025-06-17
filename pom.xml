@@ -176,6 +176,13 @@
 			<artifactId>bcprov-jdk15on</artifactId>
 			<version>1.70</version>
 		</dependency>
+
+		<!-- Telegram Bot -->
+		<dependency>
+			<groupId>org.telegram</groupId>
+			<artifactId>telegrambots-spring-boot-starter</artifactId>
+			<version>6.8.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
