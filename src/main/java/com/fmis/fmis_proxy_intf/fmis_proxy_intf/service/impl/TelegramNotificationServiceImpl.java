@@ -36,7 +36,7 @@ public class TelegramNotificationServiceImpl implements TelegramNotificationServ
             SendMessage message = new SendMessage();
             message.setChatId(chatId);
             message.setText(telegramMessage);
-            message.setParseMode("Markdown");
+            message.setParseMode("HTML");
 
             try {
                 bankTelegramBot.execute(message);
