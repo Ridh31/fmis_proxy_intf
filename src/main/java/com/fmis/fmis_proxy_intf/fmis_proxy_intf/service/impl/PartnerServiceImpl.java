@@ -100,6 +100,19 @@ public class PartnerServiceImpl implements PartnerService {
     }
 
     /**
+     * Retrieves a partner by its system code.
+     *
+     * Delegates the lookup to the {@code partnerRepository}.
+     *
+     * @param systemCode the system code associated with the partner
+     * @return an Optional containing the partner if found, otherwise empty
+     */
+    @Override
+    public Optional<Partner> findBySystemCode(String systemCode) {
+        return partnerRepository.findBySystemCode(systemCode);
+    }
+
+    /**
      * Retrieves a {@link Partner} by its unique code.
      *
      * @param code the partner's unique code

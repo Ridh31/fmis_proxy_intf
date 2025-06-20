@@ -366,7 +366,8 @@ public class PartnerController {
                             partner.getId(),
                             partner.getName(),
                             partner.getDescription(),
-                            partner.getIdentifier()
+                            partner.getIdentifier(),
+                            partner.getSystemCode()
                     )
             );
 
@@ -484,6 +485,15 @@ public class PartnerController {
                         ));
             }
 
+            if (!existingPartner.getSystemCode().equalsIgnoreCase(updatedPartner.getSystemCode())
+                    && partnerService.findBySystemCode(updatedPartner.getSystemCode()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.PARTNER_SYSTEM_CODE_TAKEN
+                        ));
+            }
+
             if (!existingPartner.getCode().equalsIgnoreCase(updatedPartner.getCode())
                     && partnerService.findByCode(updatedPartner.getCode()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -496,8 +506,9 @@ public class PartnerController {
             // Update partner fields
             boolean codeChanged = !existingPartner.getCode().equalsIgnoreCase(updatedPartner.getCode());
             existingPartner.setName(updatedPartner.getName());
-            existingPartner.setCode(updatedPartner.getCode());
             existingPartner.setIdentifier(updatedPartner.getIdentifier());
+            existingPartner.setSystemCode(updatedPartner.getSystemCode());
+            existingPartner.setCode(updatedPartner.getCode());
             existingPartner.setDescription(updatedPartner.getDescription());
 
             // Regenerate keys if code changed

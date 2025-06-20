@@ -10,6 +10,7 @@ public class PartnerDTO {
     private String name;
     private String description;
     private String identifier;
+    private String systemCode;
 
     /**
      * Constructs a new PartnerDTO with provided details.
@@ -18,12 +19,14 @@ public class PartnerDTO {
      * @param name        the name of the partner
      * @param description a brief description of the partner
      * @param identifier  a unique string used to identify the partner
+     * @param systemCode  a unique string used to identify the system or bank code
      */
-    public PartnerDTO(Long id, String name, String description, String identifier) {
+    public PartnerDTO(Long id, String name, String description, String identifier, String systemCode) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.identifier = identifier;
+        this.systemCode = systemCode;
     }
 
     // Getters and Setters
@@ -57,5 +60,13 @@ public class PartnerDTO {
 
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
+    }
+
+    public String getSystemCode() {
+        return systemCode;
+    }
+
+    public void setSystemCode(String systemCode) {
+        this.systemCode = systemCode;
     }
 }

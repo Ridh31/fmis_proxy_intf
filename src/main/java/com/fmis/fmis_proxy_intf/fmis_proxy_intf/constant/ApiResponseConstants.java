@@ -73,6 +73,7 @@ public final class ApiResponseConstants {
     public static final String NO_CONFIG_TO_UPDATE = "There is no FMIS configuration in the database to update.";
     public static final String PARTNER_NAME_TAKEN = "Bad Request: Partner name is already taken.";
     public static final String PARTNER_IDENTIFIER_TAKEN = "Bad Request: Partner identifier is already taken.";
+    public static final String PARTNER_SYSTEM_CODE_TAKEN = "Bad Request: Partner system or bank code is already taken.";
     public static final String PARTNER_CODE_TAKEN = "Bad Request: Partner code is already taken.";
     public static final String USERNAME_TAKEN = "Bad Request: Username is already taken.";
     public static final String NAME_TAKEN = "Bad Request: Name is already taken.";

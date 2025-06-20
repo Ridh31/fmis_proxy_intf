@@ -44,6 +44,14 @@ public interface PartnerService {
     Optional<Partner> findByIdentifier(String identifier);
 
     /**
+     * Finds a partner by its system code.
+     *
+     * @param systemCode the system code associated with the partner
+     * @return an Optional containing the partner if found, otherwise empty
+     */
+    Optional<Partner> findBySystemCode(String systemCode);
+
+    /**
      * Retrieves a partner by its unique code.
      *
      * @param code the unique code associated with the partner

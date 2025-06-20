@@ -43,8 +43,13 @@ public class Partner {
     private String identifier;
 
     @Column(nullable = false, unique = true)
+    @NotEmpty(message = "System code cannot be empty. Please provide a valid system code.")
+    @Size(min = 1, max = 50, message = "System code must be between 1 and 50 characters long.")
+    private String systemCode;
+
+    @Column(nullable = false, unique = true)
     @NotEmpty(message = "Code cannot be empty. Please provide a valid code.")
-    @Size(min = 1, max = 50, message = "Identifier must be between 1 and 50 characters long.")
+    @Size(min = 1, max = 50, message = "Code must be between 1 and 50 characters long.")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String code;
 
@@ -88,17 +93,32 @@ public class Partner {
     /**
      * Custom constructor for creating a new Partner entity.
      *
-     * @param name         The name of the partner.
-     * @param description  The partner's description.
-     * @param code         Unique identifier for the partner.
-     * @param publicKey    RSA public key.
-     * @param privateKey   RSA private key.
-     * @param createdBy    ID of the user who created the partner.
+     * @param name        The name of the partner.
+     * @param description The partner's description.
+     * @param identifier  The unique identifier for the partner.
+     * @param systemCode  The system code associated with the partner.
+     * @param code        Unique code for the partner.
+     * @param publicKey   RSA public key.
+     * @param privateKey  RSA private key.
+     * @param isOwn       Indicates if the partner is owned internally.
+     * @param isBank      Indicates if the partner is a bank.
+     * @param createdBy   ID of the user who created the partner.
      */
-    public Partner(String name, String description, String identifier, String code, String publicKey, String privateKey, Boolean isOwn, Boolean isBank, Long createdBy) {
+    public Partner(
+            String name,
+            String description,
+            String identifier,
+            String systemCode,
+            String code,
+            String publicKey,
+            String privateKey,
+            Boolean isOwn,
+            Boolean isBank,
+            Long createdBy) {
         this.name = name;
         this.description = description;
         this.identifier = identifier;
+        this.systemCode = systemCode;
         this.code = code;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
@@ -133,20 +153,28 @@ public class Partner {
         this.description = description;
     }
 
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
     public String getIdentifier() {
         return identifier;
     }
 
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
+    }
+
+    public String getSystemCode() {
+        return systemCode;
+    }
+
+    public void setSystemCode(String systemCode) {
+        this.systemCode = systemCode;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getPublicKey() {

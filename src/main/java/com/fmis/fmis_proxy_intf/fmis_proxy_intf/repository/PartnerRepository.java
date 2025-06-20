@@ -39,6 +39,14 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
     Optional<Partner> findByIdentifier(String identifier);
 
     /**
+     * Finds a partner by its system code.
+     *
+     * @param systemCode the system code associated with the partner
+     * @return an Optional containing the partner if found, otherwise empty
+     */
+    Optional<Partner> findBySystemCode(String systemCode);
+
+    /**
      * Finds a partner by its unique code.
      *
      * @param code the code associated with the partner
