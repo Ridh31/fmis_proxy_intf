@@ -443,11 +443,12 @@ public class BankStatementController {
                         // Construct notification to Telegram Bot
                         String partnerName = partner.map(Partner::getName).orElse("Unknown Partner");
                         String partnerIdentifier = partner.map(Partner::getIdentifier).orElse("Unknown Identifier");
+                        String partnerSystemCode = partner.map(Partner::getSystemCode).orElse("Unknown System Code");
                         DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                         String telegramStatementDate = statementDate.format(outputFormatter);
                         String telegramImportedDate = LocalDate.now().format(outputFormatter);
                         String telegramImportedStatus = (responseCode == 201) ? "Processed" : "Failed";
-                        String announcementEmoji = (responseCode == 201) ? "📢" : "⚠️";
+                        String announcementEmoji = (responseCode == 201) ? "🔔" : "⚠️";
                         String statusEmoji = (responseCode == 201) ? "✅" : "❌";
 
                         String requestMessage =
@@ -459,7 +460,7 @@ public class BankStatementController {
                         String telegramMessage =
                                 requestMessage + "\n\n" +
                                 announcementEmoji + " <b>Bank Statement Update</b>\n\n" +
-                                "• Identifier: <code>" + TelegramUtil.escapeHtml(partnerIdentifier) + "</code>\n" +
+                                "• Reference: <code>" + TelegramUtil.escapeHtml(partnerSystemCode) + "</code>" + " (" + TelegramUtil.escapeHtml(partnerIdentifier) + ")\n" +
                                 "• Account Number: <code>" + TelegramUtil.escapeHtml(bankAccountNumber != null ? bankAccountNumber : "N/A") + "</code>\n" +
                                 "• Statement Date: <code>" + telegramStatementDate + "</code>\n" +
                                 "• Imported On: <code>" + telegramImportedDate + "</code>\n" +
