@@ -322,10 +322,10 @@ public class BankStatementController {
             List<Map<String, Object>> statementList = (List<Map<String, Object>>) validatedData.get("CMB_BANKSTM_STG");
 
             partner.ifPresent(p -> {
-                String identifier = p.getIdentifier();
+                String systemCode = p.getSystemCode();
 
                 for (Map<String, Object> item : statementList) {
-                    item.put("CMB_BANK_CODE", identifier);
+                    item.put("CMB_BANK_CODE", systemCode);
 
                     String statementDate = item.getOrDefault("CMB_BSP_STMT_DT", "").toString();
                     String accountNumber = item.getOrDefault("CMB_BANK_ACCOUNT_N", "").toString();
