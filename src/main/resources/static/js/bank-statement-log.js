@@ -342,6 +342,23 @@ filterBtn.addEventListener("click", () => {
     fetchData();
 });
 
+/**
+ * Handle logout:
+ * - Clear cookies
+ * - Redirect to login page
+ */
+document.querySelector(".btn-logout")?.addEventListener("click", () => {
+    const deleteCookie = name => {
+        document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax;`;
+    };
+
+    deleteCookie("isAdmin");
+    deleteCookie("adminUsername");
+    deleteCookie("adminPassword");
+
+    window.location.href = "/api/v1/admin/login";
+});
+
 // Initial fetch when page loads
 loadPartners();
 fetchData();
