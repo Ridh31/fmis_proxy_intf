@@ -9,6 +9,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -29,6 +30,7 @@ import java.util.Optional;
 @RequestMapping("/api/v1/admin")
 public class PageController {
 
+    private final int cookieLifetime = 300;
     private final UserService userService;
 
     /**
@@ -58,14 +60,45 @@ public class PageController {
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
 
-            return new ResponseEntity<>(content.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.OK);
+            // Clear cookies by setting them with an expired max-age
+            ResponseCookie isAdminCookie = ResponseCookie.from("isAdmin", "")
+                    .path("/")
+                    .maxAge(0)
+                    .httpOnly(true)
+                    .build();
+
+            ResponseCookie adminUsernameCookie = ResponseCookie.from("adminUsername", "")
+                    .path("/")
+                    .maxAge(0)
+                    .httpOnly(true)
+                    .build();
+
+            ResponseCookie adminPasswordCookie = ResponseCookie.from("adminPassword", "")
+                    .path("/")
+                    .maxAge(0)
+                    .httpOnly(true)
+                    .build();
+
+            headers.add(HttpHeaders.SET_COOKIE, isAdminCookie.toString());
+            headers.add(HttpHeaders.SET_COOKIE, adminUsernameCookie.toString());
+            headers.add(HttpHeaders.SET_COOKIE, adminPasswordCookie.toString());
+
+            return new ResponseEntity<>(
+                    content.getBytes(StandardCharsets.UTF_8),
+                    headers,
+                    HttpStatus.OK
+            );
         } catch (IOException e) {
             String errorMessage = ApiResponseConstants.ERROR_READING_FILE;
 
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
 
-            return new ResponseEntity<>(errorMessage.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(
+                    errorMessage.getBytes(StandardCharsets.UTF_8),
+                    headers,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 
@@ -81,7 +114,6 @@ public class PageController {
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
             HttpServletResponse response
     ) {
-
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
             return new RedirectView("/api/v1/admin/login");
         }
@@ -100,7 +132,59 @@ public class PageController {
                     .replace("{{password}}", adminPassword)
                     .replace("{{partnerToken}}", partnerToken);
 
-            int cookieLifetime = 60;
+            // Set cookie expire duration
+            CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+            CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+            CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
+
+            return new ResponseEntity<>(
+                    content.getBytes(StandardCharsets.UTF_8),
+                    headers,
+                    HttpStatus.OK
+            );
+        } catch (IOException e) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
+            return new ResponseEntity<>(
+                    "Error loading file.".getBytes(),
+                    headers,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Handles GET request to the FMIS configuration page.
+     *
+     * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
+     */
+    @GetMapping("/fmis-config")
+    public Object fmisConfig(
+            @CookieValue(name = "isAdmin", required = false) String isAdmin,
+            @CookieValue(name = "adminUsername", required = false) String adminUsername,
+            @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            HttpServletResponse response
+    ) {
+        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
+            return new RedirectView("/api/v1/admin/login");
+        }
+
+        try {
+            Optional<User> userOptional = userService.findByUsername(adminUsername);
+            String partnerToken = userOptional.get().getPartner().getPublicKey();
+
+            Resource resource = new ClassPathResource("templates/fmis-config.html");
+            String title = "Configuration | FMIS Proxy Interface";
+            String heading = "FMIS Configuration";
+            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
+            content = content.replace("{{title}}", title)
+                    .replace("{{heading}}", heading)
+                    .replace("{{username}}", adminUsername)
+                    .replace("{{password}}", adminPassword)
+                    .replace("{{partnerToken}}", partnerToken);
 
             // Set cookie expire duration
             CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -110,11 +194,19 @@ public class PageController {
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
 
-            return new ResponseEntity<>(content.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.OK);
+            return new ResponseEntity<>(
+                    content.getBytes(StandardCharsets.UTF_8),
+                    headers,
+                    HttpStatus.OK
+            );
         } catch (IOException e) {
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-            return new ResponseEntity<>("Error loading file.".getBytes(), headers, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(
+                    "Error loading file.".getBytes(),
+                    headers,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 }

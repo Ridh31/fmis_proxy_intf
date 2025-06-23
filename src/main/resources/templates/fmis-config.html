@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/img/logo-fmis-v2-300x190-1.png" rel="shortcut icon">
+    <script src="/libs/datatables/jquery-3.6.0.min.js"></script>
+    <script src="/libs/jquery-ui/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="/css/fmis-config.css">
+    <title>{{title}}</title>
+</head>
+<body>
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2>FMIS Configuration</h2>
+            <p class="subtext">System integration details for PSIGW REST services.</p>
+        </div>
+        <button id="openModalBtn" class="icon-btn" title="Edit">
+            <svg width="27px" height="27px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M19.2071 2.79312C17.9882 1.57417 16.0119 1.57417 14.7929 2.79312L5.68463 11.9014C5.30015 12.2859 5.0274 12.7676 4.89552 13.2951L4.02988 16.7577C3.94468 17.0985 4.04453 17.459 4.29291 17.7073C4.54129 17.9557 4.90178 18.0556 5.24256 17.9704L8.70513 17.1047C9.23263 16.9729 9.71437 16.7001 10.0988 16.3156L19.2071 7.20733C20.4261 5.98838 20.4261 4.01207 19.2071 2.79312ZM16.2071 4.20733C16.645 3.76943 17.355 3.76943 17.7929 4.20733C18.2308 4.64524 18.2308 5.35522 17.7929 5.79312L8.68463 14.9014C8.55647 15.0296 8.39589 15.1205 8.22006 15.1644L6.37439 15.6259L6.83581 13.7802C6.87976 13.6044 6.97068 13.4438 7.09884 13.3156L16.2071 4.20733Z" fill="#1A73E8"/>
+                <path d="M5 20C4.44772 20 4 20.4477 4 21C4 21.5523 4.44772 22 5 22H19C19.5523 22 20 21.5523 20 21C20 20.4477 19.5523 20 19 20H5Z" fill="#1A73E8"/>
+            </svg>
+        </button>
+    </div>
+    <p class="label">Base URL</p>
+    <div class="info-block">
+        <p class="value" id="baseURLField">Loading...</p>
+    </div>
+    <div class="info-grid">
+        <div class="info-block">
+            <p class="label">Username</p>
+            <p class="value" id="usernameField">Loading...</p>
+        </div>
+        <div class="info-block">
+            <label for="passwordField" class="label">Password</label>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <input id="passwordField" type="password" value="" placeholder="Loading..." class="value password-field" readonly/>
+                <button type="button" class="icon-btn toggle-password" aria-label="Toggle password visibility">
+                    <span class="eye-icon">
+                        <!-- Eye On -->
+                        <svg class="eye-on" viewBox="0 -0.5 25 25" xmlns="http://www.w3.org/2000/svg" >
+                            <path d="M12.0003 5.251C7.96932 5.183 3.80032 8 1.17932 10.885C0.904199 11.1904 0.751953 11.5869 0.751953 11.998C0.751953 12.4091 0.904199 12.8056 1.17932 13.111C3.74332 15.935 7.90032 18.817 12.0003 18.748C16.1003 18.817 20.2583 15.935 22.8243 13.111C23.0994 12.8056 23.2517 12.4091 23.2517 11.998C23.2517 11.5869 23.0994 11.1904 22.8243 10.885C20.2003 8 16.0313 5.183 12.0003 5.251Z" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M15.75 12C15.7498 12.7416 15.5297 13.4666 15.1175 14.0831C14.7054 14.6997 14.1196 15.1802 13.4344 15.4638C12.7491 15.7475 11.9952 15.8216 11.2678 15.6768C10.5404 15.532 9.87234 15.1748 9.348 14.6503C8.82365 14.1258 8.4666 13.4576 8.32198 12.7302C8.17737 12.0028 8.25169 11.2489 8.53555 10.5637C8.81941 9.87854 9.30005 9.29293 9.91672 8.88092C10.5334 8.46891 11.2584 8.249 12 8.249C12.4926 8.24887 12.9804 8.34581 13.4355 8.53428C13.8905 8.72275 14.304 8.99906 14.6523 9.34741C15.0006 9.69576 15.2768 10.1093 15.4651 10.5645C15.6535 11.0196 15.7503 11.5074 15.75 12Z" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <!-- Eye Off -->
+                        <svg class="eye-off active" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.78309 20.9991L21.5323 2.99988" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M19.7491 8.87964C20.8636 9.69316 21.8934 10.6168 22.8229 11.6365C23.098 11.9419 23.2503 12.3384 23.2503 12.7495C23.2503 13.1605 23.098 13.557 22.8229 13.8624C20.257 16.6863 16.0992 19.5682 11.9994 19.4992C10.9829 19.5068 9.97136 19.3591 8.99963 19.0614" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.77916 16.2603C2.84594 15.5357 1.97616 14.7328 1.17927 13.8604C0.904163 13.555 0.751923 13.1585 0.751923 12.7475C0.751923 12.3364 0.904163 11.9399 1.17927 11.6345C3.80016 8.75164 7.96899 5.93275 11.9998 5.99975C12.7749 5.99106 13.548 6.07677 14.3021 6.2549" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M11.9994 8.99963C11.5069 8.9995 11.0192 9.09641 10.5642 9.28481C10.1092 9.47321 9.69575 9.74941 9.34752 10.0976C8.99929 10.4459 8.72308 10.8593 8.53468 11.3143C8.35077 11.7585 8.25405 12.2338 8.24966 12.7143" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M11.9995 16.4993C12.492 16.4993 12.9797 16.4023 13.4347 16.2138C13.8898 16.0253 14.3032 15.749 14.6514 15.4007C14.9996 15.0524 15.2758 14.6389 15.4642 14.1838C15.6495 13.7362 15.7463 13.2571 15.7493 12.7729" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <p class="label">Content-Type</p>
+    <div class="info-block">
+        <p class="value" id="contentTypeField">Loading...</p>
+    </div>
+    <p class="label">Description</p>
+    <div class="info-block">
+        <p class="value" id="descriptionField">Loading...</p>
+    </div>
+    <div class="actions">
+        <button class="btn btn-logout">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 24 24" fill="none">
+                <path opacity="1" d="M9.00195 7C9.01406 4.82497 9.11051 3.64706 9.87889 2.87868C10.7576 2 12.1718 2 15.0002 2L16.0002 2C18.8286 2 20.2429 2 21.1215 2.87868C22.0002 3.75736 22.0002 5.17157 22.0002 8L22.0002 16C22.0002 18.8284 22.0002 20.2426 21.1215 21.1213C20.2429 22 18.8286 22 16.0002 22H15.0002C12.1718 22 10.7576 22 9.87889 21.1213C9.11051 20.3529 9.01406 19.175 9.00195 17" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                <path d="M15 12L2 12M2 12L5.5 9M2 12L5.5 15" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Logout</span>
+        </button>
+    </div>
+</div>
+<div id="editModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Edit Configuration</h3>
+        <div class="modal-group">
+            <label for="editBaseURL">Base URL:</label>
+            <input type="text" id="editBaseURL" name="baseURL"/>
+        </div>
+        <div class="modal-group">
+            <label for="editUsername">Username:</label>
+            <input type="text" id="editUsername" name="username"/>
+        </div>
+        <div class="modal-group">
+            <label for="editPassword">Password:</label>
+            <input type="password" id="editPassword" name="password"/>
+            <div id="editPasswordHidden" hidden></div>
+        </div>
+        <div class="modal-group">
+            <label for="editContentType">Content-Type:</label>
+            <input type="text" id="editContentType" name="contentType"/>
+        </div>
+        <div class="modal-group">
+            <label for="editDescription">Description:</label>
+            <textarea id="editDescription" name="description" rows="4"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button id="saveBtn" class="btn btn-confirm">Save</button>
+            <button id="cancelBtn" class="btn btn-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+<div class="credentials">
+    <div data-username="{{username}}"></div>
+    <div data-password="{{password}}"></div>
+    <div data-partner-token="{{partnerToken}}"></div>
+</div>
+</body>
+<script src="/js/fmis-config.js"></script>
+</html>

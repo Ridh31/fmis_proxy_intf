@@ -46,7 +46,7 @@ public class ConfigController {
 
     /**
      * Endpoint to retrieve a paginated list of FMIS configurations.
-     * Accessible only to Super Admin users.
+     * Accessible only to Admin users.
      *
      * @param page The page number (default: 0).
      * @param size The number of items per page (default: 10).
@@ -54,7 +54,7 @@ public class ConfigController {
      */
     @Operation(
             summary = "Get FMIS Configuration",
-            description = "Retrieves a paginated list of FMIS configurations. Accessible only to Super Admins."
+            description = "Retrieves a paginated list of FMIS configurations. Accessible only to Admins."
     )
     @Hidden
     @GetMapping("/list-config")
@@ -70,8 +70,8 @@ public class ConfigController {
             }
             User currentUser = (User) userValidation;
 
-            // Validate Super Admin or Privileged Role
-            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateSuperAdmin(currentUser);
+            // Validate Admin or Privileged Role
+            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
             if (adminValidation != null) {
                 return AuthorizationHelper.castToApiResponse(adminValidation);
             }
@@ -104,7 +104,7 @@ public class ConfigController {
 
     /**
      * Endpoint to update the FMIS configuration.
-     * Accessible only to Super Admin users (Level 1).
+     * Accessible only to Admin users.
      *
      * @param request       The configuration update request containing the new FMIS configuration data.
      * @param bindingResult The validation result for the incoming request data.
@@ -112,7 +112,7 @@ public class ConfigController {
      */
     @Operation(
             summary = "Update FMIS Configuration",
-            description = "Allows a Super Admin (Level 1) to update FMIS configuration."
+            description = "Allows a Admin to update FMIS configuration."
     )
     @Hidden
     @PutMapping("/update-fmis-config")
@@ -136,8 +136,8 @@ public class ConfigController {
 
             User currentUser = (User) userValidation;
 
-            // Check that user is a Super Admin
-            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateSuperAdmin(currentUser);
+            // Check that user is Admin
+            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
             if (adminValidation != null) {
                 return AuthorizationHelper.castToApiResponse(adminValidation);
             }
