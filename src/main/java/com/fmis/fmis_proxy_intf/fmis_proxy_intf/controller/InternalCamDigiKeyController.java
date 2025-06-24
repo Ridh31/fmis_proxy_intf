@@ -138,16 +138,26 @@ public class InternalCamDigiKeyController {
     }
 
     /**
-     * Endpoint to retrieve a paginated list of internal CamDigiKey hosts.
+     * Endpoint to retrieve a paginated and filtered list of internal CamDigiKey hosts.
      *
-     * @param page the page number (default is 0)
-     * @param size the number of items per page (default is 10)
-     * @return ResponseEntity containing the list of hosts or an appropriate status message
+     * @param page        the page number (default is 0)
+     * @param size        the number of items per page (default is 10)
+     * @param name        optional filter by host name
+     * @param appKey      optional filter by application key
+     * @param ipAddress   optional filter by IP address
+     * @param accessURL   optional filter by access URL
+     * @param createdDate optional filter by creation date in "dd-MM-yyyy" format
+     * @return ResponseEntity containing a paginated list of hosts or appropriate status message
      */
     @GetMapping("list-host")
-    public ResponseEntity<ApiResponse<?>> getAllHosts(
+    public ResponseEntity<ApiResponse<?>> getFilteredHosts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String appKey,
+            @RequestParam(required = false) String ipAddress,
+            @RequestParam(required = false) String accessURL,
+            @RequestParam(required = false) String createdDate) {
 
         try {
             // Validate authenticated user
@@ -163,16 +173,9 @@ public class InternalCamDigiKeyController {
                 return AuthorizationHelper.castToApiResponse(adminValidation);
             }
 
-            // Fetch paginated internal CamDigiKey list
-            Page<InternalCamDigiKey> hosts = internalCamDigiKeyService.getAllInternalCamDigiKey(page, size);
-
-            if (hosts.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.NO_CONTENT_CODE,
-                                ApiResponseConstants.NOT_FOUND
-                        ));
-            }
+            // Fetch filtered and paginated internal CamDigiKey list
+            Page<InternalCamDigiKey> hosts = internalCamDigiKeyService.getFilteredInternalCamDigiKeys(
+                    page, size, name, appKey, ipAddress, accessURL, createdDate);
 
             return ResponseEntity.ok(new ApiResponse<>(
                     ApiResponseConstants.SUCCESS_CODE,
@@ -251,18 +254,9 @@ public class InternalCamDigiKeyController {
 
             InternalCamDigiKey existing = optionalExisting.get();
 
-            // Check for uniqueness conflicts (only if values changed)
-            if (!existing.getName().equals(updatedData.getName()) &&
-                    internalCamDigiKeyService.existsByName(updatedData.getName())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.NAME_TAKEN
-                        ));
-            }
-
-            if (!existing.getAppKey().equals(updatedData.getAppKey()) &&
-                    internalCamDigiKeyService.existsByAppKey(updatedData.getAppKey())) {
+            // Manual uniqueness check for appKey
+            Optional<InternalCamDigiKey> appKeyOwner = internalCamDigiKeyService.findByAppKey(updatedData.getAppKey());
+            if (appKeyOwner.isPresent() && !appKeyOwner.get().getId().equals(existing.getId())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ApiResponseConstants.BAD_REQUEST_CODE,
@@ -270,8 +264,19 @@ public class InternalCamDigiKeyController {
                         ));
             }
 
-            if (!existing.getIpAddress().equals(updatedData.getIpAddress()) &&
-                    internalCamDigiKeyService.existsByIpAddress(updatedData.getIpAddress())) {
+            // Manual uniqueness check for name
+            if (!existing.getName().equals(updatedData.getName())
+                    && internalCamDigiKeyService.existsByName(updatedData.getName())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.NAME_TAKEN
+                        ));
+            }
+
+            // IP Address uniqueness
+            if (!existing.getIpAddress().equals(updatedData.getIpAddress())
+                    && internalCamDigiKeyService.existsByIpAddress(updatedData.getIpAddress())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ApiResponseConstants.BAD_REQUEST_CODE,
@@ -279,8 +284,9 @@ public class InternalCamDigiKeyController {
                         ));
             }
 
-            if (!existing.getAccessURL().equals(updatedData.getAccessURL()) &&
-                    internalCamDigiKeyService.existsByAccessURL(updatedData.getAccessURL())) {
+            // Access URL uniqueness
+            if (!existing.getAccessURL().equals(updatedData.getAccessURL())
+                    && internalCamDigiKeyService.existsByAccessURL(updatedData.getAccessURL())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ApiResponseConstants.BAD_REQUEST_CODE,
@@ -307,7 +313,6 @@ public class InternalCamDigiKeyController {
             ));
 
         } catch (Exception e) {
-            // Handle unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,

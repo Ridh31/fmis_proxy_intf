@@ -169,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
  */
 function clearValidationErrors() {
     document.querySelectorAll(".validation-error").forEach(el => el.remove());
+    document.querySelectorAll(".input-error").forEach(el => el.classList.remove("input-error"));
 }
 
 /**
@@ -180,6 +181,7 @@ function showValidationErrors(errors) {
     for (const [field, message] of Object.entries(errors)) {
         const inputEl = document.getElementById("edit" + capitalize(field));
         if (inputEl) {
+            inputEl.classList.add("input-error");
             const errorEl = document.createElement("div");
             errorEl.className = "validation-error";
             errorEl.style.color = "red";

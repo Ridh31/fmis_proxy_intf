@@ -108,15 +108,29 @@ public class InternalCamDigiKeyServiceImpl implements InternalCamDigiKeyService 
     }
 
     /**
-     * Retrieves a paginated list of all active and non-deleted {@link InternalCamDigiKey} records.
+     * Retrieves a paginated list of active and non-deleted {@link InternalCamDigiKey} records,
+     * filtered optionally by name, appKey, ipAddress, accessURL, and createdDate.
      *
-     * @param page the page number (zero-based index)
-     * @param size the number of records per page
-     * @return a {@link Page} containing {@link InternalCamDigiKey} entities
+     * @param page        the zero-based page index
+     * @param size        the number of records per page
+     * @param name        optional filter by name
+     * @param appKey      optional filter by app key
+     * @param ipAddress   optional filter by IP address
+     * @param accessURL   optional filter by access URL
+     * @param createdDate optional filter by creation date in "dd-MM-yyyy" format
+     * @return a {@link Page} of {@link InternalCamDigiKey} entities matching the filters
      */
     @Override
-    public Page<InternalCamDigiKey> getAllInternalCamDigiKey(int page, int size) {
+    public Page<InternalCamDigiKey> getFilteredInternalCamDigiKeys(
+            int page, int size,
+            String name,
+            String appKey,
+            String ipAddress,
+            String accessURL,
+            String createdDate) {
+
         Pageable pageable = PageRequest.of(page, size);
-        return internalCamDigiKeyRepository.getAllInternalCamDigiKey(pageable);
+        return internalCamDigiKeyRepository.findFilteredInternalCamDigiKeys(
+                name, appKey, ipAddress, accessURL, createdDate, pageable);
     }
 }

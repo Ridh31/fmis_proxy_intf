@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -63,10 +64,16 @@ public interface InternalCamDigiKeyRepository extends JpaRepository<InternalCamD
     Optional<InternalCamDigiKey> findByAppKey(String appKey);
 
     /**
-     * Retrieves a paginated list of all active and non-deleted {@link InternalCamDigiKey} records.
+     * Retrieves a paginated list of active and non-deleted {@link InternalCamDigiKey} records,
+     * filtered by optional parameters.
      *
-     * @param pageable the pagination information
-     * @return a page of {@link InternalCamDigiKey} entities
+     * @param name        optional filter by name
+     * @param appKey      optional filter by app key
+     * @param ipAddress   optional filter by IP address
+     * @param accessURL   optional filter by access URL
+     * @param createdDate optional filter by creation date in "dd-MM-yyyy" format
+     * @param pageable    pagination information
+     * @return a page of filtered {@link InternalCamDigiKey} entities
      */
     @Query(value = """
         SELECT
@@ -76,7 +83,20 @@ public interface InternalCamDigiKeyRepository extends JpaRepository<InternalCamD
         WHERE
             ic.status = TRUE
             AND ic.is_deleted = FALSE
-        ORDER BY ic.id DESC
-        """, nativeQuery = true)
-    Page<InternalCamDigiKey> getAllInternalCamDigiKey(Pageable pageable);
+            AND (:name IS NULL OR ic.name = :name)
+            AND (:appKey IS NULL OR ic.app_key = :appKey)
+            AND (:ipAddress IS NULL OR ic.ip_address = :ipAddress)
+            AND (:accessURL IS NULL OR ic.access_url = :accessURL)
+            AND (:createdDate IS NULL OR DATE_FORMAT(ic.created_date, '%d-%m-%Y') = :createdDate)
+        ORDER BY
+            ic.id DESC
+    """, nativeQuery = true)
+    Page<InternalCamDigiKey> findFilteredInternalCamDigiKeys(
+            @Param("name") String name,
+            @Param("appKey") String appKey,
+            @Param("ipAddress") String ipAddress,
+            @Param("accessURL") String accessURL,
+            @Param("createdDate") String createdDate,
+            Pageable pageable
+    );
 }

@@ -2,6 +2,8 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 
@@ -68,11 +70,24 @@ public interface InternalCamDigiKeyService {
     Optional<InternalCamDigiKey> findByAppKey(String appKey);
 
     /**
-     * Retrieves a paginated list of active and non-deleted {@link InternalCamDigiKey} entities.
+     * Retrieves a paginated list of active and non-deleted {@link InternalCamDigiKey} entities,
+     * optionally filtered by the provided parameters.
      *
-     * @param page the page number (zero-based index)
-     * @param size the number of records per page
-     * @return a {@link Page} containing {@link InternalCamDigiKey} results
+     * @param page        the zero-based page index
+     * @param size        the number of records per page
+     * @param name        optional filter by name
+     * @param appKey      optional filter by app key
+     * @param ipAddress   optional filter by IP address
+     * @param accessURL   optional filter by access URL
+     * @param createdDate optional filter by creation date (formatted as "dd-MM-yyyy")
+     * @return a {@link Page} containing filtered {@link InternalCamDigiKey} results
      */
-    Page<InternalCamDigiKey> getAllInternalCamDigiKey(int page, int size);
+    Page<InternalCamDigiKey> getFilteredInternalCamDigiKeys(
+            int page, int size,
+            String name,
+            String appKey,
+            String ipAddress,
+            String accessURL,
+            String createdDate
+    );
 }

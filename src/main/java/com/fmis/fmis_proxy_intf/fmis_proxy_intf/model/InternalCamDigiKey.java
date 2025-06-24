@@ -1,6 +1,8 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 
@@ -38,7 +40,8 @@ public class InternalCamDigiKey {
     private Integer createdBy;
 
     @Column(name = "created_date")
-    @JsonIgnore
+    @JsonProperty(value = "createdDate", access = JsonProperty.Access.READ_ONLY)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm a")
     private LocalDateTime createdDate = LocalDateTime.now();
 
     @JsonIgnore
