@@ -28,7 +28,6 @@ $(() => {
     });
 });
 
-
 /**
  * Display a loading indicator in the table while fetching data.
  * Clears existing table body and shows a single row with "Loading..." message.
@@ -61,7 +60,6 @@ function hideLoading() {
         }
     });
 }
-
 
 /**
  * Fetch data from the API with optional filters, then render the data table.
@@ -238,7 +236,7 @@ function validateModalFields(data) {
         showError(input, "App key is required. Please provide a valid app key.");
         valid = false;
     }
-    if (!validateIP(data.ipAddress.trim())) {
+    if (!data.ipAddress.trim()) {
         const input = document.getElementById("modalIP");
         showError(input, "IP address is required. Please provide a valid IP address.");
         valid = false;
@@ -250,16 +248,6 @@ function validateModalFields(data) {
     }
 
     return valid;
-}
-
-/**
- * Validates IP address format using a regex.
- * @param {string} ip - IP address string to validate
- * @returns {boolean} - True if valid, otherwise false
- */
-function validateIP(ip) {
-    const ipRegex = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
-    return ipRegex.test(ip);
 }
 
 /**

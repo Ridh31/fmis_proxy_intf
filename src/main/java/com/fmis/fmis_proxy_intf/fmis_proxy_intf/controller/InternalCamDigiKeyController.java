@@ -275,16 +275,6 @@ public class InternalCamDigiKeyController {
                         ));
             }
 
-            // IP Address uniqueness
-            if (!existing.getIpAddress().equals(updatedData.getIpAddress())
-                    && internalCamDigiKeyService.existsByIpAddress(updatedData.getIpAddress())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.IP_ADDRESS_TAKEN
-                        ));
-            }
-
             // Access URL uniqueness
             if (!existing.getAccessURL().equals(updatedData.getAccessURL())
                     && internalCamDigiKeyService.existsByAccessURL(updatedData.getAccessURL())) {
