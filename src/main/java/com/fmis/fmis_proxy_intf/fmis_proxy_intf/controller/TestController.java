@@ -8,6 +8,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TestService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponseExamples;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ExceptionUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -21,8 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Controller for handling test-related endpoints.
@@ -125,15 +124,7 @@ public class TestController {
                                 fmisResponseBody
                         ));
             } else {
-                fmisResponseBody = Optional.ofNullable(fmisResponseBody).orElse("");
-
-                // Define the regex pattern to capture only the domain
-                Pattern pattern = Pattern.compile("(https?://[a-zA-Z0-9.-]+)");
-                Matcher matcher = pattern.matcher(fmisResponseBody);
-
-                // Extract the first match if found
-                String responseURL = matcher.find() ? matcher.group(1) : "";
-                String responseHost = !responseURL.isEmpty() ? " (" + responseURL + ")" : "";
+                String responseHost = ExceptionUtils.formatHostFromContent(fmisResponseBody);
 
                 // Handle failure in sending data to FMIS
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY)

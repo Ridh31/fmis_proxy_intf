@@ -8,6 +8,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.InternalCamDigiKeyService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ExceptionUtils;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -398,11 +399,13 @@ public class InternalCamDigiKeyController {
 
             } catch (ResourceAccessException e) {
                 // Handle unreachable external host
+                String targetHost = ExceptionUtils.extractTargetHost(e.getMessage());
+
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
                                 ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
                                 ApiResponseConstants.SERVICE_UNAVAILABLE,
-                                e.getMessage()
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + " (" + targetHost + ")"
                         ));
 
             } catch (Exception e) {
@@ -532,10 +535,12 @@ public class InternalCamDigiKeyController {
 
             } catch (ResourceAccessException e) {
                 // Handle unreachable host or timeout
+                String targetHost = ExceptionUtils.extractTargetHost(e.getMessage());
+
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ApiResponse<>(
                         ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
                         ApiResponseConstants.SERVICE_UNAVAILABLE,
-                        e.getMessage()
+                        ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + " (" + targetHost + ")"
                 ));
 
             } catch (Exception e) {
@@ -644,11 +649,13 @@ public class InternalCamDigiKeyController {
 
             } catch (ResourceAccessException e) {
                 // Handle unreachable external host
+                String targetHost = ExceptionUtils.extractTargetHost(e.getMessage());
+
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
                                 ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
                                 ApiResponseConstants.SERVICE_UNAVAILABLE,
-                                e.getMessage()
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + " (" + targetHost + ")"
                         ));
 
             } catch (Exception e) {
