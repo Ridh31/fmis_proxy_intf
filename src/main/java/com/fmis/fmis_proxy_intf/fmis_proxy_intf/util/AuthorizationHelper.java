@@ -25,6 +25,14 @@ public class AuthorizationHelper {
     private final RoleService roleService;
     private final PartnerService partnerService;
 
+    /**
+     * Constructs an instance of AuthorizationHelper with required services.
+     * Uses constructor injection to initialize dependencies for user, role, and partner management.
+     *
+     * @param userService    service for user-related operations
+     * @param roleService    service for role-related operations
+     * @param partnerService service for partner-related operations
+     */
     @Autowired
     public AuthorizationHelper(UserService userService,
                                RoleService roleService,
@@ -50,7 +58,7 @@ public class AuthorizationHelper {
         Optional<User> userOptional = userService.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            return unauthorizedResponse(ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND);
+            return unauthorizedResponse(ApiResponseConstants.UNAUTHORIZED_ACCESS);
         }
 
         return userOptional.get();
@@ -75,10 +83,10 @@ public class AuthorizationHelper {
     }
 
     /**
-     * Validates if the given user is a super admin.
+     * Validates that the user has Admin or Super Admin access (level 1 or 2).
      *
      * @param user the authenticated user
-     * @return ResponseEntity if invalid, or null if valid
+     * @return ResponseEntity if unauthorized, or null if valid
      */
     public ResponseEntity<ApiResponse<Object>> validateAdmin(User user) {
         if (!roleService.existsById(user.getRole().getId())) {
@@ -91,6 +99,48 @@ public class AuthorizationHelper {
         }
 
         return null;
+    }
+
+    /**
+     * Authenticate user and authorize as Super Admin only.
+     *
+     * @return the authenticated User if successful,
+     *         or ResponseEntity<ApiResponse<?>> if failed.
+     */
+    public Object authenticateAndAuthorizeSuperAdmin() {
+        Object result = getAuthenticatedUserOrResponse();
+        if (result instanceof ResponseEntity) {
+            return result;
+        }
+        User user = (User) result;
+
+        ResponseEntity<ApiResponse<Object>> superAdminValidation = validateSuperAdmin(user);
+        if (superAdminValidation != null) {
+            return superAdminValidation;
+        }
+
+        return user;
+    }
+
+    /**
+     * Authenticate user and authorize as Admin or Super Admin.
+     *
+     * @return the authenticated User if successful,
+     *         or ResponseEntity<ApiResponse<?>> if failed.
+     */
+    public Object authenticateAndAuthorizeAdmin() {
+        Object result = getAuthenticatedUserOrResponse();
+        if (result instanceof ResponseEntity) {
+            return result;
+        }
+        User user = (User) result;
+
+        ResponseEntity<ApiResponse<Object>> adminValidation = validateAdmin(user);
+        if (adminValidation != null) {
+            return adminValidation;
+        }
+
+        return user;
     }
 
     /**
@@ -139,24 +189,77 @@ public class AuthorizationHelper {
         return user;
     }
 
+    /**
+     * Internal method to authenticate and retrieve the current user, or return an error response.
+     *
+     * @return the authenticated User object or ResponseEntity if authentication fails
+     */
+    private Object getAuthenticatedUserOrResponse() {
+        Object userValidation = validateUser();
+        if (userValidation instanceof ResponseEntity) {
+            return userValidation;
+        }
+        return (User) userValidation;
+    }
+
+    /**
+     * Constructs a response for an unauthorized request (HTTP 401).
+     * This is used when the user is not authenticated or does not have valid credentials.
+     *
+     * @param message The message to include in the response body.
+     * @return A ResponseEntity with status 401 and an ApiResponse containing the provided message.
+     */
     private ResponseEntity<ApiResponse<Object>> unauthorizedResponse(String message) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse<>(ApiResponseConstants.UNAUTHORIZED_CODE, message));
+                .body(new ApiResponse<>(
+                        ApiResponseConstants.UNAUTHORIZED_CODE,
+                        message
+                ));
     }
 
+    /**
+     * Constructs a response for a not found error (HTTP 404).
+     * This is used when a requested resource is not found in the system.
+     *
+     * @param message The message to include in the response body.
+     * @return A ResponseEntity with status 404 and an ApiResponse containing the provided message.
+     */
     private ResponseEntity<ApiResponse<Object>> notFoundResponse(String message) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse<>(ApiResponseConstants.NOT_FOUND_CODE, message));
+                .body(new ApiResponse<>(
+                        ApiResponseConstants.NOT_FOUND_CODE,
+                        message
+                ));
     }
 
+    /**
+     * Constructs a response for a forbidden request (HTTP 403).
+     * This is used when the user is authenticated but does not have permission to perform the action.
+     *
+     * @param message The message to include in the response body.
+     * @return A ResponseEntity with status 403 and an ApiResponse containing the provided message.
+     */
     private ResponseEntity<ApiResponse<Object>> forbiddenResponse(String message) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiResponse<>(ApiResponseConstants.FORBIDDEN_CODE, message));
+                .body(new ApiResponse<>(
+                        ApiResponseConstants.FORBIDDEN_CODE,
+                        message
+                ));
     }
 
+    /**
+     * Constructs a response for a bad request (HTTP 400).
+     * This is used when the client provides invalid input, such as missing or incorrect data.
+     *
+     * @param message The message to include in the response body.
+     * @return A ResponseEntity with status 400 and an ApiResponse containing the provided message.
+     */
     private ResponseEntity<ApiResponse<Object>> badRequestResponse(String message) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, message));
+                .body(new ApiResponse<>(
+                        ApiResponseConstants.BAD_REQUEST_CODE,
+                        message
+                ));
     }
 
     /**

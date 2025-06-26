@@ -8,7 +8,7 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-    private int code;  // Changed from String to int
+    private int code;
     private String message;
     private T data;
     private T error;
@@ -18,7 +18,7 @@ public class ApiResponse<T> {
      * Initializes code to 200 and message to "Success".
      */
     public ApiResponse() {
-        this.code = 200;  // Changed from "200" to 200
+        this.code = 200;
         this.message = "Success";
     }
 

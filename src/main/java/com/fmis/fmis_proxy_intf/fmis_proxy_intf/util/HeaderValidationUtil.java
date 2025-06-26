@@ -36,7 +36,7 @@ public class HeaderValidationUtil {
         // Check if the user exists by their username
         Optional<User> userOptional = userService.findByUsername(username);
         if (userOptional.isEmpty()) {
-            return buildUnauthorizedResponse(ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND);
+            return buildUnauthorizedResponse(ApiResponseConstants.UNAUTHORIZED_ACCESS);
         }
 
         // Validate the partnerCode (must not be null or empty)
@@ -84,7 +84,10 @@ public class HeaderValidationUtil {
      */
     private static ResponseEntity<ApiResponse<?>> buildBadRequestResponse(String message) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, message));
+                .body(new ApiResponse<>(
+                        ApiResponseConstants.BAD_REQUEST_CODE,
+                        message
+                ));
     }
 
     /**
@@ -95,7 +98,10 @@ public class HeaderValidationUtil {
      */
     private static ResponseEntity<ApiResponse<?>> buildUnauthorizedResponse(String message) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse<>(ApiResponseConstants.UNAUTHORIZED_CODE, message));
+                .body(new ApiResponse<>(
+                        ApiResponseConstants.UNAUTHORIZED_CODE,
+                        message
+                ));
     }
 
     /**
@@ -106,7 +112,10 @@ public class HeaderValidationUtil {
      */
     private static ResponseEntity<ApiResponse<?>> buildForbiddenResponse(String message) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiResponse<>(ApiResponseConstants.FORBIDDEN_CODE, message));
+                .body(new ApiResponse<>(
+                        ApiResponseConstants.FORBIDDEN_CODE,
+                        message
+                ));
     }
 
     /**
@@ -117,6 +126,9 @@ public class HeaderValidationUtil {
      */
     private static ResponseEntity<ApiResponse<?>> buildInternalServerErrorResponse(String message) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponse<>(ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE, message));
+                .body(new ApiResponse<>(
+                        ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                        message
+                ));
     }
 }

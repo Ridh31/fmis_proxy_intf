@@ -7,7 +7,6 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,27 +41,23 @@ public class PartnerController {
 
     private final PartnerService partnerService;
     private final UserService userService;
-    private final RoleService roleService;
     private final AuthorizationHelper authorizationHelper;
 
     /**
      * Constructs a new {@code PartnerController} with the required service dependencies.
      * Uses constructor-based dependency injection to ensure all components are initialized.
      *
-     * @param partnerService         the service responsible for partner operations
-     * @param userService            the service responsible for user authentication and retrieval
-     * @param roleService            the service responsible for role management and validation
-     * @param authorizationHelper    utility class to handle user authorization and role validation
+     * @param partnerService      the service responsible for partner operations
+     * @param userService         the service responsible for user authentication and retrieval
+     * @param authorizationHelper utility class to handle user authorization and role validation
      */
     public PartnerController(
             PartnerService partnerService,
             UserService userService,
-            RoleService roleService,
             AuthorizationHelper authorizationHelper
     ) {
         this.partnerService = partnerService;
         this.userService = userService;
-        this.roleService = roleService;
         this.authorizationHelper = authorizationHelper;
     }
 
@@ -206,8 +201,10 @@ public class PartnerController {
             @Validated @RequestBody Partner partner,
             BindingResult bindingResult) {
 
-        // Validate request body fields
+        // Extract validation errors
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return bad request with the errors
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
@@ -216,17 +213,16 @@ public class PartnerController {
                     ));
         }
 
+        // Perform authentication and authorization checks
+        Object validationResult = authorizationHelper.validate(partner);
+        if (validationResult instanceof ResponseEntity) {
+            return castToApiResponse(validationResult);
+        }
+
+        // Retrieve the authenticated user
+        User currentUser = (User) validationResult;
+
         try {
-            // Perform authentication and authorization checks
-            Object validationResult = authorizationHelper.validate(partner);
-
-            if (validationResult instanceof ResponseEntity) {
-                return castToApiResponse(validationResult);
-            }
-
-            // Retrieve the authenticated user
-            User currentUser = (User) validationResult;
-
             // Generate RSA keys based on the partner code
             Map<String, Object> generatedKeys = RSAUtil.generatePartnerKey(partner.getCode());
 
@@ -286,18 +282,10 @@ public class PartnerController {
             return partnerValidationResponse;
         }
 
-        // Validate user authentication
-        Object userValidation = authorizationHelper.validateUser();
-        if (userValidation instanceof ResponseEntity) {
-            return AuthorizationHelper.castToApiResponse(userValidation);
-        }
-
-        User currentUser = (User) userValidation;
-
-        // Check for admin-level access (level 1 or 2)
-        ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
-        if (adminValidation != null) {
-            return AuthorizationHelper.castToApiResponse(adminValidation);
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
         }
 
         try {
@@ -344,18 +332,10 @@ public class PartnerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        // Validate user authentication
-        Object userValidation = authorizationHelper.validateUser();
-        if (userValidation instanceof ResponseEntity) {
-            return AuthorizationHelper.castToApiResponse(userValidation);
-        }
-
-        User currentUser = (User) userValidation;
-
-        // Validate admin or privileged role (level 1 or 2)
-        ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
-        if (adminValidation != null) {
-            return AuthorizationHelper.castToApiResponse(adminValidation);
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
         }
 
         try {
@@ -421,11 +401,16 @@ public class PartnerController {
             @Validated @RequestBody Partner updatedPartner,
             BindingResult bindingResult) {
 
-        // Handle validation errors
+        // Extract validation errors
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return bad request with the errors
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            validationErrors
+                    ));
         }
 
         // Validate partner ID format
@@ -440,20 +425,13 @@ public class PartnerController {
                     ));
         }
 
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
+        }
+
         try {
-            // Validate authenticated user
-            Object userValidation = authorizationHelper.validateUser();
-            if (userValidation instanceof ResponseEntity) {
-                return AuthorizationHelper.castToApiResponse(userValidation);
-            }
-            User currentUser = (User) userValidation;
-
-            // Validate admin or privileged role
-            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
-            if (adminValidation != null) {
-                return AuthorizationHelper.castToApiResponse(adminValidation);
-            }
-
             // Fetch existing partner
             Optional<Partner> existingPartnerOpt = partnerService.findById(partnerId);
             if (existingPartnerOpt.isEmpty()) {

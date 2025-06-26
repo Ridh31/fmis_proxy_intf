@@ -67,25 +67,25 @@ public class InternalCamDigiKeyController {
             @Validated @RequestBody InternalCamDigiKey internalCamDigiKey,
             BindingResult bindingResult) {
 
-        // Authenticate user
-        Object userValidation = authorizationHelper.validateUser();
-        if (userValidation instanceof ResponseEntity) {
-            return AuthorizationHelper.castToApiResponse(userValidation);
-        }
-        User currentUser = (User) userValidation;
-
-        // Authorize admin roles
-        ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
-        if (adminValidation != null) {
-            return AuthorizationHelper.castToApiResponse(adminValidation);
-        }
-
-        // Handle validation errors
+        // Extract validation errors
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return bad request with the errors
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            validationErrors
+                    ));
         }
+
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
+        }
+
+        User currentUser = (User) authorization;
 
         try {
             // Check for duplicate values in unique fields
@@ -160,20 +160,13 @@ public class InternalCamDigiKeyController {
             @RequestParam(required = false) String accessURL,
             @RequestParam(required = false) String createdDate) {
 
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
+        }
+
         try {
-            // Validate authenticated user
-            Object userValidation = authorizationHelper.validateUser();
-            if (userValidation instanceof ResponseEntity) {
-                return AuthorizationHelper.castToApiResponse(userValidation);
-            }
-            User currentUser = (User) userValidation;
-
-            // Validate admin role
-            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
-            if (adminValidation != null) {
-                return AuthorizationHelper.castToApiResponse(adminValidation);
-            }
-
             // Fetch filtered and paginated internal CamDigiKey list
             Page<InternalCamDigiKey> hosts = internalCamDigiKeyService.getFilteredInternalCamDigiKeys(
                     page, size, name, appKey, ipAddress, accessURL, createdDate);
@@ -207,21 +200,10 @@ public class InternalCamDigiKeyController {
             @Validated @RequestBody InternalCamDigiKey updatedData,
             BindingResult bindingResult) {
 
-        // Authenticate user
-        Object userValidation = authorizationHelper.validateUser();
-        if (userValidation instanceof ResponseEntity) {
-            return AuthorizationHelper.castToApiResponse(userValidation);
-        }
-        User currentUser = (User) userValidation;
-
-        // Authorize admin or privileged user
-        ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
-        if (adminValidation != null) {
-            return AuthorizationHelper.castToApiResponse(adminValidation);
-        }
-
-        // Validate request payload
+        // Extract validation errors
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return bad request with the errors
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
@@ -240,6 +222,12 @@ public class InternalCamDigiKeyController {
                             ApiResponseConstants.BAD_REQUEST_CODE,
                             ApiResponseConstants.BAD_REQUEST_ID_NOT_NUMERIC
                     ));
+        }
+
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
         }
 
         try {

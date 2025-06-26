@@ -34,8 +34,8 @@ public class BankInterfaceNotification extends TelegramLongPollingBot {
     }
 
     /**
-     * Handles incoming Telegram updates.
-     * Registers a user if they send the "/start" command.
+     * Processes incoming Telegram updates.
+     * Registers users who send the "/start" command and confirms subscription.
      *
      * @param update the incoming update from Telegram
      */
@@ -43,18 +43,18 @@ public class BankInterfaceNotification extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String chatId = update.getMessage().getChatId().toString();
-            String text = update.getMessage().getText().trim();
+            String messageText = update.getMessage().getText().trim();
 
-            if ("/start".equalsIgnoreCase(text)) {
-                SendMessage message = new SendMessage();
-                message.setChatId(chatId);
-                message.setText("✅ You’re now set to receive bank interface updates.");
+            if ("/start".equalsIgnoreCase(messageText)) {
+                SendMessage startMessage = new SendMessage();
+                startMessage.setChatId(chatId);
+                startMessage.setText("✅ You’re now set to receive bank interface updates.");
 
                 try {
-                    execute(message);
+                    execute(startMessage);
                     chatIds.add(chatId);
                 } catch (TelegramApiException e) {
-                    System.err.println("Failed to send welcome message to chat ID " + chatId + ": " + e.getMessage());
+                    System.err.printf("⚠️ Unable to send start message to chat ID %s. Error: %s%n", chatId, e.getMessage());
                 }
             }
         }

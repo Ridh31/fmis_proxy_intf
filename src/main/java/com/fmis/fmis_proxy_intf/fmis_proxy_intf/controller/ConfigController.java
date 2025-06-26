@@ -2,7 +2,6 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ConfigDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.FmisRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
@@ -62,20 +61,13 @@ public class ConfigController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
+        }
+
         try {
-            // Validate authenticated user
-            Object userValidation = authorizationHelper.validateUser();
-            if (userValidation instanceof ResponseEntity) {
-                return AuthorizationHelper.castToApiResponse(userValidation);
-            }
-            User currentUser = (User) userValidation;
-
-            // Validate Admin or Privileged Role
-            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
-            if (adminValidation != null) {
-                return AuthorizationHelper.castToApiResponse(adminValidation);
-            }
-
             // Fetch paginated FMIS config list
             Page<FMIS> config = fmisService.getConfig(page, size);
 
@@ -120,28 +112,25 @@ public class ConfigController {
             @Validated @RequestBody ConfigDTO request,
             BindingResult bindingResult) {
 
-        // Handle validation errors
+        // Extract validation errors
         Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return bad request with the errors
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            validationErrors
+                    ));
+        }
+
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
         }
 
         try {
-            // Validate authenticated user
-            Object userValidation = authorizationHelper.validateUser();
-            if (userValidation instanceof ResponseEntity) {
-                return AuthorizationHelper.castToApiResponse(userValidation);
-            }
-
-            User currentUser = (User) userValidation;
-
-            // Check that user is Admin
-            ResponseEntity<ApiResponse<Object>> adminValidation = authorizationHelper.validateAdmin(currentUser);
-            if (adminValidation != null) {
-                return AuthorizationHelper.castToApiResponse(adminValidation);
-            }
-
             // Fetch existing configuration
             Optional<FMIS> optionalConfig = fmisRepository.findFirstBy();
             if (optionalConfig.isEmpty()) {

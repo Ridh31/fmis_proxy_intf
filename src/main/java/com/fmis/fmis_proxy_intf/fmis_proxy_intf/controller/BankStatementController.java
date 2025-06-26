@@ -270,7 +270,10 @@ public class BankStatementController {
         // If there are validation errors, return them in the response
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            validationErrors
+                    ));
         }
 
         // Check if the 'Data' field is missing or empty
@@ -286,7 +289,8 @@ public class BankStatementController {
         String username = userService.getAuthenticatedUsername();
 
         // Validate that the X-Partner-Token is not missing or empty
-        ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse =
+                HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
         if (partnerValidationResponse != null) {
             return partnerValidationResponse;
         }
@@ -726,7 +730,8 @@ public class BankStatementController {
         String username = userService.getAuthenticatedUsername();
 
         // Validate that the X-Partner-Token is not missing or empty
-        ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse =
+                HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
         if (partnerValidationResponse != null) {
             return partnerValidationResponse;
         }

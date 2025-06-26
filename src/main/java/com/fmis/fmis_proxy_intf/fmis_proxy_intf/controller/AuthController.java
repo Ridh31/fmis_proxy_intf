@@ -10,6 +10,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.HeaderValidationUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -22,8 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -48,29 +47,33 @@ public class AuthController {
     private final PartnerService partnerService;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
+    private final AuthorizationHelper authorizationHelper;
 
     /**
-     * Constructs a new {@code AuthController} with the necessary services and utilities.
-     * Uses constructor-based dependency injection to initialize components required for authentication and authorization.
+     * Constructs a new {@code AuthController} with the required dependencies.
+     * Initializes core services for authentication, authorization, and user/partner management.
      *
-     * @param userService            the service for managing user-related operations
-     * @param roleService            the service for managing role-related operations
-     * @param partnerService         the service for partner management
-     * @param authenticationManager  the Spring Security component for handling authentication
-     * @param passwordEncoder        the component responsible for encoding user passwords
+     * @param userService           service for managing user-related operations
+     * @param roleService           service for managing role-related operations
+     * @param partnerService        service for managing partner-related operations
+     * @param authenticationManager Spring Security component for user authentication
+     * @param passwordEncoder       component for encoding and verifying passwords
+     * @param authorizationHelper   utility for performing authorization checks
      */
     public AuthController(
             UserService userService,
             RoleService roleService,
             PartnerService partnerService,
             AuthenticationManager authenticationManager,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            AuthorizationHelper authorizationHelper
     ) {
         this.userService = userService;
         this.roleService = roleService;
         this.partnerService = partnerService;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
+        this.authorizationHelper = authorizationHelper;
     }
 
     /**
@@ -96,7 +99,10 @@ public class AuthController {
         // If there are validation errors, return bad request with the errors
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            validationErrors
+                    ));
         }
 
         try {
@@ -143,7 +149,7 @@ public class AuthController {
             user.setPassword(userDTO.getPassword());
             user.setRole(role);
             user.setPartner(partner);
-            user.setEmail(userDTO.getEmail()); // Set email
+            user.setEmail(userDTO.getEmail());
 
             // Register the user
             User savedUser = userService.registerUser(user);
@@ -187,7 +193,8 @@ public class AuthController {
         String username = user.getUsername();
 
         // Validate that the X-Partner-Token is not missing or empty
-        ResponseEntity<ApiResponse<?>> partnerValidationResponse = HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+        ResponseEntity<ApiResponse<?>> partnerValidationResponse =
+                HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
         if (partnerValidationResponse != null) {
             return partnerValidationResponse;
         }
@@ -198,7 +205,10 @@ public class AuthController {
         // If there are validation errors, return them in the response
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, validationErrors));
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            validationErrors
+                    ));
         }
 
         try {
@@ -254,32 +264,14 @@ public class AuthController {
     @Hidden
     @PutMapping("/reset-password")
     public ResponseEntity<ApiResponse<?>> resetPassword(@RequestParam String username, @RequestParam String password) {
+
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeSuperAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
+        }
+
         try {
-            // Get the currently authenticated user
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String currentUsername = authentication.getName(); // The logged-in user's username
-            User currentUser = userService.findByUsername(currentUsername)
-                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
-
-            // Fetch the role of the authenticated user
-            Long roleId = currentUser.getRole().getId();
-            if (!roleService.existsById(roleId)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.NOT_FOUND_CODE,
-                                ApiResponseConstants.ROLE_NOT_FOUND
-                        ));
-            }
-
-            // Check if the authenticated user is a Super Admin (level 1)
-            if (currentUser.getRole().getLevel() != 1) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.FORBIDDEN_CODE,
-                                ApiResponseConstants.FORBIDDEN_RESET_PASSWORD
-                        ));
-            }
-
             // Fetch the target user by username
             User targetUser = userService.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
@@ -323,11 +315,10 @@ public class AuthController {
     public ResponseEntity<ApiResponse<?>> getAllUsers(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
-
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        // Retrieve the username of the authenticated user
+        // Retrieve the username of the authenticated user for partner validation
         String username = userService.getAuthenticatedUsername();
 
         // Validate the provided X-Partner-Token header
@@ -337,35 +328,10 @@ public class AuthController {
             return partnerValidationResponse;
         }
 
-        // Attempt to retrieve the current user by username
-        Optional<User> userOptional = userService.findByUsername(username);
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    new ApiResponse<>(
-                            ApiResponseConstants.UNAUTHORIZED_CODE,
-                            ApiResponseConstants.UNAUTHORIZED_USER_NOT_FOUND
-                    ));
-        }
-
-        User currentUser = userOptional.get();
-
-        // Verify that the user's role exists
-        Long roleId = currentUser.getRole().getId();
-        if (!roleService.existsById(roleId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    new ApiResponse<>(
-                            ApiResponseConstants.NOT_FOUND_CODE,
-                            ApiResponseConstants.ROLE_NOT_FOUND
-                    ));
-        }
-
-        // Restrict access to only Super Admins (level 1)
-        if (currentUser.getRole().getLevel() != 1) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    new ApiResponse<>(
-                            ApiResponseConstants.FORBIDDEN_CODE,
-                            ApiResponseConstants.FORBIDDEN
-                    ));
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeSuperAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
         }
 
         try {
@@ -393,7 +359,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_FETCHING_PARTNERS + e.getMessage()
+                            ApiResponseConstants.ERROR_FETCHING_USERS + e.getMessage()
                     ));
         }
     }

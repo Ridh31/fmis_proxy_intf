@@ -57,12 +57,20 @@ public class ReDocController {
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
 
-            return new ResponseEntity<>(content.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.OK);
+            return new ResponseEntity<>(
+                    content.getBytes(StandardCharsets.UTF_8),
+                    headers,
+                    HttpStatus.OK
+            );
         } catch (IOException e) {
             String errorMessage = ApiResponseConstants.ERROR_READING_FILE;
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-            return new ResponseEntity<>(errorMessage.getBytes(StandardCharsets.UTF_8), headers, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(
+                    errorMessage.getBytes(StandardCharsets.UTF_8),
+                    headers,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 }
