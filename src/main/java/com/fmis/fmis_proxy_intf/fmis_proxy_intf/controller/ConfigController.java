@@ -135,7 +135,10 @@ public class ConfigController {
             Optional<FMIS> optionalConfig = fmisRepository.findFirstBy();
             if (optionalConfig.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, ApiResponseConstants.NO_CONFIG_TO_UPDATE));
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.NO_CONFIG_TO_UPDATE
+                        ));
             }
 
             // Update configuration fields
@@ -151,12 +154,18 @@ public class ConfigController {
             fmisRepository.save(config);
 
             // Return success response
-            return ResponseEntity.ok(new ApiResponse<>(ApiResponseConstants.SUCCESS_CODE, ApiResponseConstants.UPDATED));
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.UPDATED
+            ));
 
         } catch (Exception e) {
             // Handle unexpected errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE, e.getMessage()));
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            e.getMessage()
+                    ));
         }
     }
 }
