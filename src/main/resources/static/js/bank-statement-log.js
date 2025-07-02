@@ -217,6 +217,35 @@ function renderTable() {
  * @param {object} item - The statement data object
  */
 function openModal(item) {
+    const isDataEmpty =
+        item.Data &&
+        typeof item.Data === "object" &&
+        Object.keys(item.Data).length === 0 &&
+        item.status === "Failed" &&
+        typeof item.message === "string" &&
+        item.message.includes("There are no statement records.");
+
+    if (isDataEmpty) {
+        const modal = document.getElementById("modal");
+        const body = document.getElementById("modalBody");
+
+        body.innerHTML = `
+        <div style="
+            background-color: #F8D7DA;
+            color: #842029;
+            border: 1px solid #F5C2C7;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        ">
+            <strong>Details:</strong> ${item.message}
+        </div>`;
+
+        modal.style.display = "flex";
+        return;
+    }
+
     const modal = document.getElementById("modal");
     const body = document.getElementById("modalBody");
 

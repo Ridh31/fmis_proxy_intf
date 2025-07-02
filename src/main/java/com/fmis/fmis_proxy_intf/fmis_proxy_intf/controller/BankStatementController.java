@@ -276,8 +276,31 @@ public class BankStatementController {
                     ));
         }
 
-        // Check if the 'Data' field is missing or empty
+        // Check if the 'Data' field is missing or an empty object {}.
+        // This is allowed — used to ensure the bank submits daily.
         if (bankStatementDTO.getData() == null || bankStatementDTO.getData().isEmpty()) {
+            bankStatementDTO.setMethod("POST");
+            bankStatementDTO.setEndpoint(endpoint);
+            bankStatementDTO.setFilename(filename);
+            bankStatementDTO.setPayload("{}");
+            bankStatementDTO.setXml("<?xml version=\"1.0\"?><Data></Data>");
+            bankStatementDTO.setStatus(false);
+            bankStatementDTO.setMessage(ApiResponseConstants.NO_STATEMENT_RECORDS);
+
+            // Set user and partner info (if available)
+            String username = userService.getAuthenticatedUsername();
+            Long userId = userService.findByUsername(username)
+                    .map(User::getId)
+                    .orElse(null);
+            bankStatementDTO.setCreatedBy(userId);
+
+            Long partnerId = partnerService.findIdByPublicKey(partnerCode);
+            bankStatementDTO.setPartnerId(partnerId);
+
+            // Save log to DB
+            bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+
+            // Return validation error response
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(
                             ApiResponseConstants.BAD_REQUEST_CODE,
@@ -443,35 +466,15 @@ public class BankStatementController {
                         bankStatementService.createBankStatement(partnerId, bankStatementDTO);
 
                         // Construct notification to Telegram Bot
-                        String partnerName = partner.map(Partner::getName).orElse("Unknown Partner");
-                        String partnerIdentifier = partner.map(Partner::getIdentifier).orElse("Unknown Identifier");
-                        String partnerSystemCode = partner.map(Partner::getSystemCode).orElse("Unknown System Code");
-                        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                        String telegramStatementDate = statementDate.format(outputFormatter);
-                        String telegramImportedDate = LocalDate.now().format(outputFormatter);
-                        String telegramImportedStatus = (responseCode == 201) ? "Processed" : "Failed";
-                        String announcementEmoji = (responseCode == 201) ? "🔔" : "⚠️";
-                        String statusEmoji = (responseCode == 201) ? "✅" : "❌";
+                        String telegramMessage = TelegramUtil.buildBankStatementNotification(
+                                partner,
+                                bankAccountNumber,
+                                statementDate.toLocalDate(),
+                                responseCode,
+                                responseMessage
+                        );
 
-                        String requestMessage =
-                                "📨 <b>New Request</b>\n\n" +
-                                "From: <b>" +TelegramUtil.escapeHtml(partnerName) + "</b>\n" +
-                                "Action: Import Bank Statement\n" +
-                                "Time: <code>" + LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma")) + "</code>";
-
-                        String telegramMessage =
-                                requestMessage + "\n\n" +
-                                announcementEmoji + " <b>Bank Statement Update</b>\n\n" +
-                                "• Reference: <code>" + TelegramUtil.escapeHtml(partnerSystemCode) + "</code>" + " (" + TelegramUtil.escapeHtml(partnerIdentifier) + ")\n" +
-                                "• Account Number: <code>" + TelegramUtil.escapeHtml(bankAccountNumber != null ? bankAccountNumber : "N/A") + "</code>\n" +
-                                "• Statement Date: <code>" + telegramStatementDate + "</code>\n" +
-                                "• Imported On: <code>" + telegramImportedDate + "</code>\n" +
-                                "• Status: <b>" + telegramImportedStatus + "</b> " + statusEmoji + "\n" +
-                                "• Message: " + TelegramUtil.escapeHtml(responseMessage != null ? responseMessage : "");
-
-                        // Only send if not successful
                         if (responseCode != 201) {
-                            // Send notification to Telegram Bot
                             telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
                         }
 
