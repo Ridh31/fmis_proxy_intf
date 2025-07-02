@@ -276,9 +276,10 @@ public class BankStatementController {
                     ));
         }
 
-        // Check if the 'Data' field is missing or an empty object {}.
-        // This is allowed — used to ensure the bank submits daily.
+        // Allow empty 'Data' ({} or null) to ensure the bank submits daily
         if (bankStatementDTO.getData() == null || bankStatementDTO.getData().isEmpty()) {
+
+            // Prepare basic bankStatementDTO properties
             bankStatementDTO.setMethod("POST");
             bankStatementDTO.setEndpoint(endpoint);
             bankStatementDTO.setFilename(filename);
@@ -287,20 +288,34 @@ public class BankStatementController {
             bankStatementDTO.setStatus(false);
             bankStatementDTO.setMessage(ApiResponseConstants.NO_STATEMENT_RECORDS);
 
-            // Set user and partner info (if available)
+            // Retrieve current user info and set creator ID
             String username = userService.getAuthenticatedUsername();
             Long userId = userService.findByUsername(username)
                     .map(User::getId)
                     .orElse(null);
             bankStatementDTO.setCreatedBy(userId);
 
+            // Retrieve partner info and assign partner ID
             Long partnerId = partnerService.findIdByPublicKey(partnerCode);
             bankStatementDTO.setPartnerId(partnerId);
 
-            // Save log to DB
+            // Persist the bank statement log in DB
             bankStatementService.createBankStatement(partnerId, bankStatementDTO);
 
-            // Return validation error response
+            // Build a detailed Telegram notification message for empty data scenario
+            Optional<Partner> partner = partnerService.findById(partnerId);
+            String telegramMessage = TelegramUtil.buildBankStatementNotification(
+                    partner,
+                    "N/A",
+                    null,
+                    ApiResponseConstants.BAD_REQUEST_CODE,
+                    ApiResponseConstants.NO_STATEMENT_RECORDS
+            );
+
+            // Send notification via Telegram bot
+            telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+
+            // Return HTTP 400 Bad Request with validation error message
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(
                             ApiResponseConstants.BAD_REQUEST_CODE,

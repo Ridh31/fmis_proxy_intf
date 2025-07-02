@@ -84,7 +84,7 @@ public final class TelegramUtil {
         String partnerSystemCode = partner.map(Partner::getSystemCode).orElse("Unknown System Code");
 
         DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String telegramStatementDate = statementDate.format(outputFormatter);
+        String telegramStatementDate = (statementDate != null) ? statementDate.format(outputFormatter) : "N/A";
         String telegramImportedDate = LocalDate.now().format(outputFormatter);
         String telegramImportedStatus = (responseCode == 201) ? "Processed" : "Failed";
         String announcementEmoji = (responseCode == 201) ? "🔔" : "⚠️";
