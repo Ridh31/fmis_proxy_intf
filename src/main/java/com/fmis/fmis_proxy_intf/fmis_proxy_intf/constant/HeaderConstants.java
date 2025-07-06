@@ -21,6 +21,7 @@ public final class HeaderConstants {
      */
     public static final String X_PARTNER_TOKEN = "X-Partner-Token";
     public static final String X_PARTNER_TOKEN_DESC = "The identifier of the partner, which is recognized and authorized by the provider.";
+    public static final String X_ROAD_CLIENT = "X-Road-Client";
 
     // Private constructor to prevent instantiation of this utility class
     private HeaderConstants() {

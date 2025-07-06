@@ -301,6 +301,114 @@ public class InternalCamDigiKeyController {
     }
 
     /**
+     * Retrieves an organization access token from an external service using the appKey.
+     * Validates input, looks up configuration, calls external endpoint,
+     * and handles errors including missing parameters, config not found,
+     * HTTP client/server errors, and connectivity issues.
+     *
+     * @param appKey the application key identifying the external system
+     * @return ResponseEntity with token data or error details
+     */
+    @GetMapping("/organization-token")
+    public ResponseEntity<ApiResponse<?>> getOrganizationAccessToken(@RequestParam(required = false) String appKey) {
+
+        // Validate input
+        if (appKey == null || appKey.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+                    ));
+        }
+
+        try {
+            // Lookup host configuration by appKey
+            Optional<InternalCamDigiKey> host = internalCamDigiKeyService.findByAppKey(appKey);
+
+            if (host.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + appKey + ")"
+                        ));
+            }
+
+            // Prepare URL for external service
+            String endpoint = "/api/v1/portal/camdigikey/organization-token";
+            String url = host.get().getAccessURL() + endpoint;
+
+            try {
+                ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode data = root.path("data");
+
+                return ResponseEntity.ok(new ApiResponse<>(
+                        ApiResponseConstants.SUCCESS_CODE,
+                        ApiResponseConstants.SUCCESS,
+                        data
+                ));
+
+            } catch (HttpClientErrorException e) {
+                // Handle 4xx errors
+                int rawStatusCode = e.getStatusCode().value();
+                HttpStatus status = HttpStatus.resolve(rawStatusCode);
+                if (status == null) status = HttpStatus.BAD_REQUEST;
+
+                String message = switch (status) {
+                    case NOT_FOUND -> ApiResponseConstants.EXTERNAL_RESOURCE_NOT_FOUND;
+                    case BAD_REQUEST -> ApiResponseConstants.EXTERNAL_BAD_REQUEST;
+                    default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
+                };
+
+                return ResponseEntity.status(status)
+                        .body(new ApiResponse<>(
+                                status.value(),
+                                message,
+                                rawStatusCode + " - " + status.getReasonPhrase()
+                        ));
+
+            } catch (HttpServerErrorException e) {
+                // Handle 5xx errors from external server
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_GATEWAY_CODE,
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                                e.getStatusCode() + " - " + e.getStatusText()
+                        ));
+
+            } catch (ResourceAccessException e) {
+                // Handle unreachable external host
+                String targetHost = ExceptionUtils.extractTargetHost(e.getMessage());
+
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
+                                ApiResponseConstants.SERVICE_UNAVAILABLE,
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + " (" + targetHost + ")"
+                        ));
+
+            } catch (Exception e) {
+                // Handle unexpected external error
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                                ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                        ));
+            }
+
+        } catch (Exception e) {
+            // Handle unexpected internal error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
      * Retrieves a login token from an external service using the provided appKey.
      *
      * @param appKey the application key identifying the target system

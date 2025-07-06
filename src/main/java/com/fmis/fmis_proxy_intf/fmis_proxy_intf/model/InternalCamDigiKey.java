@@ -27,11 +27,11 @@ public class InternalCamDigiKey {
     @NotEmpty(message = "App key cannot be empty. Please provide a valid app key.")
     private String appKey;
 
-    @Column(name = "ip_address", nullable = false, unique = true)
+    @Column(name = "ip_address", nullable = false)
     @NotEmpty(message = "IP Address cannot be empty. Please provide a valid IP Address.")
     private String ipAddress;
 
-    @Column(name = "access_url", nullable = false, unique = true)
+    @Column(name = "access_url", nullable = false)
     @NotEmpty(message = "Access URL cannot be empty. Please provide a valid Access URL.")
     private String accessURL;
 

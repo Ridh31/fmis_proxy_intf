@@ -158,6 +158,10 @@ public final class ApiResponseConstants {
     public static final String ERROR_FMIS_RESPONSE_EMPTY = "No content received from FMIS response.";
     public static final String EXTERNAL_SERVER_ERROR = "An internal error occurred on the external server.";
     public static final String EXTERNAL_CLIENT_ERROR = "An error occurred while communicating with the external server.";
+    public static final String UNSUPPORTED_CONTENT_TYPE = "Unsupported content type: ";
+    public static final String CONFIG_NOT_FOUND_FOR_KEY = "Configuration not found for key: ";
+    public static final String CAMDIGIKEY_JSON_PARSE_ERROR = "Failed to parse CamDigiKey response JSON";
+    public static final String CAMDIGIKEY_ORG_TOKEN_RETRIEVAL_FAILED = "Failed to retrieve organization token from CamDigiKey service";
 
     /**
      * 502 Bad Gateway Error - Issues communicating with external services

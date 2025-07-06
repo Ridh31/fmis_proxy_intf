@@ -183,6 +183,13 @@
 			<artifactId>telegrambots-spring-boot-starter</artifactId>
 			<version>6.8.0</version>
 		</dependency>
+
+		<!-- JSON -->
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20231013</version>
+		</dependency>
 	</dependencies>
 
 	<build>
