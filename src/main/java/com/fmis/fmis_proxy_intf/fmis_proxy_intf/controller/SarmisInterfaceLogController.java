@@ -51,7 +51,7 @@ public class SarmisInterfaceLogController {
      * and sending HTTP requests to external APIs.
      *
      * @param sarmisInterfaceLogService service for saving and managing SARMIS interface logs
-     * @param securityServerService     service for retrieving security server configurations by key
+     * @param securityServerService     service for retrieving security server configurations by config key
      * @param internalCamDigiKeyService Service for interacting with CamDigiKey and retrieving authorization tokens.
      * @param restTemplate              HTTP client for sending requests to external systems such as SARMIS
      */
@@ -120,8 +120,8 @@ public class SarmisInterfaceLogController {
             sarmisInterfaceLog.setEndpoint("/api/v1/sarmis/fmis-purchase-orders");
             sarmisInterfaceLog.setInterfaceCode(generatedCode);
 
-            // Retrieve SecurityServer configuration by key
-            Optional<SecurityServer> optionalConfig = securityServerService.getByKey(FMIS_BATCH_PO_SARMIS);
+            // Retrieve SecurityServer configuration by config key
+            Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(FMIS_BATCH_PO_SARMIS);
             if (optionalConfig.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(

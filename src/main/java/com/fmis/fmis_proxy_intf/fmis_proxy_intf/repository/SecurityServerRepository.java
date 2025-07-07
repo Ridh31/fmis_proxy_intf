@@ -6,25 +6,24 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 /**
- * Repository interface for SecurityServer entities.
- * Extends JpaRepository to provide CRUD operations and
- * custom query methods for SecurityServer.
+ * Repository interface for managing {@link SecurityServer} entities.
+ * Provides CRUD operations and custom query methods.
  */
 public interface SecurityServerRepository extends JpaRepository<SecurityServer, Long> {
 
     /**
-     * Finds a SecurityServer entity by its unique key.
+     * Retrieves a SecurityServer by its unique configuration key.
      *
-     * @param key the unique key of the SecurityServer
-     * @return an Optional containing the SecurityServer if found, otherwise empty
+     * @param configKey the unique configuration key
+     * @return an {@link Optional} containing the found SecurityServer, or empty if not found
      */
-    Optional<SecurityServer> findByKey(String key);
+    Optional<SecurityServer> findByConfigKey(String configKey);
 
     /**
-     * Checks if a SecurityServer entity exists with the given key.
+     * Checks whether a SecurityServer with the given configuration key exists.
      *
-     * @param key the unique key to check
-     * @return true if a SecurityServer with the key exists, false otherwise
+     * @param configKey the unique configuration key
+     * @return true if a matching SecurityServer exists, false otherwise
      */
-    boolean existsByKey(String key);
+    boolean existsByConfigKey(String configKey);
 }

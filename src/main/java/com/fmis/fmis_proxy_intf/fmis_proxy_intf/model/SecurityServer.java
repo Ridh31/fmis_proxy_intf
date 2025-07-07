@@ -27,9 +27,9 @@ public class SecurityServer {
     @NotEmpty(message = "Name cannot be empty. Please provide a valid name.")
     private String name;
 
-    @Column(name = "key", nullable = false, unique = true)
-    @NotEmpty(message = "Key cannot be empty. Please provide a valid key.")
-    private String key;
+    @Column(name = "config_key", nullable = false, unique = true)
+    @NotEmpty(message = "Config key cannot be empty. Please provide a valid config key.")
+    private String configKey;
 
     @Column(name = "base_url", nullable = false)
     @NotEmpty(message = "Base URL cannot be empty. Please provide a valid base URL.")
@@ -80,12 +80,12 @@ public class SecurityServer {
         this.name = name;
     }
 
-    public String getKey() {
-        return key;
+    public String getConfigKey() {
+        return configKey;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setConfigKey(String configKey) {
+        this.configKey = configKey;
     }
 
     public String getBaseURL() {

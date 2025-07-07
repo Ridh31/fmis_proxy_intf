@@ -10,51 +10,54 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Service implementation for managing SecurityServer entities.
- * Provides business logic and data access delegation for creating,
- * retrieving, and deleting security server records.
+ * Implementation of {@link SecurityServerService} for managing security server configurations.
+ * Handles business logic for creating, retrieving, and deleting {@link SecurityServer} entities.
  */
 @Service
 public class SecurityServerServiceImpl implements SecurityServerService {
 
+    private final SecurityServerRepository securityServerRepository;
+
     @Autowired
-    private SecurityServerRepository securityServerRepository;
+    public SecurityServerServiceImpl(SecurityServerRepository securityServerRepository) {
+        this.securityServerRepository = securityServerRepository;
+    }
 
     /**
-     * Creates and saves a new SecurityServer entity.
-     * Converts the provided key to uppercase and ensures uniqueness before saving.
+     * Creates and saves a new {@link SecurityServer}.
+     * Converts the config key to uppercase and ensures it is unique before persisting.
      *
-     * @param server the SecurityServer entity to create
-     * @return the saved SecurityServer entity
-     * @throws RuntimeException if a server with the same key already exists
+     * @param server the SecurityServer entity to be created
+     * @return the saved SecurityServer
+     * @throws RuntimeException if a server with the same config key already exists
      */
     @Override
     public SecurityServer create(SecurityServer server) {
-        // Enforce uppercase and prevent duplication
-        server.setKey(server.getKey().toUpperCase());
+        String normalizedKey = server.getConfigKey().toUpperCase();
+        server.setConfigKey(normalizedKey);
 
-        if (securityServerRepository.existsByKey(server.getKey())) {
-            throw new RuntimeException("Security server with key already exists: " + server.getKey());
+        if (securityServerRepository.existsByConfigKey(normalizedKey)) {
+            throw new RuntimeException("Security server with config key already exists: " + normalizedKey);
         }
 
         return securityServerRepository.save(server);
     }
 
     /**
-     * Retrieves a SecurityServer entity by its unique key.
+     * Retrieves a {@link SecurityServer} by its unique configuration key.
      *
-     * @param key the unique key to search for
-     * @return an Optional containing the SecurityServer if found, or empty if not
+     * @param configKey the unique config key
+     * @return an {@link Optional} containing the server if found, or empty otherwise
      */
     @Override
-    public Optional<SecurityServer> getByKey(String key) {
-        return securityServerRepository.findByKey(key.toUpperCase());
+    public Optional<SecurityServer> getByConfigKey(String configKey) {
+        return securityServerRepository.findByConfigKey(configKey.toUpperCase());
     }
 
     /**
-     * Retrieves all SecurityServer entities from the database.
+     * Retrieves all {@link SecurityServer} entities.
      *
-     * @return a list of all SecurityServer records
+     * @return a list of all configured security servers
      */
     @Override
     public List<SecurityServer> getAll() {
@@ -62,7 +65,7 @@ public class SecurityServerServiceImpl implements SecurityServerService {
     }
 
     /**
-     * Deletes a SecurityServer entity by its ID.
+     * Deletes a {@link SecurityServer} by its ID.
      *
      * @param id the ID of the SecurityServer to delete
      */

@@ -6,35 +6,36 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Service interface defining operations for managing SecurityServer entities.
+ * Service interface for managing {@link SecurityServer} entities.
+ * Defines operations for creating, retrieving, and deleting security server configurations.
  */
 public interface SecurityServerService {
 
     /**
-     * Creates a new SecurityServer entity.
+     * Creates and saves a new {@link SecurityServer}.
      *
-     * @param server the SecurityServer entity to create
-     * @return the created SecurityServer entity
+     * @param server the SecurityServer to create
+     * @return the saved SecurityServer
      */
     SecurityServer create(SecurityServer server);
 
     /**
-     * Retrieves a SecurityServer entity by its unique key.
+     * Retrieves a {@link SecurityServer} by its unique configuration key.
      *
-     * @param key the unique key of the SecurityServer
-     * @return an Optional containing the SecurityServer if found, otherwise empty
+     * @param configKey the unique config key
+     * @return an {@link Optional} containing the SecurityServer if found, or empty if not
      */
-    Optional<SecurityServer> getByKey(String key);
+    Optional<SecurityServer> getByConfigKey(String configKey);
 
     /**
-     * Retrieves all SecurityServer entities.
+     * Retrieves all {@link SecurityServer} entities.
      *
-     * @return a list of all SecurityServer entities
+     * @return a list of all SecurityServer records
      */
     List<SecurityServer> getAll();
 
     /**
-     * Deletes the SecurityServer entity with the specified ID.
+     * Deletes a {@link SecurityServer} by its ID.
      *
      * @param id the ID of the SecurityServer to delete
      */
