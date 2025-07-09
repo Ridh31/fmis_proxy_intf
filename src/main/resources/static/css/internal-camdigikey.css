@@ -16,7 +16,7 @@ h2 {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
 }
 
 .input-title {
@@ -318,10 +318,4 @@ input.error {
     margin-top: 0.25rem;
     color: #DC2626;
     font-size: 0.875rem;
-}
-
-@media (max-width: 1200px) {
-    .filter-bar {
-        flex-wrap: wrap;
-    }
 }
