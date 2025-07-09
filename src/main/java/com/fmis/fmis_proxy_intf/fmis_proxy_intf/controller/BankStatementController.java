@@ -415,8 +415,11 @@ public class BankStatementController {
                     ResponseEntity<String> fmisResponse = fmisService.sendXmlToFmis(fmisURL, fmisUsername, fmisPassword, xmlPayload);
                     String fmisResponseBody = fmisResponse.getBody();
 
+                    System.out.println("\n\n\n\n" + fmisResponseBody + "\n\n\n\n");
+
                     int responseCode = ApiResponseConstants.CREATED_CODE;
                     String responseMessage;
+                    String statementId = null;
 
                     if (fmisResponse.getStatusCode().is2xxSuccessful()) {
                         // Parse the FMIS XML response manually
@@ -445,13 +448,22 @@ public class BankStatementController {
                                     }
                                 }
 
-                                // Extract message from <message>...</message>
+                                // Extract message from <message></message>
                                 Node messageNode = root.getElementsByTagName("message").item(0);
                                 if (messageNode != null) {
                                     responseMessage = messageNode.getTextContent();
                                     fmisResponseData.put("message", responseMessage);
                                 } else {
                                     responseMessage = ApiResponseConstants.ERROR_FMIS_RESPONSE_EMPTY;
+                                }
+
+                                // Extract message from <statement_id></statement_id>
+                                Node statementIdNode = root.getElementsByTagName("statement_id").item(0);
+                                if (statementIdNode != null) {
+                                    statementId = statementIdNode.getTextContent();
+                                    if ("0".equals(statementId)) {
+                                        statementId = null;
+                                    }
                                 }
                             } catch (Exception e) {
                                 responseMessage = ApiResponseConstants.ERROR_FMIS_RESPONSE_PARSE;
@@ -476,6 +488,7 @@ public class BankStatementController {
                         }
 
                         bankStatementDTO.setMessage(responseMessage);
+                        bankStatementDTO.setStatementId(statementId);
 
                         // Import bank statement
                         bankStatementService.createBankStatement(partnerId, bankStatementDTO);
@@ -718,14 +731,19 @@ public class BankStatementController {
 
     /**
      * Endpoint to fetch paginated bank statements.
+     * Retrieves bank statements from the database with optional filters such as
+     * bank ID, account number, statement ID, statement date, imported date, and status.
+     * Results are mapped to BankStatementDTOs and returned in a paginated format.
      *
-     * This method retrieves a list of bank statements from the database,
-     * maps them to BankStatementDTOs, and returns them in a paginated format.
-     * The data includes all relevant fields from the bank statement entity,
-     * and it handles parsing and conversion of payload data (JSON) to a Map for the API response.
-     *
-     * @param page The page number to retrieve (default is 0).
-     * @param size The number of items per page (default is 10).
+     * @param partnerCode        The partner token from the request header (required).
+     * @param bankId             The bank ID to filter by (optional).
+     * @param bankAccountNumber  The bank account number to filter by (optional).
+     * @param statementId        The statement ID to filter by (optional).
+     * @param statementDate      The statement date to filter by (optional, format: dd-MM-yyyy).
+     * @param importedDate       The imported date to filter by (optional, format: dd-MM-yyyy).
+     * @param status             The status to filter by (optional).
+     * @param page               The page number to retrieve (default is 0).
+     * @param size               The number of items per page (default is 10).
      * @return A paginated list of BankStatementDTOs containing the bank statement data.
      */
     @Operation(
@@ -738,6 +756,7 @@ public class BankStatementController {
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
             @RequestParam(required = false) String bankId,
             @RequestParam(required = false) String bankAccountNumber,
+            @RequestParam(required = false) String statementId,
             @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate statementDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate importedDate,
             @RequestParam(required = false) String status,
@@ -768,6 +787,11 @@ public class BankStatementController {
             }
         }
 
+        // Check statement id
+        if (statementId == null || statementId.isBlank() || "0".equals(statementId)) {
+            statementId = null;
+        }
+
         // Check status value if exist
         Boolean statusValue = null;
         if (status != null && !status.trim().isEmpty()) {
@@ -786,7 +810,7 @@ public class BankStatementController {
 
         try {
             // Fetch the paginated list of bank statements from the service
-            Page<BankStatement> bankStatements = bankStatementService.getFilteredBankStatements(page, size, partnerId, bankAccountNumber, statementDate, importedDate, statusValue);
+            Page<BankStatement> bankStatements = bankStatementService.getFilteredBankStatements(page, size, partnerId, bankAccountNumber, statementId, statementDate, importedDate, statusValue);
 
             // ObjectMapper for JSON conversion
             ObjectMapper objectMapper = new ObjectMapper();
@@ -804,6 +828,7 @@ public class BankStatementController {
                 dto.setEndpoint(bankStatement.getEndpoint());
                 dto.setFilename(bankStatement.getFilename());
                 dto.setBankAccountNumber(bankStatement.getBankAccountNumber());
+                dto.setStatementId(bankStatement.getStatementId());
                 dto.setStatementDate(bankStatement.getStatementDate());
                 dto.setXml(bankStatement.getXml());
                 dto.setMessage(bankStatement.getMessage());

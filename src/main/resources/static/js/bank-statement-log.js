@@ -35,7 +35,7 @@ function showLoading() {
 
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 9;
+    cell.colSpan = 10;
     cell.style.textAlign = "center";
     cell.style.margin = "0.75rem";
     cell.style.fontWeight = "bold";
@@ -66,13 +66,13 @@ function hideLoading() {
  * Handles API errors gracefully and logs them to the console.
  */
 async function loadPartners() {
-    const partnerSelect = document.getElementById('partnerSelect');
+    const partnerSelect = document.getElementById("partnerSelect");
 
     try {
         // Make a request to fetch the list of partners using basic auth
         const response = await fetch(`${baseUrl}/api/v1/list-bank-partner`, {
             headers: {
-                'Authorization': `Basic ${basicAuth}`
+                "Authorization": `Basic ${basicAuth}`
             }
         });
 
@@ -87,14 +87,14 @@ async function loadPartners() {
 
         // Populate the select dropdown with partner options
         partners.forEach(partner => {
-            const option = document.createElement('option');
+            const option = document.createElement("option");
             option.value = partner.id;
             option.textContent = `𓉘${partner.identifier}𓉝 – ${partner.name}`;
-            option.className = 'info';
+            option.className = "info";
             partnerSelect.appendChild(option);
         });
     } catch (error) {
-        console.error("Error loading partners:", error);
+        console.error("Error loading partners: ", error);
     }
 }
 
@@ -108,16 +108,18 @@ async function fetchData() {
     tbody.innerHTML = "";
     showLoading();
 
-    const bankId = document.getElementById('partnerSelect').value;
-    const account = document.getElementById('bankAccount').value;
-    const statementDate = document.getElementById('statementDate').value;
-    const importedDate = document.getElementById('importedDate').value;
-    const status = document.getElementById('statusSelect').value;
+    const bankId = document.getElementById("partnerSelect").value;
+    const account = document.getElementById("bankAccount").value;
+    const statementId = document.getElementById("statementId").value;
+    const statementDate = document.getElementById("statementDate").value;
+    const importedDate = document.getElementById("importedDate").value;
+    const status = document.getElementById("statusSelect").value;
 
     const params = new URLSearchParams();
     params.append("size", 100);
     if (bankId) params.append("bankId", bankId);
     if (account) params.append("bankAccountNumber", account);
+    if (statementId) params.append("statementId", statementId);
     if (statementDate) params.append("statementDate", formatDate(statementDate));
     if (importedDate) params.append("importedDate", formatDate(importedDate));
     if (status) params.append("status", status);
@@ -132,8 +134,8 @@ async function fetchData() {
 
             const response = await fetch(`${url}?${params.toString()}`, {
                 headers: {
-                    'Authorization': `Basic ${basicAuth}`,
-                    'X-Partner-Token': partnerToken
+                    "Authorization": `Basic ${basicAuth}`,
+                    "X-Partner-Token": partnerToken
                 }
             });
 
@@ -155,7 +157,7 @@ async function fetchData() {
 
     } catch (err) {
         console.error("Fetch failed:", err);
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: red;">Error fetching data.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: red;">Error fetching data.</td></tr>`;
     } finally {
         hideLoading();
     }
@@ -179,7 +181,7 @@ function formatDate(input) {
 function renderTable() {
     let bankStatementDataTable = $('#logTable');
 
-    if ($.fn.DataTable.isDataTable('#logTable')) {
+    if ($.fn.DataTable.isDataTable("#logTable")) {
         bankStatementDataTable.DataTable().destroy();
     }
 
@@ -187,17 +189,19 @@ function renderTable() {
         data: fullData.map((item, i) => [
             i + 1,
             item.bankAccountNumber,
+            item.statementId,
             item.statementDate,
-            `<span class="${item.status === 'Processed' ? 'success' : 'error'}">${item.status}</span>`,
+            `<span class="${item.status === "Processed" ? "success" : "error"}">${item.status}</span>`,
             item.method,
             item.endpoint,
-            item.importedBy || 'N/A',
-            item.createdDate || 'N/A',
-            `<span class="view-link" data-index='${i}' onclick="handleViewClick(this)">View</span>`
+            item.importedBy || "N/A",
+            item.createdDate || "N/A",
+            `<span class="view-link" data-index="${i}" onclick="handleViewClick(this)">View</span>`
         ]),
         columns: [
             { title: "#" },
             { title: "Bank Account" },
+            { title: "Statement ID" },
             { title: "Statement Date" },
             { title: "Status" },
             { title: "Method" },

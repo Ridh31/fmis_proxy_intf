@@ -88,8 +88,8 @@ async function fetchData() {
     try {
         const response = await fetch(`${url}?${params.toString()}`, {
             headers: {
-                'Authorization': `Basic ${basicAuth}`,
-                'X-Partner-Token': partnerToken
+                "Authorization": `Basic ${basicAuth}`,
+                "X-Partner-Token": partnerToken
             }
         });
 
@@ -342,7 +342,7 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
 
 // Attach event listener to view icons inside the table to open modal with data for editing
 $("#internalCamDigiKeyTable tbody").on("click", ".view-link", function () {
-    const index = $(this).data('index');
+    const index = $(this).data("index");
     const item = fullData[index];
     openEditModal(item);
 });

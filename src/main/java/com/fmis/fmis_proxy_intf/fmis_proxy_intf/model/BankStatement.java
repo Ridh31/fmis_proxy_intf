@@ -41,6 +41,10 @@ public class BankStatement {
     private String bankAccountNumber;
 
     @Lob
+    @Column(name = "statement_id")
+    private String statementId;
+
+    @Lob
     @Column(name = "statement_date")
     private LocalDateTime statementDate;
 
@@ -120,6 +124,14 @@ public class BankStatement {
 
     public void setBankAccountNumber(String bankAccountNumber) {
         this.bankAccountNumber = bankAccountNumber;
+    }
+
+    public String getStatementId() {
+        return statementId;
+    }
+
+    public void setStatementId(String statementId) {
+        this.statementId = statementId;
     }
 
     public LocalDateTime getStatementDate() {

@@ -45,6 +45,7 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
      *
      * @param partnerId          The partner ID to filter by (optional).
      * @param bankAccountNumber  The bank account number to filter by (optional).
+     * @param statementId        The statement ID to filter by (optional).
      * @param statementDate      The statement date to filter by (optional).
      * @param importedDate       The imported date to filter by (optional).
      * @param status             The status (true/false) to filter by (optional).
@@ -61,6 +62,7 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
             LEFT JOIN partner_intf pi2 ON pi2.id = bs.partner_intf_id
         WHERE bs.is_deleted = FALSE
             AND (:bankAccountNumber IS NULL OR bs.bank_account_number = :bankAccountNumber)
+            AND (:statementId IS NULL OR bs.statement_id = :statementId)
             AND (:statementDate IS NULL OR bs.statement_date >= :statementDate 
                 AND bs.statement_date < DATE_ADD(:statementDate, INTERVAL 1 DAY))
             AND (:importedDate IS NULL OR bs.created_date >= :importedDate 
@@ -72,6 +74,7 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
     Page<BankStatement> findFilteredBankStatements(
             @Param("partnerId") Long partnerId,
             @Param("bankAccountNumber") String bankAccountNumber,
+            @Param("statementId") String statementId,
             @Param("statementDate") LocalDate statementDate,
             @Param("importedDate") LocalDate importedDate,
             @Param("status") Boolean status,

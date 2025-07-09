@@ -57,6 +57,7 @@ public class BankStatementServiceImpl implements BankStatementService {
         bankStatement.setEndpoint(bankStatementDTO.getEndpoint());
         bankStatement.setFilename(bankStatementDTO.getFilename());
         bankStatement.setBankAccountNumber(bankStatementDTO.getBankAccountNumber());
+        bankStatement.setStatementId(bankStatementDTO.getStatementId());
         bankStatement.setStatementDate(bankStatementDTO.getStatementDate());
         bankStatement.setPayload(bankStatementDTO.getPayload());
         bankStatement.setXml(bankStatementDTO.getXml());
@@ -90,6 +91,7 @@ public class BankStatementServiceImpl implements BankStatementService {
      * @param size              The size of each page (items per page).
      * @param partnerId         The partner ID to filter by (optional).
      * @param bankAccountNumber The bank account number to filter by (optional).
+     * @param statementId       The statement id to filter by (optional).
      * @param statementDate     The statement date to filter by (optional).
      * @param importedDate      The imported date to filter by (optional).
      * @param status            The status (true/false) to filter by (optional).
@@ -100,6 +102,7 @@ public class BankStatementServiceImpl implements BankStatementService {
             int page, int size,
             Long partnerId,
             String bankAccountNumber,
+            String statementId,
             LocalDate statementDate,
             LocalDate importedDate,
             Boolean status) {
@@ -108,6 +111,7 @@ public class BankStatementServiceImpl implements BankStatementService {
         return bankStatementRepository.findFilteredBankStatements(
                 partnerId,
                 bankAccountNumber,
+                statementId,
                 statementDate,
                 importedDate,
                 status,

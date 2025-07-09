@@ -39,6 +39,7 @@ public interface BankStatementService {
      * @param size              The number of items per page.
      * @param partnerId         The partner ID to filter by (optional).
      * @param bankAccountNumber The bank account number to filter by (optional).
+     * @param statementId       The bank account number to filter by (optional).
      * @param statementDate     The statement date to filter by (optional).
      * @param importedDate      The imported date to filter by (optional).
      * @param status            The status (true/false) to filter by (optional).
@@ -48,6 +49,7 @@ public interface BankStatementService {
             int page, int size,
             Long partnerId,
             String bankAccountNumber,
+            String statementId,
             LocalDate statementDate,
             LocalDate importedDate,
             Boolean status

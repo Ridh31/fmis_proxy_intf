@@ -14,9 +14,9 @@ h2 {
 
 .filter-bar {
     display: flex;
-    gap: 1rem;
+    gap: 0.5rem;
     margin-bottom: 1.5rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .input-title {
@@ -236,4 +236,10 @@ tr:hover {
 
 .btn-logout:hover {
     background-color: #D24C3E;
+}
+
+@media (max-width: 1200px) {
+    .filter-bar {
+        flex-wrap: wrap;
+    }
 }

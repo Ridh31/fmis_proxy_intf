@@ -44,6 +44,7 @@ public class BankStatementDTO {
     private String filename;
 
     private String bankAccountNumber;
+    private String statementId;
     private LocalDateTime statementDate;
 
     @JsonIgnore
@@ -174,6 +175,14 @@ public class BankStatementDTO {
 
     public void setBankAccountNumber(String bankAccountNumber) {
         this.bankAccountNumber = bankAccountNumber;
+    }
+
+    public String getStatementId() {
+        return statementId;
+    }
+
+    public void setStatementId(String statementId) {
+        this.statementId = statementId;
     }
 
     public LocalDateTime getStatementDate() {
