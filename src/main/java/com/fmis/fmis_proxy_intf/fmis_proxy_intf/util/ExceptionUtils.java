@@ -1,5 +1,8 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,5 +64,33 @@ public class ExceptionUtils {
         String safeContent = Optional.ofNullable(content).orElse("");
         String baseUrl = extractBaseUrl(safeContent);
         return !baseUrl.isEmpty() ? " (" + baseUrl + ")" : "";
+    }
+
+    /**
+     * Attempts to extract a valid JSON object embedded within an exception message.
+     *
+     * @param message       The raw exception message.
+     * @param objectMapper  The Jackson ObjectMapper instance.
+     * @return A JsonNode representing the parsed JSON object, or a node with the raw error if parsing fails.
+     */
+    public static JsonNode extractJsonFromMessage(String message, ObjectMapper objectMapper) {
+        try {
+            if (message == null || message.isBlank()) {
+                return objectMapper.createObjectNode().put("error", "Empty exception message");
+            }
+
+            int jsonStart = message.indexOf('{');
+            int jsonEnd = message.lastIndexOf('}') + 1;
+
+            if (jsonStart != -1 && jsonEnd > jsonStart) {
+                String jsonPart = message.substring(jsonStart, jsonEnd);
+                return objectMapper.readTree(jsonPart);
+            }
+
+        } catch (Exception e) {
+            // Fall through to return raw error below
+        }
+
+        return objectMapper.createObjectNode().put("error", message);
     }
 }

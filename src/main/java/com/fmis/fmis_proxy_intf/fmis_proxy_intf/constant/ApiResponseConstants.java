@@ -170,6 +170,7 @@ public final class ApiResponseConstants {
     public static final int BAD_GATEWAY_CODE = 502;
     public static final String BAD_GATEWAY_CODE_STRING = "502";
     public static final String BAD_GATEWAY_NOT_CONNECT = "Could not connect to any target host";
+    public static final String UPSTREAM_SERVICE_ERROR_MESSAGE = "Bad gateway: upstream service returned an invalid response.";
 
     /**
      * 503 Service Unavailable Error - Temporary service issues
