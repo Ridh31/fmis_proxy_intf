@@ -198,6 +198,7 @@ public class SarmisInterfaceLogController {
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
 
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -357,6 +358,7 @@ public class SarmisInterfaceLogController {
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
 
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -518,6 +520,7 @@ public class SarmisInterfaceLogController {
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
 
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -680,6 +683,7 @@ public class SarmisInterfaceLogController {
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
 
                             // Failed to connect to SARMIS
@@ -844,6 +848,7 @@ public class SarmisInterfaceLogController {
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
 
                             // Failed to connect to SARMIS
