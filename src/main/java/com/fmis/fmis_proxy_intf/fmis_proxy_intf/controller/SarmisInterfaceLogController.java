@@ -197,6 +197,9 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
                                             ApiResponseConstants.BAD_GATEWAY_CODE,
@@ -353,6 +356,9 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
                                             ApiResponseConstants.BAD_GATEWAY_CODE,
@@ -511,6 +517,9 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
                                             ApiResponseConstants.BAD_GATEWAY_CODE,
@@ -670,6 +679,8 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
 
                             // Failed to connect to SARMIS
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -832,6 +843,8 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            sarmisInterfaceLog.setResponse(sarmisError.toString());
+                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
 
                             // Failed to connect to SARMIS
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
