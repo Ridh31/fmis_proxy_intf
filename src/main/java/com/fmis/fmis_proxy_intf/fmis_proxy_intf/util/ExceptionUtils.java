@@ -73,7 +73,7 @@ public class ExceptionUtils {
      * @param objectMapper  The Jackson ObjectMapper instance.
      * @return A JsonNode representing the parsed JSON object, or a node with the raw error if parsing fails.
      */
-    public static JsonNode extractJsonFromMessage(String message, ObjectMapper objectMapper) {
+    public static JsonNode extractJsonFromErrorMessage(String message, ObjectMapper objectMapper) {
         try {
             if (message == null || message.isBlank()) {
                 return objectMapper.createObjectNode().put("error", "Empty exception message");

@@ -186,7 +186,8 @@ public class SarmisInterfaceLogController {
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
                                         ApiResponseConstants.SUCCESS_CODE,
-                                        ApiResponseConstants.SUCCESS
+                                        ApiResponseConstants.SUCCESS,
+                                        objectMapper.readTree(sarmisResponse.getBody())
                                 ));
                             } else {
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -196,7 +197,7 @@ public class SarmisInterfaceLogController {
                                         ));
                             }
                         } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
                             sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
@@ -346,7 +347,8 @@ public class SarmisInterfaceLogController {
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
                                         ApiResponseConstants.SUCCESS_CODE,
-                                        ApiResponseConstants.SUCCESS
+                                        ApiResponseConstants.SUCCESS,
+                                        objectMapper.readTree(sarmisResponse.getBody())
                                 ));
                             } else {
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -356,7 +358,7 @@ public class SarmisInterfaceLogController {
                                         ));
                             }
                         } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
                             sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
@@ -508,7 +510,8 @@ public class SarmisInterfaceLogController {
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
                                         ApiResponseConstants.SUCCESS_CODE,
-                                        ApiResponseConstants.SUCCESS
+                                        ApiResponseConstants.SUCCESS,
+                                        objectMapper.readTree(sarmisResponse.getBody())
                                 ));
                             } else {
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -518,7 +521,7 @@ public class SarmisInterfaceLogController {
                                         ));
                             }
                         } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
                             sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
@@ -681,7 +684,7 @@ public class SarmisInterfaceLogController {
                                         ));
                             }
                         } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
                             sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);
@@ -846,7 +849,7 @@ public class SarmisInterfaceLogController {
                                         ));
                             }
                         } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromMessage(e.getMessage(), objectMapper);
+                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
                             sarmisInterfaceLog.setResponse(sarmisError.toString());
                             sarmisInterfaceLog.setStatus(false);
                             sarmisInterfaceLogService.save(sarmisInterfaceLog);

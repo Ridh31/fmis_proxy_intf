@@ -415,8 +415,6 @@ public class BankStatementController {
                     ResponseEntity<String> fmisResponse = fmisService.sendXmlToFmis(fmisURL, fmisUsername, fmisPassword, xmlPayload);
                     String fmisResponseBody = fmisResponse.getBody();
 
-                    System.out.println("\n\n\n\n" + fmisResponseBody + "\n\n\n\n");
-
                     int responseCode = ApiResponseConstants.CREATED_CODE;
                     String responseMessage;
                     String statementId = null;
@@ -513,6 +511,11 @@ public class BankStatementController {
                                 ));
                     } else {
                         String responseHost = ExceptionUtils.formatHostFromContent(fmisResponseBody);
+                        bankStatementDTO.setMessage(fmisResponseBody);
+                        bankStatementDTO.setStatus(false);
+
+                        // Capture error
+                        bankStatementService.createBankStatement(partnerId, bankStatementDTO);
 
                         // Handle failure in sending data to FMIS
                         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -560,15 +563,15 @@ public class BankStatementController {
     @Operation(
             summary = "Upload Bank Statement",
             description = "Uploads a JSON file containing bank statement data. " +
-                          "The file is validated, parsed into a DTO, and then processed as if submitted through the import API. " +
-                          "The data is forwarded to FMIS after successful validation.",
+                    "The file is validated, parsed into a DTO, and then processed as if submitted through the import API. " +
+                    "The data is forwarded to FMIS after successful validation.",
             parameters = {
-                @Parameter(
-                        name = HeaderConstants.X_PARTNER_TOKEN,
-                        in = ParameterIn.HEADER,
-                        required = true,
-                        description = HeaderConstants.X_PARTNER_TOKEN_DESC
-                )
+                    @Parameter(
+                            name = HeaderConstants.X_PARTNER_TOKEN,
+                            in = ParameterIn.HEADER,
+                            required = true,
+                            description = HeaderConstants.X_PARTNER_TOKEN_DESC
+                    )
             },
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
