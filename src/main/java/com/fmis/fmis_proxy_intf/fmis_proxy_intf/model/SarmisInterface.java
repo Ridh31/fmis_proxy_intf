@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
 @Data
 @Getter
 @Setter
-@Table(name = "sarmis_interface_log")
-public class SarmisInterfaceLog {
+@Table(name = "sarmis_interface")
+public class SarmisInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

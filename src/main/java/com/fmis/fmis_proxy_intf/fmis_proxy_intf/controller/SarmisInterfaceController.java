@@ -7,10 +7,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SarmisInterfaceLog;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SarmisInterface;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SecurityServer;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.InternalCamDigiKeyService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SarmisInterfaceLogService;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SarmisInterfaceService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SecurityServerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ExceptionUtils;
@@ -38,7 +38,7 @@ import java.util.Optional;
 )
 @RestController
 @RequestMapping("/api/v1")
-public class SarmisInterfaceLogController {
+public class SarmisInterfaceController {
 
     private static final String SARMIS_APP_KEY = "sarmis_interface";
     private static final String FMIS_BATCH_PO_SARMIS = "FMIS_BATCH_PO_SARMIS";
@@ -47,7 +47,7 @@ public class SarmisInterfaceLogController {
     private static final String INSTITUTION_CLOSING_LIST_SARMIS = "INSTITUTION_CLOSING_LIST_SARMIS";
     private static final String ASSET_KIND_LIST_SARMIS = "ASSET_KIND_LIST_SARMIS";
 
-    private final SarmisInterfaceLogService sarmisInterfaceLogService;
+    private final SarmisInterfaceService sarmisInterfaceService;
     private final SecurityServerService securityServerService;
     private final InternalCamDigiKeyService internalCamDigiKeyService;
     private final RestTemplate restTemplate;
@@ -57,17 +57,17 @@ public class SarmisInterfaceLogController {
      * Initializes services responsible for logging interface activity, retrieving security server configurations,
      * and sending HTTP requests to external APIs.
      *
-     * @param sarmisInterfaceLogService service for saving and managing SARMIS interface logs
+     * @param sarmisInterfaceService service for saving and managing SARMIS interface logs
      * @param securityServerService     service for retrieving security server configurations by config key
      * @param internalCamDigiKeyService Service for interacting with CamDigiKey and retrieving authorization tokens.
      * @param restTemplate              HTTP client for sending requests to external systems such as SARMIS
      */
     @Autowired
-    public SarmisInterfaceLogController(SarmisInterfaceLogService sarmisInterfaceLogService,
-                                        SecurityServerService securityServerService,
-                                        InternalCamDigiKeyService internalCamDigiKeyService,
-                                        RestTemplate restTemplate) {
-        this.sarmisInterfaceLogService = sarmisInterfaceLogService;
+    public SarmisInterfaceController(SarmisInterfaceService sarmisInterfaceService,
+                                     SecurityServerService securityServerService,
+                                     InternalCamDigiKeyService internalCamDigiKeyService,
+                                     RestTemplate restTemplate) {
+        this.sarmisInterfaceService = sarmisInterfaceService;
         this.securityServerService = securityServerService;
         this.internalCamDigiKeyService = internalCamDigiKeyService;
         this.restTemplate = restTemplate;
@@ -87,7 +87,7 @@ public class SarmisInterfaceLogController {
             @RequestHeader("Content-Type") String contentType) {
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        SarmisInterfaceLog sarmisInterfaceLog = new SarmisInterfaceLog();
+        SarmisInterface sarmisInterface = new SarmisInterface();
         String payload = "";
         String organizationToken = "";
 
@@ -101,7 +101,7 @@ public class SarmisInterfaceLogController {
                     ((ObjectNode) rootNode).put("interface_code", generatedCode);
                 }
                 payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterfaceLog.setPayload(payload);
+                sarmisInterface.setPayload(payload);
 
             } else if (contentType.contains("application/xml")) {
                 String json = XmlToJsonUtil.convertXmlToJson(requestBody);
@@ -111,8 +111,8 @@ public class SarmisInterfaceLogController {
                     ((ObjectNode) rootNode).put("interface_code", generatedCode);
                 }
                 payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterfaceLog.setXml(updatedXml);
-                sarmisInterfaceLog.setPayload(payload);
+                sarmisInterface.setXml(updatedXml);
+                sarmisInterface.setPayload(payload);
 
             } else {
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -123,9 +123,9 @@ public class SarmisInterfaceLogController {
             }
 
             // Set log metadata
-            sarmisInterfaceLog.setMethod("POST");
-            sarmisInterfaceLog.setEndpoint("/api/v1/sarmis/fmis-purchase-orders");
-            sarmisInterfaceLog.setInterfaceCode(generatedCode);
+            sarmisInterface.setMethod("POST");
+            sarmisInterface.setEndpoint("/api/v1/sarmis/fmis-purchase-orders");
+            sarmisInterface.setInterfaceCode(generatedCode);
 
             // Retrieve SecurityServer configuration by config key
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(FMIS_BATCH_PO_SARMIS);
@@ -179,9 +179,9 @@ public class SarmisInterfaceLogController {
                             ResponseEntity<String> sarmisResponse = restTemplate.postForEntity(securityServerURL, entity, String.class);
 
                             // Log the response from SARMIS
-                            sarmisInterfaceLog.setResponse(sarmisResponse.getBody());
-                            sarmisInterfaceLog.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse(sarmisResponse.getBody());
+                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
@@ -198,9 +198,9 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterfaceLog.setResponse(sarmisError.toString());
-                            sarmisInterfaceLog.setStatus(false);
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse(sarmisError.toString());
+                            sarmisInterface.setStatus(false);
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
@@ -259,7 +259,7 @@ public class SarmisInterfaceLogController {
             @RequestHeader("Content-Type") String contentType) {
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        SarmisInterfaceLog sarmisInterfaceLog = new SarmisInterfaceLog();
+        SarmisInterface sarmisInterface = new SarmisInterface();
         String payload = "";
         String organizationToken = "";
 
@@ -267,14 +267,14 @@ public class SarmisInterfaceLogController {
             if (contentType.contains("application/json")) {
                 JsonNode rootNode = objectMapper.readTree(requestBody);
                 payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterfaceLog.setPayload(payload);
+                sarmisInterface.setPayload(payload);
 
             } else if (contentType.contains("application/xml")) {
                 String json = XmlToJsonUtil.convertXmlToJson(requestBody);
                 JsonNode rootNode = objectMapper.readTree(json);
                 payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterfaceLog.setXml(requestBody);
-                sarmisInterfaceLog.setPayload(payload);
+                sarmisInterface.setXml(requestBody);
+                sarmisInterface.setPayload(payload);
 
             } else {
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -285,8 +285,8 @@ public class SarmisInterfaceLogController {
             }
 
             // Set log metadata
-            sarmisInterfaceLog.setMethod("POST");
-            sarmisInterfaceLog.setEndpoint("/api/v1/sarmis/long-term-asset-report");
+            sarmisInterface.setMethod("POST");
+            sarmisInterface.setEndpoint("/api/v1/sarmis/long-term-asset-report");
 
             // Retrieve SecurityServer configuration by config key
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(LONG_TERM_ASSET_REPORT_SARMIS);
@@ -340,9 +340,9 @@ public class SarmisInterfaceLogController {
                             ResponseEntity<String> sarmisResponse = restTemplate.postForEntity(securityServerURL, entity, String.class);
 
                             // Log the response from SARMIS
-                            sarmisInterfaceLog.setResponse(sarmisResponse.getBody());
-                            sarmisInterfaceLog.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse(sarmisResponse.getBody());
+                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
@@ -359,9 +359,9 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterfaceLog.setResponse(sarmisError.toString());
-                            sarmisInterfaceLog.setStatus(false);
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse(sarmisError.toString());
+                            sarmisInterface.setStatus(false);
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
@@ -422,7 +422,7 @@ public class SarmisInterfaceLogController {
             @RequestHeader("Content-Type") String contentType) {
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        SarmisInterfaceLog sarmisInterfaceLog = new SarmisInterfaceLog();
+        SarmisInterface sarmisInterface = new SarmisInterface();
         String payload = "";
         String organizationToken = "";
 
@@ -430,14 +430,14 @@ public class SarmisInterfaceLogController {
             if (contentType.contains("application/json")) {
                 JsonNode rootNode = objectMapper.readTree(requestBody);
                 payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterfaceLog.setPayload(payload);
+                sarmisInterface.setPayload(payload);
 
             } else if (contentType.contains("application/xml")) {
                 String json = XmlToJsonUtil.convertXmlToJson(requestBody);
                 JsonNode rootNode = objectMapper.readTree(json);
                 payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterfaceLog.setXml(requestBody);
-                sarmisInterfaceLog.setPayload(payload);
+                sarmisInterface.setXml(requestBody);
+                sarmisInterface.setPayload(payload);
 
             } else {
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -448,8 +448,8 @@ public class SarmisInterfaceLogController {
             }
 
             // Set log metadata
-            sarmisInterfaceLog.setMethod("POST");
-            sarmisInterfaceLog.setEndpoint("/api/v1/sarmis/depreciation-asset-report");
+            sarmisInterface.setMethod("POST");
+            sarmisInterface.setEndpoint("/api/v1/sarmis/depreciation-asset-report");
 
             // Retrieve SecurityServer configuration by config key
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(DEPRECIATION_ASSET_REPORT_SARMIS);
@@ -503,9 +503,9 @@ public class SarmisInterfaceLogController {
                             ResponseEntity<String> sarmisResponse = restTemplate.postForEntity(securityServerURL, entity, String.class);
 
                             // Log the response from SARMIS
-                            sarmisInterfaceLog.setResponse(sarmisResponse.getBody());
-                            sarmisInterfaceLog.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse(sarmisResponse.getBody());
+                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
@@ -522,9 +522,9 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterfaceLog.setResponse(sarmisError.toString());
-                            sarmisInterfaceLog.setStatus(false);
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse(sarmisError.toString());
+                            sarmisInterface.setStatus(false);
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
@@ -589,9 +589,9 @@ public class SarmisInterfaceLogController {
 
         try {
             // Initialize the SARMIS interface log
-            SarmisInterfaceLog sarmisInterfaceLog = new SarmisInterfaceLog();
-            sarmisInterfaceLog.setMethod("GET");
-            sarmisInterfaceLog.setEndpoint("/api/v1/sarmis/institution-closing-list");
+            SarmisInterface sarmisInterface = new SarmisInterface();
+            sarmisInterface.setMethod("GET");
+            sarmisInterface.setEndpoint("/api/v1/sarmis/institution-closing-list");
 
             // Retrieve SARMIS configuration from database
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(INSTITUTION_CLOSING_LIST_SARMIS);
@@ -662,9 +662,9 @@ public class SarmisInterfaceLogController {
                             );
 
                             // Log and persist the response
-                            sarmisInterfaceLog.setResponse((sarmisResponse.getBody()).toString());
-                            sarmisInterfaceLog.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse((sarmisResponse.getBody()).toString());
+                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             JsonNode sarmisResponseJSON = sarmisResponse.getBody();
 
@@ -685,9 +685,9 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterfaceLog.setResponse(sarmisError.toString());
-                            sarmisInterfaceLog.setStatus(false);
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse(sarmisError.toString());
+                            sarmisInterface.setStatus(false);
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             // Failed to connect to SARMIS
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -754,9 +754,9 @@ public class SarmisInterfaceLogController {
 
         try {
             // Initialize the SARMIS interface log
-            SarmisInterfaceLog sarmisInterfaceLog = new SarmisInterfaceLog();
-            sarmisInterfaceLog.setMethod("GET");
-            sarmisInterfaceLog.setEndpoint("/api/v1/sarmis/asset-kind-list");
+            SarmisInterface sarmisInterface = new SarmisInterface();
+            sarmisInterface.setMethod("GET");
+            sarmisInterface.setEndpoint("/api/v1/sarmis/asset-kind-list");
 
             // Retrieve SARMIS configuration from database
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(ASSET_KIND_LIST_SARMIS);
@@ -827,9 +827,9 @@ public class SarmisInterfaceLogController {
                             );
 
                             // Log and persist the response
-                            sarmisInterfaceLog.setResponse((sarmisResponse.getBody()).toString());
-                            sarmisInterfaceLog.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse((sarmisResponse.getBody()).toString());
+                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             JsonNode assetKindList = sarmisResponse.getBody();
 
@@ -850,9 +850,9 @@ public class SarmisInterfaceLogController {
                             }
                         } catch (RestClientException e) {
                             JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterfaceLog.setResponse(sarmisError.toString());
-                            sarmisInterfaceLog.setStatus(false);
-                            sarmisInterfaceLogService.save(sarmisInterfaceLog);
+                            sarmisInterface.setResponse(sarmisError.toString());
+                            sarmisInterface.setStatus(false);
+                            sarmisInterfaceService.save(sarmisInterface);
 
                             // Failed to connect to SARMIS
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
