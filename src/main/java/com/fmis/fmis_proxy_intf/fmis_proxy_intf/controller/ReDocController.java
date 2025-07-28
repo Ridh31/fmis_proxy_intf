@@ -23,16 +23,16 @@ import java.nio.file.Files;
 public class ReDocController {
 
     // Inject application details from the application.properties file
-    @Value("${application-title}")
+    @Value("${application.title}")
     private String applicationTitle;
 
-    @Value("${application-description}")
+    @Value("${application.description}")
     private String applicationDescription;
 
-    @Value("${application-version}")
+    @Value("${application.version}")
     private String applicationVersion;
 
-    @Value("${application-base-url}")
+    @Value("${application.base-url}")
     private String applicationBaseUrl;
 
     /**

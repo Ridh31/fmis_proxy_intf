@@ -3,6 +3,7 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +24,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -31,6 +33,9 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${application.cors.allowed-origins}")
+    private String[] allowedOrigins;
 
     @Autowired
     public SecurityConfig(@Lazy UserDetailsService userDetailsService) {
@@ -61,7 +66,8 @@ public class SecurityConfig {
                                 "/api/v1/list-partner",
                                 "/api/v1/import-bank-statement",
                                 "/api/v1/list-bank-statement",
-                                "api/v1/internal/camdigikey/import-host"
+                                "api/v1/internal/camdigikey/import-host",
+                                "api/v1/sarmis/fmis-purchase-orders-callback"
                         ).authenticated()
                         .requestMatchers(
                                 "/api/v1/open-api/**",
@@ -101,7 +107,7 @@ public class SecurityConfig {
                             }
 
                             String jsonResponse = String.format(
-                                    "{\"code\":\"%d\", \"message\":\"%s\"}",
+                                    "{\"code\":%d, \"message\":\"%s\"}",
                                     HttpStatus.UNAUTHORIZED.value(),
                                     message
                             );
@@ -111,7 +117,7 @@ public class SecurityConfig {
                             response.setStatus(HttpStatus.FORBIDDEN.value());
                             response.setContentType(HeaderConstants.CONTENT_TYPE_JSON);
                             String jsonResponse = String.format(
-                                    "{\"code\":\"%d\", \"message\":\"%s\"}",
+                                    "{\"code\":%d, \"message\":\"%s\"}",
                                     HttpStatus.FORBIDDEN.value(),
                                     ApiResponseConstants.FORBIDDEN
                             );
@@ -152,10 +158,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "https://dev-fmis-intf.fmis.gov.kh",
-                "http://10.10.3.52"
-        ));
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

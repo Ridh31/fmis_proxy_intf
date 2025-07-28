@@ -347,19 +347,8 @@ public class BankStatementController {
             Optional<Partner> partner = partnerService.findById(partnerId);
             final String[] statement = new String[2];
 
-            // Validate the bank statement data
-            try {
-                BodyValidationUtil.validateBankStatement(bankStatementDTO.getData());
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                e.getMessage()
-                        ));
-            }
-
-            Map<String, Object> validatedData = bankStatementDTO.getData();
-            List<Map<String, Object>> statementList = (List<Map<String, Object>>) validatedData.get("CMB_BANKSTM_STG");
+            Map<String, Object> data = bankStatementDTO.getData();
+            List<Map<String, Object>> statementList = (List<Map<String, Object>>) data.get("CMB_BANKSTM_STG");
 
             partner.ifPresent(p -> {
                 String systemCode = p.getSystemCode();
@@ -387,7 +376,40 @@ public class BankStatementController {
 
             // Convert the bank statement data to JSON
             ObjectMapper objectMapper = new ObjectMapper();
-            String data = objectMapper.writeValueAsString(bankStatementDTO.getData());
+            String payload = objectMapper.writeValueAsString(bankStatementDTO.getData());
+
+            // Convert JSON data to XML for FMIS
+            String xmlPayload = JsonToXmlUtil.convertBankStatementJsonToXml(payload);
+
+            // Validate the bank statement data
+            try {
+                BodyValidationUtil.validateBankStatement(bankStatementDTO.getData());
+            } catch (IllegalArgumentException e) {
+
+                // Set logging details for failed validation
+                bankStatementDTO.setMethod("POST");
+                bankStatementDTO.setEndpoint(endpoint);
+                bankStatementDTO.setFilename(filename);
+                bankStatementDTO.setStatementDate(statementDate);
+                bankStatementDTO.setBankAccountNumber(bankAccountNumber);
+                bankStatementDTO.setPayload(payload);
+                bankStatementDTO.setXml(xmlPayload);
+                bankStatementDTO.setStatus(false);
+                bankStatementDTO.setMessage(e.getMessage());
+
+                // Set user and partner info
+                bankStatementDTO.setCreatedBy(userId);
+                bankStatementDTO.setPartnerId(partnerId);
+
+                // Save the failed attempt
+                bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                e.getMessage()
+                        ));
+            }
 
             if (!data.isEmpty()) {
                 // Set the necessary fields in the bank statement DTO
@@ -396,10 +418,7 @@ public class BankStatementController {
                 bankStatementDTO.setFilename(filename);
                 bankStatementDTO.setStatementDate(statementDate);
                 bankStatementDTO.setBankAccountNumber(bankAccountNumber);
-                bankStatementDTO.setPayload(data);
-
-                // Convert JSON data to XML for FMIS
-                String xmlPayload = JsonToXmlUtil.convertBankStatementJsonToXml(data);
+                bankStatementDTO.setPayload(payload);
                 bankStatementDTO.setXml(xmlPayload);
 
                 // Get FMIS configuration

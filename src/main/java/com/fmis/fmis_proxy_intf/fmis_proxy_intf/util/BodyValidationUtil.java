@@ -3,6 +3,9 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 import static org.apache.commons.lang3.StringUtils.isNumeric;
 
@@ -72,6 +75,22 @@ public class BodyValidationUtil {
                 }
             }
 
+            // Validate date format
+            String[] dateFields = {"CMB_BSP_STMT_DT", "CMB_VALUE_DT"};
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            for (String dateKey : dateFields) {
+                JsonNode dateNode = stmt.get(dateKey);
+                if (!dateNode.isTextual()) {
+                    throw new IllegalArgumentException("The bank statement field (" + dateKey + ") must be a string in YYYY-MM-DD format. (Entry: " + (i + 1) + ")");
+                }
+                try {
+                    LocalDate.parse(dateNode.asText(), dateFormatter);
+                } catch (DateTimeParseException e) {
+                    throw new IllegalArgumentException("The bank statement field (" + dateKey + ") has an invalid format. Expected YYYY-MM-DD. (Entry: " + (i + 1) + ")");
+                }
+            }
+
             // Check numeric fields
             for (String numericKey : numericFields) {
                 JsonNode valueNode = stmt.get(numericKey);
@@ -82,6 +101,23 @@ public class BodyValidationUtil {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Validates the FMIS batch purchase order callback data.
+     * Ensures that the "interface_code" field is present and non-blank.
+     *
+     * @param data The FMIS callback data.
+     * @throws IllegalArgumentException If the "interface_code" field is missing or blank.
+     */
+    public static void validateBatchPOCallback(Map<String, Object> data) {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = mapper.valueToTree(data);
+
+        // Check if the "interface_code" field is present and non-blank
+        if (!rootNode.has("interface_code") || rootNode.get("interface_code").asText().isBlank()) {
+            throw new IllegalArgumentException("The field (interface_code) is missing or blank.");
         }
     }
 }

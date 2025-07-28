@@ -12,10 +12,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SecurityServer;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.InternalCamDigiKeyService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SarmisInterfaceService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SecurityServerService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ExceptionUtils;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.InterfaceCodeGenerator;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.XmlToJsonUtil;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -26,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -237,6 +235,99 @@ public class SarmisInterfaceController {
 
         } catch (Exception e) {
             // Catch any unexpected errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * Handles FMIS purchase order callbacks sent in JSON format.
+     * Validates the payload, logs request and response data, and returns a standardized API response.
+     *
+     * @param requestBody Raw JSON request body from FMIS
+     * @return ResponseEntity containing standardized API response
+     */
+    @PostMapping("/sarmis/fmis-purchase-orders-callback")
+    public ResponseEntity<ApiResponse<?>> fmisPurchaseOrdersCallback(@RequestBody String requestBody) {
+        // Initialize Jackson's ObjectMapper with JavaTime support for date/time deserialization
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
+        // Prepare the logging entity
+        SarmisInterface sarmisInterface = new SarmisInterface();
+        String endpoint = "/api/v1/sarmis/fmis-purchase-orders-callback";
+
+        try {
+            // Convert the incoming JSON string into a JsonNode for easy parsing and logging
+            JsonNode jsonBody = objectMapper.readTree(requestBody);
+
+            // Perform request validation
+            try {
+                BodyValidationUtil.validateBatchPOCallback(objectMapper.convertValue(jsonBody, Map.class));
+            } catch (IllegalArgumentException e) {
+                // Validation failed — log the request and error message
+                sarmisInterface.setMethod("POST");
+                sarmisInterface.setEndpoint(endpoint);
+                sarmisInterface.setPayload(jsonBody.toString());
+                sarmisInterface.setResponse(String.format(
+                        "{\n  \"code\": %d,\n  \"message\": \"%s\"\n}",
+                        ApiResponseConstants.BAD_REQUEST_CODE,
+                        e.getMessage()
+                ));
+                sarmisInterface.setStatus(false);
+
+                // Save the log entry to the database
+                sarmisInterfaceService.save(sarmisInterface);
+
+                // Return HTTP 400 with error details
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, e.getMessage()));
+            }
+
+            // Extract the 'interface_code' if it's available in the request
+            String interfaceCode = jsonBody.has("interface_code") ? jsonBody.get("interface_code").asText() : null;
+
+            // Log successful validation and request content
+            sarmisInterface.setMethod("POST");
+            sarmisInterface.setEndpoint(endpoint);
+            sarmisInterface.setInterfaceCode(interfaceCode);
+            sarmisInterface.setPayload(jsonBody.toString());
+            sarmisInterface.setResponse(String.format(
+                    "{\n  \"code\": %d,\n  \"message\": \"%s\",\n  \"data\": %s\n}",
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.SUCCESS,
+                    jsonBody.toString()
+            ));
+            sarmisInterface.setStatus(true);
+
+            // Persist the success log
+            sarmisInterfaceService.save(sarmisInterface);
+
+            // Return successful API response including original request content
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.SUCCESS,
+                    jsonBody
+            ));
+
+        } catch (JsonProcessingException e) {
+            // JSON parsing failed — log the raw request and error details
+            sarmisInterface.setMethod("POST");
+            sarmisInterface.setEndpoint(endpoint);
+            sarmisInterface.setPayload(requestBody);
+            sarmisInterface.setResponse(String.format(
+                    "{\n  \"code\": %d,\n  \"message\": \"%s\"\n}",
+                    ApiResponseConstants.BAD_REQUEST_CODE,
+                    e.getMessage()
+            ));
+            sarmisInterface.setStatus(false);
+
+            // Save the failure log entry
+            sarmisInterfaceService.save(sarmisInterface);
+
+            // Return HTTP 500 with error details
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,

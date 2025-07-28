@@ -1,4 +1,6 @@
-<<<<<<< HEAD
+#-----------------------------------------------------------
+# 🧱 Maven & Build Artifacts
+#-----------------------------------------------------------
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -7,49 +9,74 @@ pom.xml.next
 release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
+
+#-----------------------------------------------------------
+# 🧰 Maven Wrapper
+#-----------------------------------------------------------
 .mvn/timing.properties
 # https://github.com/takari/maven-wrapper#usage-without-binary-jar
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 
+#-----------------------------------------------------------
+# 🛠️ Eclipse Specific
+#-----------------------------------------------------------
 # Eclipse m2e generated files
 # Eclipse Core
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
-=======
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
 
-### STS ###
+#-----------------------------------------------------------
+# 🧪 Spring Tool Suite (STS)
+#-----------------------------------------------------------
 .apt_generated
-.classpath
 .factorypath
-.project
 .settings
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+#-----------------------------------------------------------
+# 💡 IntelliJ IDEA
+#-----------------------------------------------------------
 .idea
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+#-----------------------------------------------------------
+# 🧱 NetBeans
+#-----------------------------------------------------------
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
+
+#-----------------------------------------------------------
+# 🏗️ Gradle (if any)
+#-----------------------------------------------------------
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
+
+#-----------------------------------------------------------
+# 🧾 Maven Target Exceptions
+#-----------------------------------------------------------
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+#-----------------------------------------------------------
+# ⚙️ Application Properties (Excluded)
+#-----------------------------------------------------------
 /src/main/resources/application-dev.properties
 /src/main/resources/application-prod.properties
 
-### VS Code ###
+#-----------------------------------------------------------
+# 🧑‍💻 VS Code
+#-----------------------------------------------------------
 .vscode/
->>>>>>> dev
+
+#-----------------------------------------------------------
+# 📄 Miscellaneous
+#-----------------------------------------------------------
+HELP.md
