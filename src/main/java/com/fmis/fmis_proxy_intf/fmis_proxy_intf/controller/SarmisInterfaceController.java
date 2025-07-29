@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -103,13 +104,27 @@ public class SarmisInterfaceController {
 
             } else if (contentType.contains("application/xml")) {
                 String json = XmlToJsonUtil.convertXmlToJson(requestBody);
-                String updatedXml = InterfaceCodeGenerator.injectInterfaceCodeIntoXml(requestBody, generatedCode);
-                JsonNode rootNode = objectMapper.readTree(json);
-                if (rootNode instanceof ObjectNode) {
-                    ((ObjectNode) rootNode).put("interface_code", generatedCode);
+                String xml = InterfaceCodeGenerator.injectInterfaceCodeIntoXml(requestBody, generatedCode);
+                ObjectNode rootNode = (ObjectNode) objectMapper.readTree(json);
+
+                // Unwrap the "data" node to make it the root
+                JsonNode dataNode = rootNode.get("data");
+                if (dataNode != null && dataNode.isObject()) {
+                    rootNode = (ObjectNode) dataNode;
                 }
+
+                // Fix purchase_orders if empty string instead of array
+                JsonNode purchaseOrdersNode = rootNode.path("purchase_orders");
+                if (purchaseOrdersNode.isTextual() && purchaseOrdersNode.asText().isEmpty()) {
+                    rootNode.putArray("purchase_orders");
+                }
+
+                // Inject interface_code
+                rootNode.put("interface_code", generatedCode);
                 payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterface.setXml(updatedXml);
+                payload = payload.replace("[ ]", "[]");
+
+                sarmisInterface.setXml(xml);
                 sarmisInterface.setPayload(payload);
 
             } else {
@@ -244,14 +259,17 @@ public class SarmisInterfaceController {
     }
 
     /**
-     * Handles FMIS purchase order callbacks sent in JSON format.
-     * Validates the payload, logs request and response data, and returns a standardized API response.
+     * Handles the FMIS purchase order callback, validates the request, logs data,
+     * and returns a custom response.
      *
-     * @param requestBody Raw JSON request body from FMIS
-     * @return ResponseEntity containing standardized API response
+     * Success response: {"error": "0000", "message": "Success", "data": <data>}
+     * Error response: {"error": "<status_code>", "message": "<error_message>"}
+     *
+     * @param requestBody Raw JSON payload from FMIS.
+     * @return ResponseEntity with the success or error response.
      */
     @PostMapping("/sarmis/fmis-purchase-orders-callback")
-    public ResponseEntity<ApiResponse<?>> fmisPurchaseOrdersCallback(@RequestBody String requestBody) {
+    public ResponseEntity<?> fmisPurchaseOrdersCallback(@RequestBody String requestBody) {
         // Initialize Jackson's ObjectMapper with JavaTime support for date/time deserialization
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
@@ -272,7 +290,7 @@ public class SarmisInterfaceController {
                 sarmisInterface.setEndpoint(endpoint);
                 sarmisInterface.setPayload(jsonBody.toString());
                 sarmisInterface.setResponse(String.format(
-                        "{\n  \"code\": %d,\n  \"message\": \"%s\"\n}",
+                        "{\n  \"error\": \"%d\",\n  \"message\": \"%s\"\n}",
                         ApiResponseConstants.BAD_REQUEST_CODE,
                         e.getMessage()
                 ));
@@ -281,9 +299,12 @@ public class SarmisInterfaceController {
                 // Save the log entry to the database
                 sarmisInterfaceService.save(sarmisInterface);
 
-                // Return HTTP 400 with error details
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(ApiResponseConstants.BAD_REQUEST_CODE, e.getMessage()));
+                // Return custom error response with HTTP 400
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", String.valueOf(ApiResponseConstants.BAD_REQUEST_CODE));
+                errorResponse.put("message", e.getMessage());
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
             }
 
             // Extract the 'interface_code' if it's available in the request
@@ -295,8 +316,8 @@ public class SarmisInterfaceController {
             sarmisInterface.setInterfaceCode(interfaceCode);
             sarmisInterface.setPayload(jsonBody.toString());
             sarmisInterface.setResponse(String.format(
-                    "{\n  \"code\": %d,\n  \"message\": \"%s\",\n  \"data\": %s\n}",
-                    ApiResponseConstants.SUCCESS_CODE,
+                    "{\n  \"error\": \"%s\",\n  \"message\": \"%s\",\n  \"data\": %s\n}",
+                    "0000",
                     ApiResponseConstants.SUCCESS,
                     jsonBody.toString()
             ));
@@ -305,12 +326,13 @@ public class SarmisInterfaceController {
             // Persist the success log
             sarmisInterfaceService.save(sarmisInterface);
 
-            // Return successful API response including original request content
-            return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.SUCCESS,
-                    jsonBody
-            ));
+            // Return custom success response with HTTP 200 and include the data
+            Map<String, Object> successResponse = new HashMap<>();
+            successResponse.put("error", "0000");
+            successResponse.put("message", ApiResponseConstants.SUCCESS);
+            successResponse.put("data", jsonBody);
+
+            return ResponseEntity.ok(successResponse);
 
         } catch (JsonProcessingException e) {
             // JSON parsing failed — log the raw request and error details
@@ -318,8 +340,8 @@ public class SarmisInterfaceController {
             sarmisInterface.setEndpoint(endpoint);
             sarmisInterface.setPayload(requestBody);
             sarmisInterface.setResponse(String.format(
-                    "{\n  \"code\": %d,\n  \"message\": \"%s\"\n}",
-                    ApiResponseConstants.BAD_REQUEST_CODE,
+                    "{\n  \"error\": \"%d\",\n  \"message\": \"%s\"\n}",
+                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
                     e.getMessage()
             ));
             sarmisInterface.setStatus(false);
@@ -327,12 +349,12 @@ public class SarmisInterfaceController {
             // Save the failure log entry
             sarmisInterfaceService.save(sarmisInterface);
 
-            // Return HTTP 500 with error details
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
-                    ));
+            // Return custom error response with HTTP 500
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", String.valueOf(ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE));
+            errorResponse.put("message", ApiResponseConstants.ERROR_OCCURRED + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
