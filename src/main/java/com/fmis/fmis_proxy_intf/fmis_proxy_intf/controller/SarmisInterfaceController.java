@@ -103,7 +103,7 @@ public class SarmisInterfaceController {
                 sarmisInterface.setPayload(payload);
 
             } else if (contentType.contains("application/xml")) {
-                String json = XmlToJsonUtil.convertXmlToJson(requestBody);
+                String json = XmlToJsonUtil.convertSarmisBatchPOXmlToJson(requestBody).toString(2);
                 String xml = InterfaceCodeGenerator.injectInterfaceCodeIntoXml(requestBody, generatedCode);
                 ObjectNode rootNode = (ObjectNode) objectMapper.readTree(json);
 
