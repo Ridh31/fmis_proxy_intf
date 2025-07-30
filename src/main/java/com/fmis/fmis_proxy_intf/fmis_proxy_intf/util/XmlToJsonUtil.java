@@ -91,14 +91,14 @@ public class XmlToJsonUtil {
                 } else {
                     items = new JSONArray();
                     items.put(itemObj);
-                    itemsWrapper.put("item", items);
                 }
+
+                po.put("items", items);
 
                 for (int j = 0; j < items.length(); j++) {
                     JSONObject item = items.getJSONObject(j);
                     forceSarmisPOItemFieldsToString(item, "quantity_received", "khr_amount", "currency_amount", "program", "fund", "geography");
 
-                    // Format budget_ref
                     if (item.has("budget_ref")) {
                         String budgetRef = item.get("budget_ref").toString();
                         if (!budgetRef.startsWith("B")) {
