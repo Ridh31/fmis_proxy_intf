@@ -2,13 +2,14 @@
 const username = document.querySelector('[data-username]')?.dataset.username || "";
 const password = document.querySelector('[data-password]')?.dataset.password || "";
 const partnerToken = document.querySelector('[data-partner-token]')?.dataset.partnerToken || "";
+const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 
 // Encode Basic Auth credentials in base64
 const basicAuth = btoa(`${username}:${password}`);
 
 // Base URL for API calls
 const baseUrl = window.location.origin;
-const url = `${baseUrl}/api/v1/internal/camdigikey/list-host`;
+const url = `${baseUrl}${apiPrefix}/internal/camdigikey/list-host`;
 
 // Elements references
 const filterBtn = document.querySelector(".filter-button");
@@ -287,7 +288,7 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
     if (!validateModalFields(updatedData)) return;
 
     try {
-        const res = await fetch(`/api/v1/internal/camdigikey/update-host/${currentEditId}`, {
+        const res = await fetch(`${apiPrefix}/internal/camdigikey/update-host/${currentEditId}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -362,7 +363,7 @@ document.querySelector(".btn-logout")?.addEventListener("click", () => {
     deleteCookie("adminUsername");
     deleteCookie("adminPassword");
 
-    window.location.href = "/api/v1/admin/login";
+    window.location.href = `${apiPrefix}/admin/login`;
 });
 
 // Initial data fetch on page load

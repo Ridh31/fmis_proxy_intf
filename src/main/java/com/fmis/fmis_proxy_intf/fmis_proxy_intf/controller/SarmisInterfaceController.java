@@ -15,6 +15,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SecurityServerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClientException;
@@ -36,8 +37,11 @@ import java.util.Optional;
         description = "Endpoints for importing and retrieving data related to SARMIS."
 )
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 public class SarmisInterfaceController {
+
+    @Value("${application.api.prefix}")
+    private String apiPrefix;
 
     private static final String SARMIS_APP_KEY = "sarmis_interface";
     private static final String FMIS_BATCH_PO_SARMIS = "FMIS_BATCH_PO_SARMIS";
@@ -137,7 +141,7 @@ public class SarmisInterfaceController {
 
             // Set log metadata
             sarmisInterface.setMethod("POST");
-            sarmisInterface.setEndpoint("/api/v1/sarmis/fmis-purchase-orders");
+            sarmisInterface.setEndpoint(apiPrefix + "/sarmis/fmis-purchase-orders");
             sarmisInterface.setInterfaceCode(generatedCode);
 
             // Retrieve SecurityServer configuration by config key
@@ -170,7 +174,7 @@ public class SarmisInterfaceController {
             }
 
             // Call the external CamDigiKey service
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + "/api/v1/portal/camdigikey/organization-token";
+            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
@@ -275,7 +279,7 @@ public class SarmisInterfaceController {
 
         // Prepare the logging entity
         SarmisInterface sarmisInterface = new SarmisInterface();
-        String endpoint = "/api/v1/sarmis/fmis-purchase-orders-callback";
+        String endpoint = apiPrefix + "/sarmis/fmis-purchase-orders-callback";
 
         try {
             // Convert the incoming JSON string into a JsonNode for easy parsing and logging
@@ -399,7 +403,7 @@ public class SarmisInterfaceController {
 
             // Set log metadata
             sarmisInterface.setMethod("POST");
-            sarmisInterface.setEndpoint("/api/v1/sarmis/long-term-asset-report");
+            sarmisInterface.setEndpoint(apiPrefix + "/sarmis/long-term-asset-report");
 
             // Retrieve SecurityServer configuration by config key
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(LONG_TERM_ASSET_REPORT_SARMIS);
@@ -431,7 +435,7 @@ public class SarmisInterfaceController {
             }
 
             // Call the external CamDigiKey service
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + "/api/v1/portal/camdigikey/organization-token";
+            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
@@ -562,7 +566,7 @@ public class SarmisInterfaceController {
 
             // Set log metadata
             sarmisInterface.setMethod("POST");
-            sarmisInterface.setEndpoint("/api/v1/sarmis/depreciation-asset-report");
+            sarmisInterface.setEndpoint(apiPrefix + "/sarmis/depreciation-asset-report");
 
             // Retrieve SecurityServer configuration by config key
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(DEPRECIATION_ASSET_REPORT_SARMIS);
@@ -594,7 +598,7 @@ public class SarmisInterfaceController {
             }
 
             // Call the external CamDigiKey service
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + "/api/v1/portal/camdigikey/organization-token";
+            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
@@ -704,7 +708,7 @@ public class SarmisInterfaceController {
             // Initialize the SARMIS interface log
             SarmisInterface sarmisInterface = new SarmisInterface();
             sarmisInterface.setMethod("GET");
-            sarmisInterface.setEndpoint("/api/v1/sarmis/institution-closing-list");
+            sarmisInterface.setEndpoint(apiPrefix + "/sarmis/institution-closing-list");
 
             // Retrieve SARMIS configuration from database
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(INSTITUTION_CLOSING_LIST_SARMIS);
@@ -736,7 +740,7 @@ public class SarmisInterfaceController {
             }
 
             // Retrieve organization token from CamDigiKey
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + "/api/v1/portal/camdigikey/organization-token";
+            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
@@ -869,7 +873,7 @@ public class SarmisInterfaceController {
             // Initialize the SARMIS interface log
             SarmisInterface sarmisInterface = new SarmisInterface();
             sarmisInterface.setMethod("GET");
-            sarmisInterface.setEndpoint("/api/v1/sarmis/asset-kind-list");
+            sarmisInterface.setEndpoint(apiPrefix + "/sarmis/asset-kind-list");
 
             // Retrieve SARMIS configuration from database
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(ASSET_KIND_LIST_SARMIS);
@@ -901,7 +905,7 @@ public class SarmisInterfaceController {
             }
 
             // Retrieve organization token from CamDigiKey
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + "/api/v1/portal/camdigikey/organization-token";
+            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {

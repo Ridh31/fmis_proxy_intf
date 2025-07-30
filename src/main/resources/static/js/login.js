@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const buttonText = document.getElementById("button-text");
     const closeModalBtn = document.querySelector(".modal-close-btn");
     const popupModal = document.getElementById("popup-modal");
+    const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 
     // Make the modal draggable using jQuery UI
     $(".modal-box").draggable({
@@ -60,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             // Send login credentials to API
-            const response = await fetch(`${window.location.origin}/api/v1/auth/verify-admin`, {
+            const response = await fetch(`${window.location.origin}${apiPrefix}/auth/verify-admin`, {
                 method: "POST",
                 body: formData
             });

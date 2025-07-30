@@ -36,7 +36,7 @@ import static com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper.
 )
 @Hidden
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 public class PartnerController {
 
     private final PartnerService partnerService;

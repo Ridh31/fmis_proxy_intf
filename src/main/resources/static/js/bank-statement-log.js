@@ -1,9 +1,10 @@
-const username = document.querySelector('[data-username]')?.dataset.username;
-const password = document.querySelector('[data-password]')?.dataset.password;
-const partnerToken = document.querySelector('[data-partner-token]').dataset.partnerToken;
+const username = document.querySelector("[data-username]")?.dataset.username;
+const password = document.querySelector("[data-password]")?.dataset.password;
+const partnerToken = document.querySelector("[data-partner-token]").dataset.partnerToken;
 const basicAuth = btoa(`${username}:${password}`);
 const baseUrl = window.location.origin;
-const url = `${baseUrl}/api/v1/list-bank-statement`;
+const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
+const url = `${baseUrl}${apiPrefix}/list-bank-statement`;
 const filterBtn = document.querySelector(".filter-button");
 
 let fullData = [];
@@ -70,7 +71,7 @@ async function loadPartners() {
 
     try {
         // Make a request to fetch the list of partners using basic auth
-        const response = await fetch(`${baseUrl}/api/v1/list-bank-partner`, {
+        const response = await fetch(`${baseUrl}${apiPrefix}/list-bank-partner`, {
             headers: {
                 "Authorization": `Basic ${basicAuth}`
             }
@@ -389,7 +390,7 @@ document.querySelector(".btn-logout")?.addEventListener("click", () => {
     deleteCookie("adminUsername");
     deleteCookie("adminPassword");
 
-    window.location.href = "/api/v1/admin/login";
+    window.location.href = `${apiPrefix}/admin/login`;
 });
 
 // Initial fetch when page loads

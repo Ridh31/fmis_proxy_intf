@@ -237,3 +237,7 @@ tr:hover {
 .btn-logout:hover {
     background-color: #D24C3E;
 }
+
+.api-prefix {
+    display: none;
+}

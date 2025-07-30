@@ -22,7 +22,7 @@ import java.util.Map;
 @Tag(name = "Portal", description = "Portal related APIs")
 @Hidden
 @RestController
-@RequestMapping("/api/v1/portal")
+@RequestMapping("/portal")
 public class PortalController {
 
     private final CamDigiKeyClient camDigiKeyClient;

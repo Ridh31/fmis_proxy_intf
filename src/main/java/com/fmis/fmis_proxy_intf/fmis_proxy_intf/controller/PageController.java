@@ -5,6 +5,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.CookieUtils;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -27,8 +28,11 @@ import java.util.Optional;
  * Controller for serving static HTML pages like login and bank statement log.
  */
 @Controller
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/admin")
 public class PageController {
+
+    @Value("${application.api.prefix}")
+    private String apiPrefix;
 
     private final int cookieLifetime = 300;
     private final UserService userService;
@@ -55,7 +59,8 @@ public class PageController {
             String heading = "Login";
             String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
             content = content.replace("{{title}}", title)
-                    .replace("{{heading}}", heading);
+                    .replace("{{heading}}", heading)
+                    .replace("{{apiPrefix}}", apiPrefix);
 
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
@@ -115,7 +120,7 @@ public class PageController {
             HttpServletResponse response
     ) {
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView("/api/v1/admin/login");
+            return new RedirectView(apiPrefix + "/admin/login");
         }
 
         try {
@@ -130,7 +135,8 @@ public class PageController {
                     .replace("{{heading}}", heading)
                     .replace("{{username}}", adminUsername)
                     .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken);
+                    .replace("{{partnerToken}}", partnerToken)
+                    .replace("{{apiPrefix}}", apiPrefix);
 
             // Set cookie expire duration
             CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -169,7 +175,7 @@ public class PageController {
             HttpServletResponse response
     ) {
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView("/api/v1/admin/login");
+            return new RedirectView(apiPrefix + "/admin/login");
         }
 
         try {
@@ -184,7 +190,8 @@ public class PageController {
                     .replace("{{heading}}", heading)
                     .replace("{{username}}", adminUsername)
                     .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken);
+                    .replace("{{partnerToken}}", partnerToken)
+                    .replace("{{apiPrefix}}", apiPrefix);
 
             // Set cookie expire duration
             CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -223,7 +230,7 @@ public class PageController {
             HttpServletResponse response
     ) {
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView("/api/v1/admin/login");
+            return new RedirectView(apiPrefix + "/admin/login");
         }
 
         try {
@@ -238,7 +245,8 @@ public class PageController {
                     .replace("{{heading}}", heading)
                     .replace("{{username}}", adminUsername)
                     .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken);
+                    .replace("{{partnerToken}}", partnerToken)
+                    .replace("{{apiPrefix}}", apiPrefix);
 
             // Set cookie expire duration
             CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);

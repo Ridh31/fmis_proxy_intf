@@ -1,9 +1,10 @@
+const apiPrefix = document.querySelector("#api-data")?.dataset.apiPrefix;
 const config = {
     url: {
         baseUrl: window.location.origin,
-        specUrl: `${window.location.origin}/api/v1/open-api`,
-        docsUrl: `${window.location.origin}/api/v1/docs`,
-        overviewUrl: `${window.location.origin}/api/v1/docs#tag/Overview`
+        specUrl: `${window.location.origin}${apiPrefix}/open-api`,
+        docsUrl: `${window.location.origin}${apiPrefix}/docs`,
+        overviewUrl: `${window.location.origin}${apiPrefix}/docs#tag/Overview`
     },
     color: {
         bgActive: "#E1E1E1",
@@ -164,7 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <section id="api-environment">
                         <h2>2. API Environment</h2>
                         <p><strong>Request Base URL:</strong></p>
-                        <pre><code>${apiBaseUrl ?? ""}/api/v1/endpoint</code></pre>
+                        <pre><code>${apiBaseUrl ?? ""}${apiPrefix}/endpoint</code></pre>
                         <p><strong>Request Headers:</strong></p>
                         <pre><code>X-Partner-Token: PARTNER_ACCESS_TOKEN</code></pre>
                         <ul class="code-description">

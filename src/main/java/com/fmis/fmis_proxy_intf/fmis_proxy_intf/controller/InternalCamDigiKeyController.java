@@ -13,6 +13,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
 import org.springframework.validation.BindingResult;
@@ -32,8 +33,11 @@ import java.util.Optional;
 @Tag(name = "Internal CamDigiKey", description = "Endpoints related to managing internal CamDigiKey.")
 @Hidden
 @RestController
-@RequestMapping("/api/v1/internal/camdigikey")
+@RequestMapping("/internal/camdigikey")
 public class InternalCamDigiKeyController {
+
+    @Value("${application.api.prefix}")
+    private String apiPrefix;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -334,7 +338,7 @@ public class InternalCamDigiKeyController {
             }
 
             // Prepare URL for external service
-            String endpoint = "/api/v1/portal/camdigikey/organization-token";
+            String endpoint = apiPrefix + "/portal/camdigikey/organization-token";
             String url = host.get().getAccessURL() + endpoint;
 
             try {
@@ -439,7 +443,7 @@ public class InternalCamDigiKeyController {
             }
 
             // Prepare URL for external service
-            String endpoint = "/api/v1/portal/camdigikey/login-token";
+            String endpoint = apiPrefix + "/portal/camdigikey/login-token";
             String url = host.get().getAccessURL() + endpoint;
 
             try {
@@ -552,7 +556,7 @@ public class InternalCamDigiKeyController {
             }
 
             // Build external request URL
-            String endpoint = "/api/v1/portal/camdigikey/get-user-access-token";
+            String endpoint = apiPrefix + "/portal/camdigikey/get-user-access-token";
             String params = "?authCode=" + authCode;
             String url = host.get().getAccessURL() + endpoint + params;
 
@@ -689,7 +693,7 @@ public class InternalCamDigiKeyController {
             }
 
             // Prepare URL for external service
-            String endpoint = "/api/v1/portal/camdigikey/validate-jwt";
+            String endpoint = apiPrefix + "/portal/camdigikey/validate-jwt";
             String params = "?jwt=" + jwt;
             String url = host.get().getAccessURL() + endpoint + params;
 

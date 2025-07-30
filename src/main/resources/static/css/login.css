@@ -136,21 +136,6 @@ body, html {
     visibility: hidden;
 }
 
-@media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-    }
-
-    .left {
-        height: 200px;
-    }
-
-    .right {
-        flex: none;
-        padding: 1.5rem;
-    }
-}
-
 .modal-overlay {
     display: none;
     position: fixed;
@@ -241,6 +226,25 @@ body, html {
 
 .modal-close-btn:hover {
     background-color: #D24C3E;
+}
+
+.api-prefix {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .left {
+        height: 200px;
+    }
+
+    .right {
+        flex: none;
+        padding: 1.5rem;
+    }
 }
 
 @keyframes fadeIn {

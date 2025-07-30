@@ -319,3 +319,7 @@ input.error {
     color: #DC2626;
     font-size: 0.875rem;
 }
+
+.api-prefix {
+    display: none;
+}

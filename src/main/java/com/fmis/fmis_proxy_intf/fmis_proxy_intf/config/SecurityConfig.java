@@ -34,6 +34,9 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Value("${application.api.prefix}")
+    private String apiPrefix;
+
     @Value("${application.cors.allowed-origins}")
     private String[] allowedOrigins;
 
@@ -61,19 +64,18 @@ public class SecurityConfig {
                 // Configure HTTP request authorization
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/reset-password",
-                                "/api/v1/create-partner",
-                                "/api/v1/list-partner",
-                                "/api/v1/import-bank-statement",
-                                "/api/v1/list-bank-statement",
-                                "api/v1/internal/camdigikey/import-host",
-                                "api/v1/sarmis/fmis-purchase-orders-callback"
+                                apiPrefix + "/auth/reset-password",
+                                apiPrefix + "/create-partner",
+                                apiPrefix + "/list-partner",
+                                apiPrefix + "/import-bank-statement",
+                                apiPrefix + "/list-bank-statement",
+                                apiPrefix + "/internal/camdigikey/import-host",
+                                apiPrefix + "/sarmis/fmis-purchase-orders-callback"
                         ).authenticated()
                         .requestMatchers(
-                                "/api/v1/open-api/**",
-                                "/api/v1/swagger-ui/**",
-                                "/api/v1/redoc/**",
-                                "/v3/api-docs/**"
+                                apiPrefix + "/open-api/**",
+                                apiPrefix + "/swagger-ui/**",
+                                apiPrefix + "/redoc/**"
                         ).permitAll()
 
                         // Allow static resources

@@ -320,3 +320,7 @@ body {
 .input-error {
     border: 1px solid red !important;
 }
+
+.api-prefix {
+    display: none;
+}

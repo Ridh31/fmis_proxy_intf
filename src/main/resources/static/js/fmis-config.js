@@ -4,6 +4,7 @@ const password = document.querySelector("[data-password]")?.dataset.password;
 
 // Encode credentials in base64 for Basic Auth
 const basicAuth = btoa(`${username}:${password}`);
+const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 
 /**
  * Fetches configuration data from the API and updates UI fields accordingly.
@@ -11,7 +12,7 @@ const basicAuth = btoa(`${username}:${password}`);
  */
 async function fetchConfig() {
     try {
-        const response = await fetch(`${window.location.origin}/api/v1/list-config`, {
+        const response = await fetch(`${window.location.origin}${apiPrefix}/list-config`, {
             headers: {
                 "Authorization": `Basic ${basicAuth}`,
                 "Accept": "application/json"
@@ -58,7 +59,7 @@ document.querySelector(".btn-logout")?.addEventListener("click", () => {
     deleteCookie("adminUsername");
     deleteCookie("adminPassword");
 
-    window.location.href = "/api/v1/admin/login";
+    window.location.href = `${apiPrefix}/admin/login`;
 });
 
 // Modal and form handling
@@ -124,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const response = await fetch(`${window.location.origin}/api/v1/update-fmis-config`, {
+            const response = await fetch(`${window.location.origin}${apiPrefix}/update-fmis-config`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

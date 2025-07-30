@@ -19,7 +19,7 @@ import java.nio.file.Files;
  * Controller to handle the API documentation request.
  */
 @Controller
-@RequestMapping("/api/v1")
+@RequestMapping
 public class ReDocController {
 
     // Inject application details from the application.properties file
@@ -34,6 +34,9 @@ public class ReDocController {
 
     @Value("${application.base-url}")
     private String applicationBaseUrl;
+
+    @Value("${application.api.prefix}")
+    private String apiPrefix;
 
     /**
      * Serve the redoc.html file as the API documentation.
@@ -51,7 +54,8 @@ public class ReDocController {
             content = content.replace("{{appTitle}}", applicationTitle)
                     .replace("{{appDescription}}", applicationDescription)
                     .replace("{{appVersion}}", applicationVersion)
-                    .replace("{{appBaseUrl}}", applicationBaseUrl);
+                    .replace("{{appBaseUrl}}", applicationBaseUrl)
+                    .replace("{{apiPrefix}}", apiPrefix);
 
             // Set HTTP headers for content type (HTML with UTF-8 encoding)
             HttpHeaders headers = new HttpHeaders();

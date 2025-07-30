@@ -31,7 +31,7 @@ import java.util.Optional;
         description = "Endpoints related to testing and FMIS connectivity."
 )
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 public class TestController {
 
     private final TestService testService;

@@ -50,7 +50,7 @@ import java.util.Optional;
         description = "Endpoints for importing and retrieving bank statements."
 )
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 public class BankStatementController {
 
     private final PartnerService partnerService;

@@ -39,7 +39,7 @@ import java.util.Optional;
         description = "Endpoints for user registration, authentication, and password management."
 )
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/auth")
 public class AuthController {
 
     private final UserService userService;

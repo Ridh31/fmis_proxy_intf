@@ -23,7 +23,7 @@ import java.util.Optional;
 
 @Hidden
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 public class ConfigController {
 
     private final FmisRepository fmisRepository;
