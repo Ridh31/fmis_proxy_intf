@@ -163,12 +163,12 @@ public class PageController {
     }
 
     /**
-     * Handles GET request to the FMIS configuration page.
+     * Handles GET request to the SARMIS Interface Log page.
      *
      * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
      */
-    @GetMapping("/fmis-config")
-    public Object fmisConfig(
+    @GetMapping("/sarmis-interface-log")
+    public Object sarmisInterfaceLog(
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
             @CookieValue(name = "adminUsername", required = false) String adminUsername,
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
@@ -182,9 +182,9 @@ public class PageController {
             Optional<User> userOptional = userService.findByUsername(adminUsername);
             String partnerToken = userOptional.get().getPartner().getPublicKey();
 
-            Resource resource = new ClassPathResource("templates/fmis-config.html");
-            String title = "Configuration | FMIS Proxy Interface";
-            String heading = "FMIS Configuration";
+            Resource resource = new ClassPathResource("templates/sarmis-interface-log.html");
+            String title = "SARMIS Interface History | FMIS Proxy Interface";
+            String heading = "SARMIS Interface History";
             String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
             content = content.replace("{{title}}", title)
                     .replace("{{heading}}", heading)
@@ -240,6 +240,61 @@ public class PageController {
             Resource resource = new ClassPathResource("templates/internal-camdigikey.html");
             String title = "Internal CamDigiKey | FMIS Proxy Interface";
             String heading = "Internal CamDigiKey";
+            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
+            content = content.replace("{{title}}", title)
+                    .replace("{{heading}}", heading)
+                    .replace("{{username}}", adminUsername)
+                    .replace("{{password}}", adminPassword)
+                    .replace("{{partnerToken}}", partnerToken)
+                    .replace("{{apiPrefix}}", apiPrefix);
+
+            // Set cookie expire duration
+            CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+            CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+            CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
+
+            return new ResponseEntity<>(
+                    content.getBytes(StandardCharsets.UTF_8),
+                    headers,
+                    HttpStatus.OK
+            );
+        } catch (IOException e) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
+            return new ResponseEntity<>(
+                    "Error loading file.".getBytes(),
+                    headers,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Handles GET request to the FMIS configuration page.
+     *
+     * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
+     */
+    @GetMapping("/fmis-config")
+    public Object fmisConfig(
+            @CookieValue(name = "isAdmin", required = false) String isAdmin,
+            @CookieValue(name = "adminUsername", required = false) String adminUsername,
+            @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            HttpServletResponse response
+    ) {
+        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
+            return new RedirectView(apiPrefix + "/admin/login");
+        }
+
+        try {
+            Optional<User> userOptional = userService.findByUsername(adminUsername);
+            String partnerToken = userOptional.get().getPartner().getPublicKey();
+
+            Resource resource = new ClassPathResource("templates/fmis-config.html");
+            String title = "Configuration | FMIS Proxy Interface";
+            String heading = "FMIS Configuration";
             String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
             content = content.replace("{{title}}", title)
                     .replace("{{heading}}", heading)

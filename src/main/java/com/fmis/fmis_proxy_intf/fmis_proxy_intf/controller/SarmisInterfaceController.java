@@ -13,9 +13,13 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.InternalCamDigiKeyServic
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SarmisInterfaceService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SecurityServerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClientException;
@@ -24,6 +28,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -54,26 +59,30 @@ public class SarmisInterfaceController {
     private final SecurityServerService securityServerService;
     private final InternalCamDigiKeyService internalCamDigiKeyService;
     private final RestTemplate restTemplate;
+    private final AuthorizationHelper authorizationHelper;
 
     /**
      * Constructs a new {@code SarmisController} with the required service dependencies.
      * Initializes services responsible for logging interface activity, retrieving security server configurations,
      * and sending HTTP requests to external APIs.
      *
-     * @param sarmisInterfaceService service for saving and managing SARMIS interface logs
+     * @param sarmisInterfaceService    service for saving and managing SARMIS interface logs
      * @param securityServerService     service for retrieving security server configurations by config key
      * @param internalCamDigiKeyService Service for interacting with CamDigiKey and retrieving authorization tokens.
      * @param restTemplate              HTTP client for sending requests to external systems such as SARMIS
+     * @param authorizationHelper       helper for authorization and authentication checks
      */
     @Autowired
     public SarmisInterfaceController(SarmisInterfaceService sarmisInterfaceService,
                                      SecurityServerService securityServerService,
                                      InternalCamDigiKeyService internalCamDigiKeyService,
-                                     RestTemplate restTemplate) {
+                                     RestTemplate restTemplate,
+                                     AuthorizationHelper authorizationHelper) {
         this.sarmisInterfaceService = sarmisInterfaceService;
         this.securityServerService = securityServerService;
         this.internalCamDigiKeyService = internalCamDigiKeyService;
         this.restTemplate = restTemplate;
+        this.authorizationHelper = authorizationHelper;
     }
 
     /**
@@ -1012,6 +1021,63 @@ public class SarmisInterfaceController {
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
                             ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
+
+    @Operation(
+            summary = "Get SARMIS Interface",
+            description = "Retrieves a paginated list of SARMIS Interface. Accessible only to Admins."
+    )
+    @Hidden
+    @GetMapping("/list-sarmis-interface")
+    public ResponseEntity<ApiResponse<?>> listSarmisInterface(
+            @RequestParam(required = false) String endpoint,
+            @RequestParam(required = false) String interfaceCode,
+            @RequestParam(required = false) String purchaseOrderId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate actionDate,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
+        }
+
+        // Check status value if exist
+        Boolean statusValue = null;
+        if (status != null && !status.trim().isEmpty()) {
+            if ("true".equalsIgnoreCase(status.trim())) {
+                statusValue = true;
+            } else if ("false".equalsIgnoreCase(status.trim())) {
+                statusValue = false;
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.BAD_REQUEST_INVALID_STATUS_VALUE
+                        ));
+            }
+        }
+
+        try {
+            // Fetch paginated SARMIS interface list
+            Page<SarmisInterface> sarmisInterface = sarmisInterfaceService.getFilteredSarmisInterface(
+                    page, size, endpoint, interfaceCode, purchaseOrderId, actionDate, statusValue);
+
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.SUCCESS,
+                    sarmisInterface
+            ));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_FETCHING_DATA + e.getMessage()
                     ));
         }
     }

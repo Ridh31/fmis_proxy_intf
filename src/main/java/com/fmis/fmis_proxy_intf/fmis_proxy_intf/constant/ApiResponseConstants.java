@@ -152,6 +152,7 @@ public final class ApiResponseConstants {
     public static final String ERROR_FETCHING_BANK_STATEMENTS = "An error occurred while fetching bank statements: ";
     public static final String ERROR_FETCHING_USERS = "An error occurred while fetching users: ";
     public static final String ERROR_FETCHING_PARTNERS = "An error occurred while fetching partners: ";
+    public static final String ERROR_FETCHING_DATA = "An error occurred while fetching data: ";
     public static final String ERROR_READING_FILE = "Error occurred while reading the documentation file.";
     public static final String ERROR_PARTNER_TOKEN_NOT_FOUND = "Partner with the provided token not found.";
     public static final String ERROR_FMIS_RESPONSE_PARSE = "Failed to parse FMIS XML response.";

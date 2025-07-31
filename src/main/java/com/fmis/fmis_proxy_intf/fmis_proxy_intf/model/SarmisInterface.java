@@ -48,10 +48,8 @@ public class SarmisInterface {
     private Long createdBy;
 
     @Column(name = "created_date", nullable = false, updatable = false)
-    @JsonProperty("imported_date")
     private LocalDateTime createdDate = LocalDateTime.now();
 
-    @JsonIgnore
     private Boolean status = true;
 
     @Column(name = "is_deleted")
