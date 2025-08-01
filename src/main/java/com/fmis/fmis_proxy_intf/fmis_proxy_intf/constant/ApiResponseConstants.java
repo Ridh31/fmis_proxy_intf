@@ -132,6 +132,7 @@ public final class ApiResponseConstants {
     public static final int NO_CONTENT_CODE = 204;
     public static final String NO_CONTENT_CODE_STRING = "204";
     public static final String NOT_FOUND = "Requested resource not found.";
+    public static final String RESOURCE_NOT_FOUND = "Resource not found. The requested URL does not exist.";
     public static final String USER_NOT_FOUND = "User not found.";
     public static final String ROLE_NOT_FOUND = "Role not found.";
     public static final String HOST_NOT_FOUND = "Host not found.";

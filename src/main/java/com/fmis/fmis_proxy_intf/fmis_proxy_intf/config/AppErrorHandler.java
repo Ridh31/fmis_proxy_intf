@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
@@ -31,21 +32,21 @@ public class AppErrorHandler implements ErrorController {
         int statusCode = (status instanceof Integer) ? (Integer) status : HttpStatus.INTERNAL_SERVER_ERROR.value();
         HttpStatus httpStatus = HttpStatus.resolve(statusCode);
 
-        String message = "An unexpected error occurred.";
+        String message = ApiResponseConstants.INTERNAL_SERVER_ERROR;
 
         // Handle 401 Unauthorized
         if (statusCode == HttpStatus.UNAUTHORIZED.value()) {
             Throwable throwable = (Throwable) request.getAttribute("javax.servlet.error.exception");
             if (throwable instanceof BadCredentialsException) {
-                message = "Invalid username or password.";
+                message = ApiResponseConstants.INVALID_CREDENTIALS;
             } else {
-                message = "Unauthorized access. Please provide valid credentials.";
+                message = ApiResponseConstants.UNAUTHORIZED_ACCESS;
             }
         }
 
         // Handle 404 Not Found
         if (statusCode == HttpStatus.NOT_FOUND.value()) {
-            message = "Resource not found. The requested URL does not exist.";
+            message = ApiResponseConstants.RESOURCE_NOT_FOUND;
         }
 
         return ResponseEntity.status(httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR)
