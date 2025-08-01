@@ -29,6 +29,6 @@ public class ApiPrefixConfig implements WebMvcConfigurer {
      */
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
-        configurer.addPathPrefix(apiPrefix, c -> true);
+        configurer.addPathPrefix(apiPrefix, clazz -> !AppErrorHandler.class.isAssignableFrom(clazz));
     }
 }
