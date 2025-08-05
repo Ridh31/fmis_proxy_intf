@@ -175,8 +175,8 @@ function renderTable() {
             item.endpoint,
             `<span class="${item.status === true ? "success" : "error"}">${item.status === true ? "Processed" : "Failed"}</span>`,
             item.createdDate ? formatDateTime(item.createdDate) : "N/A",
-            `<span class="view-link" data-index="${i}" data-type="payload" onclick="handleViewClick(this)">View</span>`,
-            `<span class="view-link" data-index="${i}" data-type="response" onclick="handleViewClick(this)">View</span>`
+            `<span class="view-link" data-index="${i}" data-type="payload" data-status="${item.status}" onclick="handleViewClick(this)">📄 View</span>`,
+            `<span class="view-link" data-index="${i}" data-type="response" data-status="${item.status}" onclick="handleViewClick(this)">📑 Preview</span>`
         ]),
         columns: [
             { title: "#" },
@@ -195,9 +195,13 @@ function renderTable() {
 }
 
 /**
- * Opens the modal and displays the data in a formatted way.
+ * Opens the modal and displays the data in a formatted and styled way.
+ *
+ * @param {Object|string} item - The data to display (JSON object or string).
+ * @param {string} type - The type of content (e.g., 'payload', 'response').
+ * @param {string} [status="true"] - The status value; determines background color.
  */
-function openModal(item) {
+function openModal(item, type, status = "true") {
     const modal = document.getElementById("modal");
     const body = document.getElementById("modalBody");
     const title = document.getElementById("modalTitle");
@@ -205,13 +209,76 @@ function openModal(item) {
     let content = "";
 
     try {
-        // Prettify JSON data
-        content = `<pre style="white-space: pre-wrap; font-size: 0.85rem; font-family: 'Courier New', Courier, monospace; color: #333; background-color: #F9F9F9; padding: 1rem; border-radius: 8px; border: 1px solid #E4E4E4; max-height: 60vh; overflow-y: auto;">${JSON.stringify(item, null, 2)}</pre>`;
+        if (!item || (typeof item === "object" && Object.keys(item).length === 0)) {
+            // Show fallback for missing or empty data
+            content = `
+                <div style="
+                    padding: 1rem;
+                    color: #888;
+                    font-style: italic;
+                    background-color: #FEFEFE;
+                    border: 1px dashed #CCC;
+                    border-radius: 8px;">
+                    No data
+                </div>
+            `;
+        } else {
+            // Format JSON
+            let jsonStr = JSON.stringify(item, null, 2);
+
+            // Highlight key values
+            const highlightRegex = /("(purchase_order_id|receipt_id|interface_code)"\s*:\s*)"([^"]+)"/g;
+            jsonStr = jsonStr.replace(
+                highlightRegex,
+                (_, keyPrefix, keyName, value) => {
+                    let color = "", textColor = "";
+
+                    switch (keyName) {
+                        case "purchase_order_id":
+                            color = "yellow";
+                            textColor = "#000";
+                            break;
+                        case "receipt_id":
+                            color = "#CCE5FF";
+                            textColor = "#003366";
+                            break;
+                        case "interface_code":
+                            color = "#D3F9D8";
+                            textColor = "#2C6E49";
+                            break;
+                    }
+
+                    return `${keyPrefix}"<span style="background-color: ${color}; font-weight: bold; color: ${textColor};">${value}</span>"`;
+                }
+            );
+
+            // Choose background and border colors based on status
+            const backgroundColor = status === "false" ? "#FFF5F5" : "#F9F9F9";
+            const borderColor = status === "false" ? "#F5C6CB" : "#E4E4E4";
+
+            // Final content
+            content = `
+                <pre style="
+                    white-space: pre-wrap;
+                    font-size: 0.85rem;
+                    font-family: 'Courier New', Courier, monospace;
+                    color: #333;
+                    background-color: ${backgroundColor};
+                    border: 1px solid ${borderColor};
+                    padding: 1rem;
+                    border-radius: 8px;
+                    max-height: 60vh;
+                    overflow-y: auto;
+                ">${jsonStr}</pre>
+            `;
+        }
     } catch (e) {
-        content = `<pre>${item}</pre>`;
+        content = `<pre style="color: red;">Failed to render content.</pre>`;
     }
 
-    title.textContent = "Details";
+    // Capitalize first letter of type
+    title.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+
     body.innerHTML = content;
     modal.style.display = "flex";
 }
@@ -229,17 +296,24 @@ function closeModal() {
 function handleViewClick(el) {
     const index = el.getAttribute("data-index");
     const type = el.getAttribute("data-type");
+    const status = el.getAttribute("data-status");
     const item = fullData[index];
 
     let parsed;
 
     try {
-        parsed = item[type] ? JSON.parse(item[type]) : "No data";
+        const raw = item[type];
+
+        if (!raw || raw.trim() === "") {
+            parsed = null;
+        } else {
+            parsed = JSON.parse(raw);
+        }
     } catch {
-        parsed = item[type] || "No data";
+        parsed = null;
     }
 
-    openModal(parsed);
+    openModal(parsed, type, status);
 }
 
 // Filter data on filter button click

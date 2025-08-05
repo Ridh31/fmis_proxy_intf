@@ -1,7 +1,9 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SecurityServer;
+import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,4 +42,42 @@ public interface SecurityServerService {
      * @param id the ID of the SecurityServer to delete
      */
     void delete(Long id);
+
+    /**
+     * Checks if a SecurityServer with the given name exists.
+     *
+     * @param name the name of the SecurityServer
+     * @return true if a SecurityServer with the same name exists, false otherwise
+     */
+    boolean existsByName(String name);
+
+    /**
+     * Checks if a SecurityServer with the given configKey exists.
+     *
+     * @param configKey the configKey of the SecurityServer
+     * @return true if a SecurityServer with the same configKey exists, false otherwise
+     */
+    boolean existsByConfigKey(String configKey);
+
+    /**
+     * Retrieves a paginated list of active and non-deleted {@link SecurityServer} entities,
+     * optionally filtered by the provided parameters.
+     * The method applies filters for name, config key, description, and creation date.
+     * If any parameter is null, it is ignored in the query.
+     *
+     * @param page        the zero-based page index (starting from 0)
+     * @param size        the number of records to return per page
+     * @param name        optional filter by the name of the security server
+     * @param configKey   optional filter by the configuration key
+     * @param description optional filter by the description of the security server
+     * @param createdDate optional filter by the creation date in "dd-MM-yyyy" format
+     * @return a {@link Page} of filtered {@link SecurityServer} results, which may be empty if no records match the criteria
+     */
+    Page<SecurityServer> getFilteredSecurityServers(
+            int page, int size,
+            String name,
+            String configKey,
+            String description,
+            LocalDate createdDate
+    );
 }

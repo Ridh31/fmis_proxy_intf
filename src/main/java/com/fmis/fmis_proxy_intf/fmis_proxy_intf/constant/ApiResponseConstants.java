@@ -78,6 +78,7 @@ public final class ApiResponseConstants {
     public static final String USERNAME_TAKEN = "Bad Request: Username is already taken.";
     public static final String NAME_TAKEN = "Bad Request: Name is already taken.";
     public static final String APP_KEY_TAKEN = "Bad Request: App key is already taken.";
+    public static final String CONFIG_KEY_TAKEN = "Bad Request: Config key is already taken.";
     public static final String IP_ADDRESS_TAKEN = "Bad Request: IP Address is already taken.";
     public static final String ACCESS_URL_TAKEN = "Bad Request: Access URL is already taken.";
     public static final String ERROR_USERNAME_MISSING_OR_EMPTY = "Bad Request: 'Username' cannot be missing or empty.";

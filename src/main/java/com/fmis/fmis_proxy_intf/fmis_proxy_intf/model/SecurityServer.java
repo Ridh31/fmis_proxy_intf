@@ -50,7 +50,7 @@ public class SecurityServer {
 
     @Column(name = "created_by")
     @JsonIgnore
-    private Integer createdBy;
+    private Long createdBy;
 
     @Column(name = "created_date")
     @JsonIgnore
@@ -144,11 +144,11 @@ public class SecurityServer {
         this.description = description;
     }
 
-    public Integer getCreatedBy() {
+    public Long getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(Integer createdBy) {
+    public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
     }
 

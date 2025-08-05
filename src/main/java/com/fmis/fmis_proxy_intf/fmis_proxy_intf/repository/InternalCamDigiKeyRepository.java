@@ -88,8 +88,7 @@ public interface InternalCamDigiKeyRepository extends JpaRepository<InternalCamD
             AND (:ipAddress IS NULL OR ic.ip_address = :ipAddress)
             AND (:accessURL IS NULL OR ic.access_url = :accessURL)
             AND (:createdDate IS NULL OR DATE_FORMAT(ic.created_date, '%d-%m-%Y') = :createdDate)
-        ORDER BY
-            ic.id DESC
+        ORDER BY ic.id DESC
     """, nativeQuery = true)
     Page<InternalCamDigiKey> findFilteredInternalCamDigiKeys(
             @Param("name") String name,

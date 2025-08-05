@@ -43,7 +43,18 @@ async function fetchConfig() {
 window.addEventListener("DOMContentLoaded", fetchConfig);
 
 // Make modal draggable with jQuery UI
-$(".modal-content").draggable({ cursor: "move" });
+let modalContent = $(".modal-content");
+let cardContent = $(".card");
+
+$(() => {
+    modalContent.draggable({
+        cursor: "move"
+    });
+
+    cardContent.draggable({
+        cursor: "move"
+    });
+});
 
 /**
  * Handle logout:

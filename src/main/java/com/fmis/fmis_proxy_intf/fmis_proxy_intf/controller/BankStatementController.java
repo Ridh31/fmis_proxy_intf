@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -52,6 +53,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping
 public class BankStatementController {
+
+    @Value("${application.api.prefix}")
+    private String apiPrefix;
 
     private final PartnerService partnerService;
     private final UserService userService;
@@ -261,7 +265,7 @@ public class BankStatementController {
 
         // Check if endpoint is null or empty, and set a default value if necessary
         if (endpoint == null || endpoint.isEmpty()) {
-            endpoint = "api/import-bank-statement";
+            endpoint = apiPrefix + "/import-bank-statement";
         }
 
         // Extract validation errors using the utility method
@@ -720,6 +724,7 @@ public class BankStatementController {
 
         try {
             String filename = file.getOriginalFilename();
+            String endpoint = apiPrefix + "/upload-bank-statement";
 
             // Parse the uploaded file into a JsonNode
             ObjectMapper mapper = new ObjectMapper();
@@ -732,7 +737,7 @@ public class BankStatementController {
             BindingResult bindingResult = new BeanPropertyBindingResult(dto, "bankStatementDTO");
 
             // Call the original createBankStatement method with the parsed DTO and binding result
-            return createBankStatement(partnerCode, dto, "api/upload-bank-statement", filename, bindingResult);
+            return createBankStatement(partnerCode, dto, endpoint, filename, bindingResult);
 
         } catch (IOException e) {
             // Handle parsing error (e.g., malformed JSON)

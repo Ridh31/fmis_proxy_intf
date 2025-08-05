@@ -41,6 +41,7 @@ import java.util.Optional;
         name = "SARMIS Interface",
         description = "Endpoints for importing and retrieving data related to SARMIS."
 )
+@Hidden
 @RestController
 @RequestMapping
 public class SarmisInterfaceController {
