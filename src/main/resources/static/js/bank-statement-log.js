@@ -8,6 +8,7 @@ const url = `${baseUrl}${apiPrefix}/list-bank-statement`;
 const filterBtn = document.querySelector(".filter-button");
 
 let fullData = [];
+const jsonDataMap = {};
 let modalContent = $(".modal-content");
 
 $(() => {
@@ -36,7 +37,7 @@ function showLoading() {
 
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 10;
+    cell.colSpan = 11;
     cell.style.textAlign = "center";
     cell.style.margin = "0.75rem";
     cell.style.fontWeight = "bold";
@@ -187,18 +188,26 @@ function renderTable() {
     }
 
     bankStatementDataTable.DataTable({
-        data: fullData.map((item, i) => [
-            i + 1,
-            item.bankAccountNumber,
-            item.statementId,
-            item.statementDate,
-            `<span class="${item.status === "Processed" ? "success" : "error"}">${item.status}</span>`,
-            item.method,
-            item.endpoint,
-            item.importedBy || "N/A",
-            item.createdDate || "N/A",
-            `<span class="view-link" data-index="${i}" onclick="handleViewClick(this)">View</span>`
-        ]),
+        data: fullData.map((item, i) => {
+            const filename = generateFilename(item);
+            jsonDataMap[i] = {
+                data: item,
+                filename: filename
+            };
+            return [
+                i + 1,
+                item.bankAccountNumber,
+                item.statementId,
+                item.statementDate,
+                `<span class="${item.status === "Processed" ? "success" : "error"}">${item.status}</span>`,
+                item.method,
+                item.endpoint,
+                item.importedBy || "N/A",
+                item.createdDate || "N/A",
+                `<span class="view-link" data-index="${i}" onclick="handleViewClick(this)">View</span>`,
+                `<span class="download-json" data-index="${i}" onclick="downloadJSON(${i})">📄</span>`
+            ];
+        }),
         columns: [
             { title: "#" },
             { title: "Bank Account" },
@@ -209,7 +218,8 @@ function renderTable() {
             { title: "Endpoint" },
             { title: "Imported By" },
             { title: "Imported Date" },
-            { title: "Action" }
+            { title: "Action" },
+            { title: "Export" }
         ],
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100, 200],
@@ -369,6 +379,72 @@ function handleViewClick(el) {
     const index = el.getAttribute("data-index");
     const item = fullData[index];
     openModal(item);
+}
+
+/**
+ * Generates a JSON filename based on available fields:
+ * Falls back to combinations or timestamp if fields are missing.
+ */
+function generateFilename(item) {
+    const clean = (str) => str?.replace(/\s+/g, '').toUpperCase();
+    const importedBy = clean(item.importedBy);
+    const bankAccount = item.bankAccountNumber;
+    const date = item.statementDate?.replace(/[-/]/g, '');
+
+    if (importedBy && bankAccount && date) {
+        return `${importedBy}-${bankAccount}-${date}.json`;
+    }
+
+    if (importedBy && date) {
+        return `${importedBy}-${date}.json`;
+    }
+
+    if (importedBy && bankAccount) {
+        return `${importedBy}-${bankAccount}.json`;
+    }
+
+    if (importedBy) {
+        return `${importedBy}.json`;
+    }
+
+    // Fallback: CMB_BANKSTM_yyyymmddHHMMSS.json
+    const now = new Date();
+    const timestamp = now.toLocaleString("en-GB", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false
+    }).replace(/[^\d]/g, '');
+
+    return `CMB_BANKSTM_${timestamp}.json`;
+}
+
+/**
+ * Downloads the JSON file for a given index from jsonDataMap.
+ * Falls back to an empty string if no data is available.
+ */
+function downloadJSON(index) {
+    const jsonEntry = jsonDataMap[index];
+
+    // Use .Data, .data, or fallback to empty string
+    let dataToDownload = "";
+    if (jsonEntry) {
+        dataToDownload = jsonEntry.Data || jsonEntry.data || "";
+    }
+
+    // Convert object to pretty JSON, or leave as string
+    const dataStr = typeof dataToDownload === "object"
+        ? JSON.stringify(dataToDownload, null, 4)
+        : dataToDownload;
+
+    const blob = new Blob([dataStr], { type: "application/json" });
+
+    // Set filename or use default timestamp
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = (jsonEntry && jsonEntry.filename) || `bank-statement-${Date.now()}.json`;
+    link.click();
+
+    URL.revokeObjectURL(link.href);
 }
 
 // Filter data

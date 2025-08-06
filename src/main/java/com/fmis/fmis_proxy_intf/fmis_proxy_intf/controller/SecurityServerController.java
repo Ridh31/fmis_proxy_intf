@@ -135,7 +135,7 @@ public class SecurityServerController {
      * @return A paginated list of filtered Security Servers.
      */
     @GetMapping("list-server")
-    public ResponseEntity<ApiResponse<?>> getFilteredHosts(
+    public ResponseEntity<ApiResponse<?>> listSecurityServer(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String name,

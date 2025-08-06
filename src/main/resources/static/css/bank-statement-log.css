@@ -154,6 +154,10 @@ tr:hover {
     color: #E88C1A;
 }
 
+.download-json {
+    cursor: pointer;
+}
+
 .modal {
     overflow: auto;
     display: none;

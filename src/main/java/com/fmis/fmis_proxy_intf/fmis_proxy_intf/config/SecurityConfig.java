@@ -70,7 +70,8 @@ public class SecurityConfig {
                                 apiPrefix + "/import-bank-statement",
                                 apiPrefix + "/list-bank-statement",
                                 apiPrefix + "/internal/camdigikey/import-host",
-                                apiPrefix + "/sarmis/fmis-purchase-orders-callback"
+                                apiPrefix + "/sarmis/fmis-purchase-orders-callback",
+                                apiPrefix + "/security-server/**"
                         ).authenticated()
                         .requestMatchers(
                                 apiPrefix + "/open-api/**",
