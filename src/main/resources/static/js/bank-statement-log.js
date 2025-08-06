@@ -382,27 +382,26 @@ function handleViewClick(el) {
 }
 
 /**
- * Generates a JSON filename based on available fields:
- * Falls back to combinations or timestamp if fields are missing.
+ * Generates a JSON filename based on available fields.
+ * Falls back to timestamped default if required fields are missing.
  */
 function generateFilename(item) {
-    const clean = (str) => str?.replace(/\s+/g, '').toUpperCase();
+    const clean = (str) =>
+        typeof str === "string" ? str.replace(/\s+/g, "").toUpperCase() : null;
+
     const systemCode = clean(item.systemCode);
-    const bankAccount = item.bankAccountNumber;
-    const date = item.statementDate?.replace(/[-/]/g, '');
+    const bankAccount = item.bankAccountNumber || null;
+    const date = item.statementDate?.replace(/[-/]/g, "") || null;
 
     if (systemCode && bankAccount && date) {
         return `${systemCode}-${bankAccount}-${date}.json`;
     }
-
     if (systemCode && date) {
         return `${systemCode}-${date}.json`;
     }
-
     if (systemCode && bankAccount) {
         return `${systemCode}-${bankAccount}.json`;
     }
-
     if (systemCode) {
         return `${systemCode}.json`;
     }
@@ -410,40 +409,48 @@ function generateFilename(item) {
     // Fallback: CMB_BANKSTM_yyyymmddHHMMSS.json
     const now = new Date();
     const timestamp = now.toLocaleString("en-GB", {
-        day: "2-digit", month: "2-digit", year: "numeric",
-        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
         hour12: false
-    }).replace(/[^\d]/g, '');
+    }).replace(/[^\d]/g, "");
 
     return `CMB_BANKSTM_${timestamp}.json`;
 }
 
 /**
  * Downloads the JSON file for a given index from jsonDataMap.
- * Falls back to an empty string if no data is available.
+ * Performs cleanup before generating and downloading the file.
  */
 function downloadJSON(index) {
     const jsonEntry = jsonDataMap[index];
+    if (!jsonEntry) return;
 
-    // Use .Data, .data, or fallback to empty string
-    let dataToDownload = "";
-    if (jsonEntry) {
-        dataToDownload = jsonEntry.Data || jsonEntry.data || "";
+    const originalData = jsonEntry.Data || jsonEntry.data || {};
+    const data = JSON.parse(JSON.stringify(originalData));
+
+    // Cleanup fields
+    delete data.createdDateFormatted;
+
+    if (Array.isArray(data?.Data?.CMB_BANKSTM_STG)) {
+        data.Data.CMB_BANKSTM_STG.forEach((entry) => {
+            delete entry.CMB_BANK_CODE;
+        });
     }
 
-    // Convert object to pretty JSON, or leave as string
-    const dataStr = typeof dataToDownload === "object"
-        ? JSON.stringify(dataToDownload, null, 4)
-        : dataToDownload;
+    const jsonString = JSON.stringify(data, null, 4);
+    const blob = new Blob([jsonString], { type: "application/json" });
 
-    const blob = new Blob([dataStr], { type: "application/json" });
-
-    // Set filename or use default timestamp
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = (jsonEntry && jsonEntry.filename) || `bank-statement-${Date.now()}.json`;
-    link.click();
 
+    // Use pre-defined filename or generate one
+    link.download = jsonEntry.filename || generateFilename(jsonEntry);
+
+    link.click();
     URL.revokeObjectURL(link.href);
 }
 
