@@ -387,24 +387,24 @@ function handleViewClick(el) {
  */
 function generateFilename(item) {
     const clean = (str) => str?.replace(/\s+/g, '').toUpperCase();
-    const importedBy = clean(item.importedBy);
+    const systemCode = clean(item.systemCode);
     const bankAccount = item.bankAccountNumber;
     const date = item.statementDate?.replace(/[-/]/g, '');
 
-    if (importedBy && bankAccount && date) {
-        return `${importedBy}-${bankAccount}-${date}.json`;
+    if (systemCode && bankAccount && date) {
+        return `${systemCode}-${bankAccount}-${date}.json`;
     }
 
-    if (importedBy && date) {
-        return `${importedBy}-${date}.json`;
+    if (systemCode && date) {
+        return `${systemCode}-${date}.json`;
     }
 
-    if (importedBy && bankAccount) {
-        return `${importedBy}-${bankAccount}.json`;
+    if (systemCode && bankAccount) {
+        return `${systemCode}-${bankAccount}.json`;
     }
 
-    if (importedBy) {
-        return `${importedBy}.json`;
+    if (systemCode) {
+        return `${systemCode}.json`;
     }
 
     // Fallback: CMB_BANKSTM_yyyymmddHHMMSS.json

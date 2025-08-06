@@ -851,6 +851,7 @@ public class BankStatementController {
                 dto.setId(bankStatement.getId());
                 dto.setPartnerCode(bankStatement.getPartner().getCode());
                 dto.setPartnerId(bankStatement.getPartner().getId());
+                dto.setPartnerSystemCode(bankStatement.getPartner().getSystemCode());
                 dto.setMethod(bankStatement.getMethod());
                 dto.setEndpoint(bankStatement.getEndpoint());
                 dto.setFilename(bankStatement.getFilename());

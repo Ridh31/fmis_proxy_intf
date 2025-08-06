@@ -28,6 +28,10 @@ public class BankStatementDTO {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long partnerId;
 
+    @Schema(hidden = true)
+    @JsonProperty(value = "systemCode", access = JsonProperty.Access.READ_ONLY)
+    private String partnerSystemCode;
+
     @NotEmpty(message = "Data cannot be empty. Please provide a valid data.")
     @JsonProperty("Data")
     @Schema(description = "The root wrapper for bank statement data.")
@@ -135,6 +139,14 @@ public class BankStatementDTO {
 
     public void setPartnerId(Long partnerId) {
         this.partnerId = partnerId;
+    }
+
+    public String getPartnerSystemCode() {
+        return partnerSystemCode;
+    }
+
+    public void setPartnerSystemCode(String partnerSystemCode) {
+        this.partnerSystemCode = partnerSystemCode;
     }
 
     public Map<String, Object> getData() {
