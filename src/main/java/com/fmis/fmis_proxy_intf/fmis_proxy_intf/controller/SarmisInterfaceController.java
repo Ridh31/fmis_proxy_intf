@@ -1026,6 +1026,19 @@ public class SarmisInterfaceController {
         }
     }
 
+    /**
+     * Retrieves a paginated list of SARMIS Interface records with optional filters.
+     * Accessible to Admins only. Validates status input and handles authorization.
+     *
+     * @param endpoint         optional filter by endpoint
+     * @param interfaceCode    optional filter by interface code
+     * @param purchaseOrderId  optional filter by purchase order ID
+     * @param actionDate       optional filter by action date (dd-MM-yyyy)
+     * @param status           optional filter by status ("true" or "false")
+     * @param page             pagination page (default 0)
+     * @param size             page size (default 10)
+     * @return response with filtered SARMIS data or error details
+     */
     @Operation(
             summary = "Get SARMIS Interface",
             description = "Retrieves a paginated list of SARMIS Interface. Accessible only to Admins."
