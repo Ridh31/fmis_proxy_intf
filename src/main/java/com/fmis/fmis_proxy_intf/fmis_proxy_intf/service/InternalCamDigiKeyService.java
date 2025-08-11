@@ -2,8 +2,6 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 

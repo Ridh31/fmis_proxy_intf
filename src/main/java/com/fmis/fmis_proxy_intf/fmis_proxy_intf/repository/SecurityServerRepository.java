@@ -41,6 +41,22 @@ public interface SecurityServerRepository extends JpaRepository<SecurityServer, 
     boolean existsByConfigKey(String configKey);
 
     /**
+     * Retrieves an {@link SecurityServer} by its ID.
+     *
+     * @param id The unique identifier of the entity.
+     * @return An {@link Optional} containing the entity if found, otherwise empty.
+     */
+    Optional<SecurityServer> findById(Long id);
+
+    /**
+     * Finds a {@link SecurityServer} entity by its unique name.
+     *
+     * @param name the name of the SecurityServer
+     * @return an {@link Optional} containing the SecurityServer if found, or empty if not found
+     */
+    Optional<SecurityServer> findByName(String name);
+
+    /**
      * Retrieves a paginated list of active and non-deleted {@link SecurityServer} records,
      * filtered optionally by name, config key, description, and creation date.
      *

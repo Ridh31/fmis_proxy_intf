@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Controller for managing security server operations.
@@ -158,6 +159,116 @@ public class SecurityServerController {
                     ApiResponseConstants.SUCCESS_CODE,
                     ApiResponseConstants.SUCCESS,
                     server
+            ));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * Updates an existing SecurityServer by ID.
+     * Validates input, checks authorization, ensures name and configKey uniqueness,
+     * then saves and returns the updated entity.
+     *
+     * @param id the SecurityServer ID from the URL path
+     * @param securityServer the updated SecurityServer data from the request body
+     * @param bindingResult validation results for the input data
+     * @return ResponseEntity with success or error details
+     */
+    @PutMapping("/update-server/{id}")
+    public ResponseEntity<ApiResponse<?>> updateSecurityServer(
+            @PathVariable String id,
+            @RequestBody SecurityServer securityServer,
+            BindingResult bindingResult) {
+
+        // Extract validation errors from the request body if any exist
+        Map<String, String> validationErrors = ValidationErrorUtils.extractValidationErrors(bindingResult);
+
+        // If there are validation errors, return a bad request with the errors
+        if (!validationErrors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            validationErrors
+                    ));
+        }
+
+        // Validate server ID format
+        long serverId;
+        try {
+            serverId = Long.parseLong(id);
+        } catch (NumberFormatException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(
+                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ApiResponseConstants.BAD_REQUEST_ID_NOT_NUMERIC
+                    ));
+        }
+
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
+        }
+
+        try {
+            // Check if the server exists
+            Optional<SecurityServer> optionalExisting = securityServerService.findById(serverId);
+            if (optionalExisting.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.NOT_FOUND_CODE,
+                                String.format(ApiResponseConstants.ENTITY_NOT_FOUND, "Security Server")
+                        ));
+            }
+
+            // Check if the name is already taken
+            Optional<SecurityServer> nameOwner = securityServerService.findByName(securityServer.getName());
+            if (nameOwner.isPresent() && !nameOwner.get().getId().equals(serverId)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.NAME_TAKEN
+                        ));
+            }
+
+            // Check if the config key is already taken
+            Optional<SecurityServer> configKeyOwner = securityServerService.getByConfigKey(securityServer.getConfigKey());
+            if (configKeyOwner.isPresent() && !configKeyOwner.get().getId().equals(serverId)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ApiResponseConstants.CONFIG_KEY_TAKEN
+                        ));
+            }
+
+            // Proceed with the update
+            SecurityServer existing = optionalExisting.get();
+
+            // Update the server details
+            existing.setName(securityServer.getName());
+            existing.setConfigKey(securityServer.getConfigKey());
+            existing.setBaseURL(securityServer.getBaseURL());
+            existing.setEndpoint(securityServer.getEndpoint());
+            existing.setSubsystem(securityServer.getSubsystem());
+            existing.setUsername(securityServer.getUsername());
+            existing.setPassword(securityServer.getPassword());
+            existing.setContentType(securityServer.getContentType());
+            existing.setDescription(securityServer.getDescription());
+
+            // Save the updated security server
+            securityServerService.update(existing);
+
+            // Return success response with updated data
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ApiResponseConstants.SUCCESS_CODE,
+                    ApiResponseConstants.SUCCESS,
+                    existing
             ));
 
         } catch (Exception e) {

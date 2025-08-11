@@ -190,6 +190,7 @@ function renderTable() {
         ],
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100],
+        scrollX: true,
         destroy: true
     });
 }

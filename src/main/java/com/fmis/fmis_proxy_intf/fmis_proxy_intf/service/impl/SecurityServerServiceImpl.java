@@ -97,6 +97,40 @@ public class SecurityServerServiceImpl implements SecurityServerService {
     }
 
     /**
+     * Retrieves a Security Server by its ID.
+     *
+     * @param id The unique identifier of the Security Server.
+     * @return An {@link Optional} containing the entity if found; otherwise empty.
+     */
+    @Override
+    public Optional<SecurityServer> findById(Long id) {
+        return securityServerRepository.findById(id);
+    }
+
+    /**
+     * Finds a {@link SecurityServer} by its name.
+     * Delegates to the repository method {@link SecurityServerRepository#findByName(String)}.
+     *
+     * @param name the name of the SecurityServer
+     * @return an {@link Optional} containing the SecurityServer if found, or empty if not found
+     */
+    @Override
+    public Optional<SecurityServer> findByName(String name) {
+        return securityServerRepository.findByName(name);
+    }
+
+    /**
+     * Updates the provided {@link SecurityServer} entity or creates it if not exists.
+     *
+     * @param server the {@link SecurityServer} entity to be updated
+     * @return the updated {@link SecurityServer} entity
+     */
+    @Override
+    public SecurityServer update(SecurityServer server) {
+        return securityServerRepository.save(server);
+    }
+
+    /**
      * Retrieves a paginated list of active and non-deleted {@link SecurityServer} entities,
      * filtered optionally by the provided parameters.
      * The filtering is applied based on parameters such as name, config key, description, and creation date.

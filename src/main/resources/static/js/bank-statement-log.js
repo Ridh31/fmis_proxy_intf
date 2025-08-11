@@ -223,6 +223,7 @@ function renderTable() {
         ],
         pageLength: 10,
         lengthMenu: [10, 25, 50, 100, 200],
+        scrollX: true,
         destroy: true
     });
 }

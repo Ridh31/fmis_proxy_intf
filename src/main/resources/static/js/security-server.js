@@ -1,7 +1,7 @@
 // Retrieve credentials and tokens from DOM dataset attributes or default to empty string
-const username = document.querySelector('[data-username]')?.dataset.username || "";
-const password = document.querySelector('[data-password]')?.dataset.password || "";
-const partnerToken = document.querySelector('[data-partner-token]')?.dataset.partnerToken || "";
+const username = document.querySelector("[data-username]")?.dataset.username || "";
+const password = document.querySelector("[data-password]")?.dataset.password || "";
+const partnerToken = document.querySelector("[data-partner-token]")?.dataset.partnerToken || "";
 const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 
 // Encode Basic Auth credentials in base64
@@ -9,7 +9,7 @@ const basicAuth = btoa(`${username}:${password}`);
 
 // Base URL for API calls
 const baseUrl = window.location.origin;
-const url = `${baseUrl}${apiPrefix}/internal/camdigikey/list-host`;
+const url = `${baseUrl}${apiPrefix}/security-server/list-server`;
 
 // Elements references
 const filterBtn = document.querySelector(".filter-button");
@@ -34,12 +34,12 @@ $(() => {
  * Clears existing table body and shows a single row with "Loading..." message.
  */
 function showLoading() {
-    const tbody = document.querySelector("#internalCamDigiKeyTable tbody");
+    const tbody = document.querySelector("#securityServerTable tbody");
     tbody.innerHTML = "";
 
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 7;
+    cell.colSpan = 11;
     cell.style.textAlign = "center";
     cell.style.margin = "0.75rem";
     cell.style.fontWeight = "bold";
@@ -52,7 +52,7 @@ function showLoading() {
  * Remove the "Loading..." row from the table body after data has loaded.
  */
 function hideLoading() {
-    const tbody = document.querySelector("#internalCamDigiKeyTable tbody");
+    const tbody = document.querySelector("#securityServerTable tbody");
     const rows = tbody.querySelectorAll("tr");
 
     rows.forEach(row => {
@@ -67,23 +67,21 @@ function hideLoading() {
  * Shows loading indicator during fetch and handles errors gracefully.
  */
 async function fetchData() {
-    const tbody = document.querySelector("#internalCamDigiKeyTable tbody");
+    const tbody = document.querySelector("#securityServerTable tbody");
     tbody.innerHTML = "";
     showLoading();
 
     // Collect filter values from input fields
     const name = document.getElementById("name").value;
-    const appKey = document.getElementById("appKey").value;
-    const ipAddress = document.getElementById("ipAddress").value;
-    const accessURL = document.getElementById("accessURL").value;
+    const configKey = document.getElementById("configKey").value;
+    const description = document.getElementById("description").value;
     const createdDate = document.getElementById("createdDate").value;
 
     // Prepare query parameters based on filled filters
     const params = new URLSearchParams();
     if (name) params.append("name", name);
-    if (appKey) params.append("appKey", appKey);
-    if (ipAddress) params.append("ipAddress", ipAddress);
-    if (accessURL) params.append("accessURL", accessURL);
+    if (configKey) params.append("configKey", configKey);
+    if (description) params.append("description", description);
     if (createdDate) params.append("createdDate", formatDate(createdDate));
 
     try {
@@ -105,7 +103,7 @@ async function fetchData() {
 
     } catch (err) {
         console.error("Fetch failed:", err);
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error fetching data.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: red;">Error fetching data.</td></tr>`;
     } finally {
         hideLoading();
     }
@@ -126,9 +124,9 @@ function formatDate(input) {
  * Reinitializes DataTable if already initialized.
  */
 function renderTable() {
-    let table = $('#internalCamDigiKeyTable');
+    let table = $("#securityServerTable");
 
-    if ($.fn.DataTable.isDataTable('#internalCamDigiKeyTable')) {
+    if ($.fn.DataTable.isDataTable("#securityServerTable")) {
         table.DataTable().destroy();
     }
 
@@ -136,10 +134,14 @@ function renderTable() {
         data: fullData.map((item, i) => [
             i + 1,
             item.name,
-            item.appKey,
-            item.ipAddress,
-            item.accessURL,
-            item.createdDate || 'N/A',
+            item.configKey,
+            item.baseURL,
+            item.endpoint,
+            item.subsystem,
+            item.username,
+            item.password,
+            item.contentType,
+            item.description,
             `<span class="view-link" data-index='${i}'>
                 <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 24 24" fill="none">
                     <path d="M21.2799 6.40005L11.7399 15.94C10.7899 16.89 7.96987 17.33 7.33987 16.7C6.70987 16.07 7.13987 13.25 8.08987 12.3L17.6399 2.75002C17.8754 2.49308 18.1605 2.28654 18.4781 2.14284C18.7956 1.99914 19.139 1.92124 19.4875 1.9139C19.8359 1.90657 20.1823 1.96991 20.5056 2.10012C20.8289 2.23033 21.1225 2.42473 21.3686 2.67153C21.6147 2.91833 21.8083 3.21243 21.9376 3.53609C22.0669 3.85976 22.1294 4.20626 22.1211 4.55471C22.1128 4.90316 22.0339 5.24635 21.8894 5.5635C21.7448 5.88065 21.5375 6.16524 21.2799 6.40005V6.40005Z" stroke="#1A73E8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -150,10 +152,14 @@ function renderTable() {
         columns: [
             { title: "#" },
             { title: "Name" },
-            { title: "App Key" },
-            { title: "IP Address" },
-            { title: "Access URL" },
-            { title: "Created Date" },
+            { title: "Config Key" },
+            { title: "Base URL" },
+            { title: "Endpoint" },
+            { title: "Subsystem" },
+            { title: "Username" },
+            { title: "Password" },
+            { title: "Content Type" },
+            { title: "Description" },
             { title: "Action" }
         ],
         pageLength: 10,
@@ -174,9 +180,14 @@ function openEditModal(item) {
     currentEditId = item.id;
 
     document.getElementById("modalName").value = item.name || "";
-    document.getElementById("modalAppKey").value = item.appKey || "";
-    document.getElementById("modalIP").value = item.ipAddress || "";
-    document.getElementById("modalURL").value = item.accessURL || "";
+    document.getElementById("modalConfigKey").value = item.configKey || "";
+    document.getElementById("modalBaseURL").value = item.baseURL || "";
+    document.getElementById("modalEndpoint").value = item.endpoint || "";
+    document.getElementById("modalSubsystem").value = item.subSystem || "";
+    document.getElementById("modalUsername").value = item.username || "";
+    document.getElementById("modalPassword").value = item.password || "";
+    document.getElementById("modalContentType").value = item.contentType || "";
+    document.getElementById("modalDescription").value = item.description || "";
 
     document.getElementById("modal").style.display = "flex";  // Show modal
 }
@@ -226,9 +237,11 @@ function showError(input, message) {
 }
 
 /**
- * Validates modal input fields and displays error messages if invalid.
- * @param {object} data - Form data to validate
- * @returns {boolean} - True if all fields are valid, otherwise false
+ * Validates required fields in the modal form.
+ * Clears previous errors, then validates 'name' and 'configKey'.
+ * Shows errors if fields are empty.
+ * @param {Object} data - Form data to validate.
+ * @returns {boolean} - True if valid, false otherwise.
  */
 function validateModalFields(data) {
     let valid = true;
@@ -239,37 +252,14 @@ function validateModalFields(data) {
         showError(input, "Name is required. Please provide a valid name.");
         valid = false;
     }
-    if (!data.appKey.trim()) {
-        const input = document.getElementById("modalAppKey");
-        showError(input, "App key is required. Please provide a valid app key.");
-        valid = false;
-    }
-    if (!data.ipAddress.trim()) {
-        const input = document.getElementById("modalIP");
-        showError(input, "IP address is required. Please provide a valid IP address.");
-        valid = false;
-    }
-    if (!validateURL(data.accessURL.trim())) {
-        const input = document.getElementById("modalURL");
-        showError(input, "Access URL is required. Please provide a valid access URL.");
+
+    if (!data.configKey.trim()) {
+        const input = document.getElementById("modalConfigKey");
+        showError(input, "Config key is required. Please provide a valid config key.");
         valid = false;
     }
 
     return valid;
-}
-
-/**
- * Validates a URL by attempting to create a URL object.
- * @param {string} url - URL string to validate
- * @returns {boolean} - True if valid URL, otherwise false
- */
-function validateURL(url) {
-    try {
-        new URL(url);
-        return true;
-    } catch {
-        return false;
-    }
 }
 
 /**
@@ -286,25 +276,32 @@ function capitalize(str) {
  * Prevents default submit, validates input, sends update request,
  * handles API errors, and refreshes data on success.
  */
-document.getElementById("editHostForm").addEventListener("submit", async function (e) {
+document.getElementById("editServerForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const updatedData = {
         name: document.getElementById("modalName").value.trim(),
-        appKey: document.getElementById("modalAppKey").value.trim(),
-        ipAddress: document.getElementById("modalIP").value.trim(),
-        accessURL: document.getElementById("modalURL").value.trim()
+        configKey: document.getElementById("modalConfigKey").value.trim(),
+        baseURL: document.getElementById("modalBaseURL").value.trim(),
+        endpoint: document.getElementById("modalEndpoint").value.trim(),
+        subSystem: document.getElementById("modalSubsystem").value.trim(),
+        username: document.getElementById("modalUsername").value.trim(),
+        password: document.getElementById("modalPassword").value.trim(),
+        contentType: document.getElementById("modalContentType").value.trim(),
+        description: document.getElementById("modalDescription").value.trim()
     };
 
     clearErrors();
 
-    if (!currentEditId) return alert("Missing ID for update.");
+    if (!currentEditId) {
+        alert("Missing ID for update.");
+        return;
+    }
 
-    // Client-side validation: stop submission if invalid
     if (!validateModalFields(updatedData)) return;
 
     try {
-        const res = await fetch(`${apiPrefix}/internal/camdigikey/update-host/${currentEditId}`, {
+        const res = await fetch(`${apiPrefix}/security-server/update-server/${currentEditId}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -315,28 +312,25 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
 
         if (!res.ok) {
             const errData = await res.json().catch(() => null);
+
             if (errData) {
-                if (errData.message && typeof errData.message === "string") {
+                // Handle string-based error message
+                if (typeof errData.message === "string") {
                     const message = errData.message.toLowerCase();
 
-                    if (message.includes("name") && !errData.error) {
+                    if (message.includes("name")) {
                         const input = document.getElementById("modalName");
                         showError(input, errData.message);
-                    } else if (message.includes("app key")) {
-                        const input = document.getElementById("modalAppKey");
-                        showError(input, errData.message);
-                    } else if (message.includes("ip address")) {
-                        const input = document.getElementById("modalIP");
-                        showError(input, errData.message);
-                    } else if (message.includes("access url")) {
-                        const input = document.getElementById("modalURL");
+                    } else if (message.includes("config key")) {
+                        const input = document.getElementById("modalConfigKey");
                         showError(input, errData.message);
                     } else {
                         alert(errData.message);
                     }
                 }
 
-                if (errData.error && typeof errData.error === "object") {
+                // Handle field-based validation errors
+                if (typeof errData.error === "object") {
                     Object.entries(errData.error).forEach(([field, msg]) => {
                         const input = document.getElementById(`modal${capitalize(field)}`);
                         if (input) {
@@ -345,7 +339,9 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
                     });
                 }
             } else {
+                alert("An unknown error occurred.");
             }
+
             return;
         }
 
@@ -353,12 +349,13 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
         fetchData();
 
     } catch (err) {
-        console.error(err);
+        console.error("Update failed:", err);
+        alert("Failed to update server. Please try again.");
     }
 });
 
 // Attach event listener to view icons inside the table to open modal with data for editing
-$("#internalCamDigiKeyTable tbody").on("click", ".view-link", function () {
+$("#securityServerTable tbody").on("click", ".view-link", function () {
     const index = $(this).data("index");
     const item = fullData[index];
     openEditModal(item);

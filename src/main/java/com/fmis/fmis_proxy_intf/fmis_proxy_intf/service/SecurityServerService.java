@@ -60,6 +60,31 @@ public interface SecurityServerService {
     boolean existsByConfigKey(String configKey);
 
     /**
+     * Retrieves a {@link SecurityServer} by its unique ID.
+     *
+     * @param id the ID of the SecurityServer to retrieve
+     * @return an {@link Optional} containing the SecurityServer if found, or empty if not
+     */
+    Optional<SecurityServer> findById(Long id);
+
+    /**
+     * Retrieves a {@link SecurityServer} by its unique name.
+     *
+     * @param name the name of the SecurityServer to find
+     * @return an {@link Optional} containing the SecurityServer if found, or empty otherwise
+     */
+    Optional<SecurityServer> findByName(String name);
+
+    /**
+     * Updates an existing {@link SecurityServer} entity.
+     * If the entity does not exist, it will be created.
+     *
+     * @param server the {@link SecurityServer} entity with updated information
+     * @return the updated {@link SecurityServer} entity
+     */
+    SecurityServer update(SecurityServer server);
+
+    /**
      * Retrieves a paginated list of active and non-deleted {@link SecurityServer} entities,
      * optionally filtered by the provided parameters.
      * The method applies filters for name, config key, description, and creation date.

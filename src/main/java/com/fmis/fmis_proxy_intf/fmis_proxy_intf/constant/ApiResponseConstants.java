@@ -138,6 +138,7 @@ public final class ApiResponseConstants {
     public static final String ROLE_NOT_FOUND = "Role not found.";
     public static final String HOST_NOT_FOUND = "Host not found.";
     public static final String BASE_URL_NOT_FOUND = "Base URL not found.";
+    public static final String ENTITY_NOT_FOUND = "%s not found.";
     public static final String NO_PARTNERS_FOUND = "No partners found.";
     public static final String NO_BANK_STATEMENTS_FOUND = "No bank statements found.";
     public static final String NO_FMIS_CONFIG_FOUND = "FMIS Configuration Not Found.";
