@@ -19,7 +19,6 @@ let modalContent = $(".modal-content");
 // Initialize jQuery UI draggable for modal and flatpickr datepicker
 $(() => {
     modalContent.draggable({
-        handle: ".modal-header",
         cursor: "move"
     });
 
