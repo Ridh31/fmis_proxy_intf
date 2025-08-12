@@ -97,6 +97,16 @@ select:focus,
     margin-top: 1rem;
 }
 
+#securityServerTable {
+    border: 1px solid #E4E4E4;
+    font-size: 14px;
+}
+
+#securityServerTable.dataTable {
+    width: 100% !important;
+    min-width: 1000px;
+}
+
 #securityServerTable td,
 #securityServerTable th {
     white-space: nowrap;
