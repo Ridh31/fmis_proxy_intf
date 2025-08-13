@@ -3,6 +3,7 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 /**
@@ -103,4 +104,27 @@ public interface PartnerService {
      * @return a {@link Page} of filtered {@link Partner} entities
      */
     Page<Partner> getFilteredBankPartners(int page, int size);
+
+    /**
+     * Retrieves a paginated list of active and non-deleted {@link Partner} entities,
+     * optionally filtered by the provided parameters.
+     *
+     * @param page        the zero-based page index
+     * @param size        the number of records per page
+     * @param name        optional filter by name
+     * @param identifier      optional filter by identifier
+     * @param systemCode   optional filter by system code
+     * @param description   optional filter by description
+     * @param createdDate optional filter by creation date (formatted as "dd-MM-yyyy")
+     * @return a {@link Page} containing filtered {@link Partner} results
+     */
+    Page<Partner> getFilteredPartners(
+            int page,
+            int size,
+            String name,
+            String identifier,
+            String systemCode,
+            String description,
+            LocalDate createdDate
+    );
 }

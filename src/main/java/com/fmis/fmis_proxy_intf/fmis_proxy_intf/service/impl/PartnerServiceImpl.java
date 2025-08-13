@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 /**
@@ -186,5 +187,33 @@ public class PartnerServiceImpl implements PartnerService {
     public Page<Partner> getFilteredBankPartners(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("identifier").ascending());
         return partnerRepository.findByIsBankTrueAndIsOwnFalse(pageable);
+    }
+
+    /**
+     * Retrieves a paginated list of active and non-deleted {@link Partner} records,
+     * filtered optionally by name, identifier, systemCode, description, and createdDate.
+     *
+     * @param page           the zero-based page index
+     * @param size             the number of records per page
+     * @param name           optional filter by name
+     * @param identifier      optional filter by identifier
+     * @param systemCode  optional filter by system  code
+     * @param description   optional filter by description
+     * @param createdDate optional filter by creation date in "dd-MM-yyyy" format
+     * @return a {@link Page} of {@link Partner} entities matching the filters
+     */
+    @Override
+    public Page<Partner> getFilteredPartners(
+            int page,
+            int size,
+            String name,
+            String identifier,
+            String systemCode,
+            String description,
+            LocalDate createdDate) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        return partnerRepository.findFilteredInternalCamDigiKeys(
+                name, identifier, systemCode, description, createdDate, pageable);
     }
 }

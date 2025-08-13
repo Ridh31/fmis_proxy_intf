@@ -16,12 +16,14 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -253,52 +255,56 @@ public class PartnerController {
     }
 
     /**
-     * Endpoint to retrieve a paginated list of all partners.
+     * Retrieves a paginated list of partners with optional filtering.
      *
-     * @param page The page number (default: 0).
-     * @param size The number of items per page (default: 10).
-     * @return A paginated list of partners.
+     * @param partnerCode  X-Partner-Token header for authentication
+     * @param name         optional filter by name
+     * @param identifier   optional filter by identifier
+     * @param systemCode   optional filter by system code
+     * @param description  optional filter by description
+     * @param createdDate  optional filter by creation date (format: dd-MM-yyyy)
+     * @param page         page number (default: 0)
+     * @param size         number of items per page (default: 10)
+     * @return a paginated list of partners wrapped in {@link ApiResponse}
      */
     @Operation(
             summary = "Get all partners",
-            description = "Retrieves a paginated list of all partners."
+            description = "Retrieves a paginated list of all partners with optional filters."
     )
     @Hidden
     @GetMapping("/list-partner")
     public ResponseEntity<ApiResponse<?>> getAllPartners(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String identifier,
+            @RequestParam(required = false) String systemCode,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate createdDate,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
+            @RequestParam(defaultValue = "10") int size
+    ) {
         // Get authenticated username
         String username = userService.getAuthenticatedUsername();
 
-        // Validate header: X-Partner-Token
-        ResponseEntity<ApiResponse<?>> partnerValidationResponse =
+        // Validate X-Partner-Token header
+        ResponseEntity<ApiResponse<?>> partnerValidation =
                 HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
-
-        if (partnerValidationResponse != null) {
-            return partnerValidationResponse;
+        if (partnerValidation != null) {
+            return partnerValidation;
         }
 
-        // Authenticate user and verify required role permissions
-        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
-        if (authorization instanceof ResponseEntity) {
-            return AuthorizationHelper.castToApiResponse(authorization);
+        // Authenticate and check admin role
+        Object authResult = authorizationHelper.authenticateAndAuthorizeAdmin();
+        if (authResult instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authResult);
         }
 
         try {
             // Fetch partners
-            Page<Partner> partners = partnerService.getAllPartners(page, size);
-
-            if (partners.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.NO_CONTENT_CODE,
-                                ApiResponseConstants.NO_PARTNERS_FOUND
-                        ));
-            }
+            Page<Partner> partners = partnerService.getFilteredPartners(
+                    page, size, name, identifier, systemCode, description, createdDate
+            );
 
             return ResponseEntity.ok(new ApiResponse<>(
                     ApiResponseConstants.SUCCESS_CODE,

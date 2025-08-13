@@ -5,7 +5,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 /**
@@ -116,4 +118,41 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
      * @return a {@link Page} of {@link Partner} entities matching the criteria
      */
     Page<Partner> findByIsBankTrueAndIsOwnFalse(Pageable pageable);
+
+    /**
+     * Retrieves a paginated list of active and non-deleted {@link Partner} records,
+     * filtered by optional parameters.
+     *
+     * @param name        optional filter by name
+     * @param identifier  optional filter by identifier
+     * @param systemCode  optional filter by system code
+     * @param description optional filter by description
+     * @param createdDate optional filter by creation date in "dd-MM-yyyy" format
+     * @return a page of filtered {@link Partner} entities
+     */
+    @Query(value = """
+        SELECT
+            *
+        FROM
+            partner_intf pi
+        WHERE
+            pi.status = TRUE
+            AND pi.is_deleted = FALSE
+            AND pi.is_own = FALSE
+            AND (:name IS NULL OR LOWER(pi.name) LIKE CONCAT('%', LOWER(:name), '%'))
+            AND (:identifier IS NULL OR LOWER(pi.identifier) LIKE CONCAT('%', LOWER(:identifier), '%'))
+            AND (:systemCode IS NULL OR LOWER(pi.system_code) LIKE CONCAT('%', LOWER(:systemCode), '%'))
+            AND (:description IS NULL OR LOWER(pi.description) LIKE CONCAT('%', LOWER(:description), '%'))
+            AND (:createdDate IS NULL OR pi.created_date >= :createdDate
+                AND pi.created_date < DATE_ADD(:createdDate, INTERVAL 1 DAY))
+        ORDER BY pi.id DESC
+    """, nativeQuery = true)
+    Page<Partner> findFilteredInternalCamDigiKeys(
+            @Param("name") String name,
+            @Param("identifier") String identifier,
+            @Param("systemCode") String systemCode,
+            @Param("description") String description,
+            @Param("createdDate") LocalDate createdDate,
+            Pageable pageable
+    );
 }

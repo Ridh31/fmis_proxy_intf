@@ -26,7 +26,6 @@ public class Partner {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore  // Hide the id field from the request body
     @Schema(hidden = true)
     private Long id;
 
@@ -50,7 +49,6 @@ public class Partner {
     @Column(nullable = false, unique = true)
     @NotEmpty(message = "Code cannot be empty. Please provide a valid code.")
     @Size(min = 1, max = 50, message = "Code must be between 1 and 50 characters long.")
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String code;
 
     @Lob
@@ -69,7 +67,6 @@ public class Partner {
     private Boolean isOwn = false;
 
     @Column(name = "is_bank")
-    @JsonIgnore
     private Boolean isBank = false;
 
     @JsonIgnore
