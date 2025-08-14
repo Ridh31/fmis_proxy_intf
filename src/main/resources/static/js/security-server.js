@@ -178,15 +178,15 @@ let currentEditId = null;
 function openEditModal(item) {
     currentEditId = item.id;
 
-    document.getElementById("modalName").value = item.name || "";
-    document.getElementById("modalConfigKey").value = item.configKey || "";
-    document.getElementById("modalBaseURL").value = item.baseURL || "";
-    document.getElementById("modalEndpoint").value = item.endpoint || "";
-    document.getElementById("modalSubsystem").value = item.subsystem || "";
-    document.getElementById("modalUsername").value = item.username || "";
-    document.getElementById("modalPassword").value = item.password || "";
-    document.getElementById("modalContentType").value = item.contentType || "";
-    document.getElementById("modalDescription").value = item.description || "";
+    document.getElementById("modalName").value = item.name || null;
+    document.getElementById("modalConfigKey").value = item.configKey || null;
+    document.getElementById("modalBaseURL").value = item.baseURL || null;
+    document.getElementById("modalEndpoint").value = item.endpoint || null;
+    document.getElementById("modalSubsystem").value = item.subsystem || null;
+    document.getElementById("modalUsername").value = item.username || null;
+    document.getElementById("modalPassword").value = item.password || null;
+    document.getElementById("modalContentType").value = item.contentType || null;
+    document.getElementById("modalDescription").value = item.description || null;
 
     document.getElementById("modal").style.display = "flex";  // Show modal
 }

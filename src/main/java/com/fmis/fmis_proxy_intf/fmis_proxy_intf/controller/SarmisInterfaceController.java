@@ -16,6 +16,8 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.json.JSONObject;
+import org.json.XML;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -199,7 +201,7 @@ public class SarmisInterfaceController {
                         organizationToken = data.path("accessToken").asText();
 
                         // Set the Authorization header
-                        headers.set(HeaderConstants.AUTHORIZATION_HEADER, organizationToken);
+                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
 
                         // Send request to external SARMIS API
                         try {
@@ -460,7 +462,7 @@ public class SarmisInterfaceController {
                         organizationToken = data.path("accessToken").asText();
 
                         // Set the Authorization header
-                        headers.set(HeaderConstants.AUTHORIZATION_HEADER, organizationToken);
+                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
 
                         // Send request to external SARMIS API
                         try {
@@ -623,7 +625,7 @@ public class SarmisInterfaceController {
                         organizationToken = data.path("accessToken").asText();
 
                         // Set the Authorization header
-                        headers.set(HeaderConstants.AUTHORIZATION_HEADER, organizationToken);
+                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
 
                         // Send request to external SARMIS API
                         try {
@@ -767,7 +769,7 @@ public class SarmisInterfaceController {
                         organizationToken = data.path("accessToken").asText();
 
                         // Set the Authorization header
-                        headers.set(HeaderConstants.AUTHORIZATION_HEADER, organizationToken);
+                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
 
                         try {
                             // Build full SARMIS URL with query params
@@ -862,6 +864,57 @@ public class SarmisInterfaceController {
     }
 
     /**
+     * Returns the institution closing list in XML format.
+     *
+     * Converts the JSON response from {@code institutionClosingList()} to XML
+     * using the org.json library, without affecting global message converters.
+     *
+     * @param page   Page number (default: 1)
+     * @param size   Page size (default: 10)
+     * @param search Optional search term (default: "")
+     * @return XML response
+     */
+    @GetMapping(value = "/sarmis/institution-closing-list/xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<String> institutionClosingListXml(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        try {
+            // Call existing JSON endpoint
+            ResponseEntity<ApiResponse<?>> jsonResponse = institutionClosingList(page, size, search);
+            ApiResponse<?> body = jsonResponse.getBody();
+
+            if (body == null) {
+                // Return 204 No Content if no data found
+                return ResponseEntity.noContent().build();
+            }
+
+            // Convert the response body to a JSON string using Jackson
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonString = objectMapper.writeValueAsString(body);
+
+            // Convert JSON string to JSONObject (org.json)
+            JSONObject json = new JSONObject(jsonString);
+
+            // Convert JSONObject to XML string with root element <response>
+            String xml = XML.toString(json, "response");
+
+            // Return the XML string with Content-Type: application/xml
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_XML)
+                    .body(xml);
+
+        } catch (Exception e) {
+            // Handle any unexpected errors by returning error as XML
+            String errorXml = "<error><message>" + e.getMessage() + "</message></error>";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_XML)
+                    .body(errorXml);
+        }
+    }
+
+    /**
      * Calls the SARMIS Institution Closing List API.
      * Retrieves a token from CamDigiKey and uses it to fetch data from SARMIS.
      *
@@ -932,7 +985,7 @@ public class SarmisInterfaceController {
                         organizationToken = data.path("accessToken").asText();
 
                         // Set the Authorization header
-                        headers.set(HeaderConstants.AUTHORIZATION_HEADER, organizationToken);
+                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
 
                         try {
                             // Build full SARMIS URL with query params
