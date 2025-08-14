@@ -182,7 +182,7 @@ function openEditModal(item) {
     document.getElementById("modalConfigKey").value = item.configKey || "";
     document.getElementById("modalBaseURL").value = item.baseURL || "";
     document.getElementById("modalEndpoint").value = item.endpoint || "";
-    document.getElementById("modalSubsystem").value = item.subSystem || "";
+    document.getElementById("modalSubsystem").value = item.subsystem || "";
     document.getElementById("modalUsername").value = item.username || "";
     document.getElementById("modalPassword").value = item.password || "";
     document.getElementById("modalContentType").value = item.contentType || "";
@@ -278,12 +278,15 @@ function capitalize(str) {
 document.getElementById("editServerForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    console.clear();
+    console.log(document.getElementById("modalSubsystem").value);
+
     const updatedData = {
         name: document.getElementById("modalName").value.trim(),
         configKey: document.getElementById("modalConfigKey").value.trim(),
         baseURL: document.getElementById("modalBaseURL").value.trim(),
         endpoint: document.getElementById("modalEndpoint").value.trim(),
-        subSystem: document.getElementById("modalSubsystem").value.trim(),
+        subsystem: document.getElementById("modalSubsystem").value.trim(),
         username: document.getElementById("modalUsername").value.trim(),
         password: document.getElementById("modalPassword").value.trim(),
         contentType: document.getElementById("modalContentType").value.trim(),
