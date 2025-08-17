@@ -1080,6 +1080,57 @@ public class SarmisInterfaceController {
     }
 
     /**
+     * Returns the asset kind list in XML format.
+     *
+     * Converts the JSON response from {@code assetKindList()} to XML
+     * using the org.json library, without affecting global message converters.
+     *
+     * @param page   Page number (default: 1)
+     * @param size   Page size (default: 10)
+     * @param search Optional search term (default: "")
+     * @return XML response
+     */
+    @GetMapping(value = "/sarmis/asset-kind-list/xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<String> assetKindListXml(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        try {
+            // Call existing JSON endpoint
+            ResponseEntity<ApiResponse<?>> jsonResponse = assetKindList(page, size, search);
+            ApiResponse<?> body = jsonResponse.getBody();
+
+            if (body == null) {
+                // Return 204 No Content if no data found
+                return ResponseEntity.noContent().build();
+            }
+
+            // Convert the response body to a JSON string using Jackson
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonString = objectMapper.writeValueAsString(body);
+
+            // Convert JSON string to JSONObject (org.json)
+            JSONObject json = new JSONObject(jsonString);
+
+            // Convert JSONObject to XML string with root element <response>
+            String xml = XML.toString(json, "response");
+
+            // Return the XML string with Content-Type: application/xml
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_XML)
+                    .body(xml);
+
+        } catch (Exception e) {
+            // Handle any unexpected errors by returning error as XML
+            String errorXml = "<error><message>" + e.getMessage() + "</message></error>";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_XML)
+                    .body(errorXml);
+        }
+    }
+
+    /**
      * Retrieves a paginated list of SARMIS Interface records with optional filters.
      * Accessible to Admins only. Validates status input and handles authorization.
      *
