@@ -3,6 +3,9 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Utility class to convert JSON to XML with dynamic key handling.
  */
@@ -94,5 +97,34 @@ public class JsonToXmlUtil {
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&apos;");
+    }
+
+    /**
+     * Recursively replaces all null values in a Map or List with empty strings ("").
+     * Ensures null fields appear in XML as empty elements instead of being skipped.
+     *
+     * @param obj The object to process. Can be a Map, List, or nested combination thereof.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static void replaceNullsWithEmptyString(Object obj) {
+        if (obj instanceof Map map) {
+            for (Object key : map.keySet()) {
+                Object value = map.get(key);
+                if (value == null) {
+                    map.put(key, "");
+                } else {
+                    replaceNullsWithEmptyString(value);
+                }
+            }
+        } else if (obj instanceof List list) {
+            for (int i = 0; i < list.size(); i++) {
+                Object value = list.get(i);
+                if (value == null) {
+                    list.set(i, "");
+                } else {
+                    replaceNullsWithEmptyString(value);
+                }
+            }
+        }
     }
 }
