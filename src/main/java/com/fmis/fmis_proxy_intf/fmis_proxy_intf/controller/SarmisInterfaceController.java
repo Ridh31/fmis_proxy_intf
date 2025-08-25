@@ -550,151 +550,71 @@ public class SarmisInterfaceController {
     }
 
     /**
-     * Submits depreciation asset report data to the SARMIS system.
+     * Retrieves depreciation asset report data from SARMIS using request parameters.
+     * Logs the request for auditing, adds authentication via CamDigiKey,
+     * and forwards it as query parameters to the SARMIS API.
      *
-     * Accepts JSON or XML input, converts and logs the payload, adds authentication,
-     * and forwards the request to the configured SARMIS endpoint.
-     *
-     * @param requestBody the raw JSON or XML payload
-     * @param contentType the content type of the incoming request (application/json or application/xml)
-     * @return a standard API response indicating success or failure
+     * @param institutionCode institution identifier (required)
+     * @param closingYear     closing year of the report (required)
+     * @param financialCode   financial code (optional)
+     * @return ApiResponse with SARMIS response or error details
      */
-    @PostMapping("/sarmis/depreciation-asset-report")
+    @GetMapping("/sarmis/depreciation-asset-report")
     public ResponseEntity<ApiResponse<?>> depreciationAssetReport(
-            @RequestBody String requestBody,
-            @RequestHeader("Content-Type") String contentType) {
-
+            @RequestParam("institution_code") String institutionCode,
+            @RequestParam("closing_year") String closingYear,
+            @RequestParam(name = "financial_code", required = false, defaultValue = "") String financialCode
+    ) {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         SarmisInterface sarmisInterface = new SarmisInterface();
-        String payload = "";
-        String organizationToken = "";
 
         try {
-            if (contentType.contains("application/json")) {
-                JsonNode rootNode = objectMapper.readTree(requestBody);
-                payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterface.setPayload(payload);
+            Map<String, String> params = Map.of(
+                    "institution_code", institutionCode,
+                    "closing_year", closingYear,
+                    "financial_code", financialCode
+            );
 
-            } else if (contentType.contains("application/xml")) {
-                String json = XmlToJsonUtil.convertXmlToJson(requestBody);
-                JsonNode rootNode = objectMapper.readTree(json);
-                payload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootNode);
-                sarmisInterface.setXml(requestBody);
-                sarmisInterface.setPayload(payload);
+            String endpoint = apiPrefix + "/sarmis/depreciation-asset-report?" +
+                    params.entrySet().stream()
+                            .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
+                            .map(e -> e.getKey() + "=" + e.getValue())
+                            .collect(Collectors.joining("&"));
 
-            } else {
-                return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.UNSUPPORTED_CONTENT_TYPE + contentType
-                        ));
+            sarmisInterface.setMethod("GET");
+            sarmisInterface.setEndpoint(endpoint);
+
+            // Retrieve SecurityServer configuration
+            SecurityServer securityServer = securityServerService.getByConfigKey(DEPRECIATION_ASSET_REPORT_SARMIS)
+                    .orElseThrow(() -> new RuntimeException(
+                            ApiResponseConstants.CONFIG_NOT_FOUND_FOR_KEY + DEPRECIATION_ASSET_REPORT_SARMIS));
+
+            // Build URI with query parameters
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder
+                    .fromHttpUrl(securityServer.getBaseURL() + securityServer.getEndpoint())
+                    .queryParam("institution_code", institutionCode)
+                    .queryParam("closing_year", closingYear);
+
+            if (!financialCode.isEmpty()) {
+                uriBuilder.queryParam("financial_code", financialCode);
             }
 
-            // Set log metadata
-            sarmisInterface.setMethod("POST");
-            sarmisInterface.setEndpoint(apiPrefix + "/sarmis/depreciation-asset-report");
+            URI uri = uriBuilder.build().encode().toUri();
 
-            // Retrieve SecurityServer configuration by config key
-            Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(DEPRECIATION_ASSET_REPORT_SARMIS);
-            if (optionalConfig.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.CONFIG_NOT_FOUND_FOR_KEY + DEPRECIATION_ASSET_REPORT_SARMIS
-                        ));
-            }
-
-            SecurityServer securityServer = optionalConfig.get();
-            String securityServerURL = securityServer.getBaseURL() + securityServer.getEndpoint();
-
-            // Prepare HTTP request headers and entity
+            // Prepare headers
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.valueOf(securityServer.getContentType()));
             headers.set(HeaderConstants.X_ROAD_CLIENT, securityServer.getSubsystem());
-            HttpEntity<String> entity = new HttpEntity<>(payload, headers);
 
             // CamDigiKey Authorization
-            Optional<InternalCamDigiKey> camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
-            if (camDigiKey.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + SARMIS_APP_KEY + ")"
-                        ));
-            }
+            InternalCamDigiKey camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY)
+                    .orElseThrow(() -> new RuntimeException(
+                            ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + SARMIS_APP_KEY + ")"));
 
-            // Call the external CamDigiKey service
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
+            String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
-            if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
-                try {
-                    String body = camDigiKeyResponse.getBody();
-                    JsonNode root = objectMapper.readTree(body);
-
-                    int errorCode = root.path("error").asInt();
-
-                    if (errorCode == 0) {
-                        JsonNode data = root.path("data");
-                        organizationToken = data.path("accessToken").asText();
-
-                        // Set the Authorization header
-                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
-
-                        // Send request to external SARMIS API
-                        try {
-                            ResponseEntity<String> sarmisResponse = restTemplate.postForEntity(securityServerURL, entity, String.class);
-
-                            // Log the response from SARMIS
-                            sarmisInterface.setResponse(sarmisResponse.getBody());
-                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceService.save(sarmisInterface);
-
-                            if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
-                                return ResponseEntity.ok(new ApiResponse<>(
-                                        ApiResponseConstants.SUCCESS_CODE,
-                                        ApiResponseConstants.SUCCESS,
-                                        objectMapper.readTree(sarmisResponse.getBody())
-                                ));
-                            } else {
-                                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                                        .body(new ApiResponse<>(
-                                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                                ApiResponseConstants.SERVICE_UNAVAILABLE + " Detail: " + sarmisResponse
-                                        ));
-                            }
-                        } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterface.setResponse(sarmisError.toString());
-                            sarmisInterface.setStatus(false);
-                            sarmisInterfaceService.save(sarmisInterface);
-
-                            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                                    .body(new ApiResponse<>(
-                                            ApiResponseConstants.BAD_GATEWAY_CODE,
-                                            ApiResponseConstants.UPSTREAM_SERVICE_ERROR_MESSAGE,
-                                            sarmisError
-                                    ));
-                        }
-                    } else {
-                        // If the error code isn't 0, it indicates something went wrong on CamDigiKey's side.
-                        String message = root.path("message").asText("Unknown error");
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ApiResponse<>(
-                                        ApiResponseConstants.BAD_REQUEST_CODE,
-                                        message
-                                ));
-                    }
-
-                } catch (JsonProcessingException e) {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ApiResponse<>(
-                                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                    ApiResponseConstants.CAMDIGIKEY_JSON_PARSE_ERROR
-                            ));
-                }
-            } else {
-                // Handle failed CamDigiKey token retrieval
+            if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
                 return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
                         .body(new ApiResponse<>(
                                 camDigiKeyResponse.getStatusCodeValue(),
@@ -702,12 +622,53 @@ public class SarmisInterfaceController {
                         ));
             }
 
+            JsonNode camDigiKeyJson = objectMapper.readTree(camDigiKeyResponse.getBody());
+            if (camDigiKeyJson.path("error").asInt() != 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                camDigiKeyJson.path("message").asText("Unknown error")
+                        ));
+            }
+
+            String organizationToken = camDigiKeyJson.path("data").path("accessToken").asText();
+            headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Forward GET request to SARMIS using URI
+            ResponseEntity<String> sarmisResponse = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+
+            // Save audit log
+            sarmisInterface.setResponse(sarmisResponse.getBody());
+            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
+            sarmisInterfaceService.save(sarmisInterface);
+
+            if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
+                return ResponseEntity.ok(new ApiResponse<>(
+                        ApiResponseConstants.SUCCESS_CODE,
+                        ApiResponseConstants.SUCCESS,
+                        objectMapper.readTree(sarmisResponse.getBody())
+                ));
+            } else {
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(new ApiResponse<>(
+                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
+                                ApiResponseConstants.SERVICE_UNAVAILABLE + " Detail: " + sarmisResponse
+                        ));
+            }
+
         } catch (Exception e) {
-            // Catch any unexpected errors
+            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
+            sarmisInterface.setResponse(sarmisError.toString());
+            sarmisInterface.setStatus(false);
+            sarmisInterfaceService.save(sarmisInterface);
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage(),
+                            sarmisError
                     ));
         }
     }
@@ -715,38 +676,40 @@ public class SarmisInterfaceController {
     /**
      * Handles POST requests for the Depreciation Asset Report in XML format.
      *
-     * This endpoint reuses the existing JSON-based method `depreciationAssetReport`
-     * and converts its JSON response into XML format. It's intended for consumers
-     * that require XML responses instead of JSON.
+     * Wraps the JSON-based `longTermAssetReport` endpoint and converts its response into XML.
      *
-     * @param requestBody Raw input payload in JSON or XML format.
-     * @param contentType Content-Type header indicating the format of the input.
-     * @return ResponseEntity containing XML output and appropriate HTTP status.
+     * @param institutionCode institution identifier (required)
+     * @param closingYear     closing year of the report (required)
+     * @param financialCode   financial code (optional)
+     * @return ResponseEntity with XML content and appropriate status.
      */
-    @PostMapping("/sarmis/depreciation-asset-report/xml")
-    public ResponseEntity<?> depreciationAssetReportXml(
-            @RequestBody String requestBody,
-            @RequestHeader("Content-Type") String contentType) {
+    @GetMapping("/sarmis/depreciation-asset-report/xml")
+    public ResponseEntity<String> depreciationAssetReportXml(
+            @RequestParam("institution_code") String institutionCode,
+            @RequestParam("closing_year") String closingYear,
+            @RequestParam(name = "financial_code", required = false, defaultValue = "") String financialCode) {
 
         try {
-            // Call the original method to get the JSON response
-            ResponseEntity<ApiResponse<?>> jsonResponse = depreciationAssetReport(requestBody, contentType);
-            ApiResponse<?> apiResponse = jsonResponse.getBody();
+            // Call the JSON endpoint directly
+            ResponseEntity<ApiResponse<?>> jsonResponse = depreciationAssetReport(
+                    institutionCode, closingYear, financialCode);
 
+            ApiResponse<?> apiResponse = jsonResponse.getBody();
             if (apiResponse == null) {
                 return ResponseEntity.noContent().build();
             }
 
-            // Use Jackson to convert ApiResponse<?> to a Map
+            // Convert ApiResponse<?> to Map
             ObjectMapper mapper = new ObjectMapper();
-            @SuppressWarnings("unchecked")
             Map<String, Object> responseMap = mapper.convertValue(apiResponse, Map.class);
 
-            // Convert Map to JSONObject, then to XML
+            // Recursively replace nulls with empty strings
+            JsonToXmlUtil.replaceNullsWithEmptyString(responseMap);
+
+            // Convert Map to XML
             JSONObject jsonObject = new JSONObject(responseMap);
             String xml = XML.toString(jsonObject, "response");
 
-            // Return XML with proper content type
             return ResponseEntity
                     .status(jsonResponse.getStatusCode())
                     .contentType(MediaType.APPLICATION_XML)
