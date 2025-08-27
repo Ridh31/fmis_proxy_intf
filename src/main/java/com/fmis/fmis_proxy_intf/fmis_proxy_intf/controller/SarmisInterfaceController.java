@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -529,6 +530,42 @@ public class SarmisInterfaceController {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> responseMap = mapper.convertValue(apiResponse, Map.class);
 
+            // Check if the "message" field is a JSON string, then parse it
+            Object messageObj = responseMap.get("message");
+            if (messageObj instanceof String) {
+                String messageStr = ((String) messageObj).trim();
+
+                // Look for embedded JSON after the last colon and space ": "
+                int jsonStart = messageStr.indexOf("{");
+                int jsonEnd = messageStr.lastIndexOf("}");
+                if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                    String prefix = messageStr.substring(0, jsonStart).trim();
+                    String jsonPart = messageStr.substring(jsonStart, jsonEnd + 1);
+
+                    try {
+                        Map<String, Object> embeddedJsonMap = mapper.readValue(jsonPart, new TypeReference<Map<String,Object>>() {});
+
+                        // Create a new map to replace "message"
+                        Map<String, Object> newMessageMap = new HashMap<>();
+                        newMessageMap.put("text", prefix);
+                        newMessageMap.putAll(embeddedJsonMap);
+
+                        responseMap.put("message", newMessageMap);
+
+                    } catch (Exception ex) {
+                        System.err.println(ApiResponseConstants.ERROR_OCCURRED + ex.getMessage());
+                    }
+                } else if (messageStr.startsWith("{") && messageStr.endsWith("}")) {
+                    try {
+                        Map<String, Object> innerMessageMap = mapper.readValue(
+                                messageStr, new TypeReference<Map<String, Object>>() {});
+                        responseMap.put("message", innerMessageMap);
+                    } catch (Exception ex) {
+                        System.err.println(ApiResponseConstants.ERROR_OCCURRED + ex.getMessage());
+                    }
+                }
+            }
+
             // Recursively replace nulls with empty strings
             JsonToXmlUtil.replaceNullsWithEmptyString(responseMap);
 
@@ -702,6 +739,42 @@ public class SarmisInterfaceController {
             // Convert ApiResponse<?> to Map
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> responseMap = mapper.convertValue(apiResponse, Map.class);
+
+            // Check if the "message" field is a JSON string, then parse it
+            Object messageObj = responseMap.get("message");
+            if (messageObj instanceof String) {
+                String messageStr = ((String) messageObj).trim();
+
+                // Look for embedded JSON after the last colon and space ": "
+                int jsonStart = messageStr.indexOf("{");
+                int jsonEnd = messageStr.lastIndexOf("}");
+                if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                    String prefix = messageStr.substring(0, jsonStart).trim();
+                    String jsonPart = messageStr.substring(jsonStart, jsonEnd + 1);
+
+                    try {
+                        Map<String, Object> embeddedJsonMap = mapper.readValue(jsonPart, new TypeReference<Map<String,Object>>() {});
+
+                        // Create a new map to replace "message"
+                        Map<String, Object> newMessageMap = new HashMap<>();
+                        newMessageMap.put("text", prefix);
+                        newMessageMap.putAll(embeddedJsonMap);
+
+                        responseMap.put("message", newMessageMap);
+
+                    } catch (Exception ex) {
+                        System.err.println(ApiResponseConstants.ERROR_OCCURRED + ex.getMessage());
+                    }
+                } else if (messageStr.startsWith("{") && messageStr.endsWith("}")) {
+                    try {
+                        Map<String, Object> innerMessageMap = mapper.readValue(
+                                messageStr, new TypeReference<Map<String, Object>>() {});
+                        responseMap.put("message", innerMessageMap);
+                    } catch (Exception ex) {
+                        System.err.println(ApiResponseConstants.ERROR_OCCURRED + ex.getMessage());
+                    }
+                }
+            }
 
             // Recursively replace nulls with empty strings
             JsonToXmlUtil.replaceNullsWithEmptyString(responseMap);
