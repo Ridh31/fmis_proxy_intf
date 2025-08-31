@@ -45,7 +45,7 @@ public class BankStatementServiceImpl implements BankStatementService {
      */
     @Transactional
     @Override
-    public BankStatement createBankStatement(Long partnerId, BankStatementDTO bankStatementDTO) {
+    public BankStatement importBankStatement(Long partnerId, BankStatementDTO bankStatementDTO) {
         // Retrieve the Partner entity or throw an exception if not found
         Partner partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new RuntimeException("Partner not found"));

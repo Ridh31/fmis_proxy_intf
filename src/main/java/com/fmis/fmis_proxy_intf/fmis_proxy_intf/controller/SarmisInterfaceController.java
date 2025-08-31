@@ -12,6 +12,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SecurityServer;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.InternalCamDigiKeyService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SarmisInterfaceService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SecurityServerService;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TelegramNotificationService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.TelegramUtil.escapeHtml;
 
 /**
  * Controller for handling SARMIS interface interactions, including logging
@@ -64,29 +67,33 @@ public class SarmisInterfaceController {
     private final InternalCamDigiKeyService internalCamDigiKeyService;
     private final RestTemplate restTemplate;
     private final AuthorizationHelper authorizationHelper;
+    private final TelegramNotificationService telegramNotificationService;
 
     /**
      * Constructs a new {@code SarmisController} with the required service dependencies.
      * Initializes services responsible for logging interface activity, retrieving security server configurations,
      * and sending HTTP requests to external APIs.
      *
-     * @param sarmisInterfaceService    service for saving and managing SARMIS interface logs
-     * @param securityServerService     service for retrieving security server configurations by config key
-     * @param internalCamDigiKeyService Service for interacting with CamDigiKey and retrieving authorization tokens.
-     * @param restTemplate              HTTP client for sending requests to external systems such as SARMIS
-     * @param authorizationHelper       helper for authorization and authentication checks
+     * @param sarmisInterfaceService      service for saving and managing SARMIS interface logs
+     * @param securityServerService       service for retrieving security server configurations by config key
+     * @param internalCamDigiKeyService   Service for interacting with CamDigiKey and retrieving authorization tokens.
+     * @param restTemplate                HTTP client for sending requests to external systems such as SARMIS
+     * @param authorizationHelper         helper for authorization and authentication checks
+     * @param telegramNotificationService service for sending Telegram notifications
      */
     @Autowired
     public SarmisInterfaceController(SarmisInterfaceService sarmisInterfaceService,
                                      SecurityServerService securityServerService,
                                      InternalCamDigiKeyService internalCamDigiKeyService,
                                      RestTemplate restTemplate,
-                                     AuthorizationHelper authorizationHelper) {
+                                     AuthorizationHelper authorizationHelper,
+                                     TelegramNotificationService telegramNotificationService) {
         this.sarmisInterfaceService = sarmisInterfaceService;
         this.securityServerService = securityServerService;
         this.internalCamDigiKeyService = internalCamDigiKeyService;
         this.restTemplate = restTemplate;
         this.authorizationHelper = authorizationHelper;
+        this.telegramNotificationService = telegramNotificationService;
     }
 
     /**
@@ -316,6 +323,10 @@ public class SarmisInterfaceController {
                 // Save the log entry to the database
                 sarmisInterfaceService.save(sarmisInterface);
 
+                // Build Telegram message for validation failed
+                String telegramMessage = TelegramUtil.buildBatchPOCallbackErrorNotification(e.getMessage());
+                telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+
                 // Return custom error response with HTTP 400
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("error", String.valueOf(ApiResponseConstants.BAD_REQUEST_CODE));
@@ -343,6 +354,10 @@ public class SarmisInterfaceController {
             // Persist the success log
             sarmisInterfaceService.save(sarmisInterface);
 
+            // Build Telegram message for notification
+            String telegramMessage = TelegramUtil.buildBatchPOCallbackNotification(jsonBody);
+            telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+
             // Return custom success response with HTTP 200 and include the data
             Map<String, Object> successResponse = new HashMap<>();
             successResponse.put("error", "0000");
@@ -365,6 +380,10 @@ public class SarmisInterfaceController {
 
             // Save the failure log entry
             sarmisInterfaceService.save(sarmisInterface);
+
+            // Build Telegram message for error notification
+            String telegramMessage = TelegramUtil.buildBatchPOCallbackErrorNotification(e.getMessage());
+            telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
 
             // Return custom error response with HTTP 500
             Map<String, Object> errorResponse = new HashMap<>();

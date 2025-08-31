@@ -254,7 +254,7 @@ public class BankStatementController {
             }
     )
     @PostMapping("/import-bank-statement")
-    public ResponseEntity<ApiResponse<?>> createBankStatement(
+    public ResponseEntity<ApiResponse<?>> importBankStatement(
             @Validated
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
@@ -304,7 +304,7 @@ public class BankStatementController {
             bankStatementDTO.setPartnerId(partnerId);
 
             // Persist the bank statement log in DB
-            bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+            bankStatementService.importBankStatement(partnerId, bankStatementDTO);
 
             // Build a detailed Telegram notification message for empty data scenario
             Optional<Partner> partner = partnerService.findById(partnerId);
@@ -406,7 +406,19 @@ public class BankStatementController {
                 bankStatementDTO.setPartnerId(partnerId);
 
                 // Save the failed attempt
-                bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+                bankStatementService.importBankStatement(partnerId, bankStatementDTO);
+
+                // Construct notification for error
+                String telegramMessage = TelegramUtil.buildBankStatementNotification(
+                        partner,
+                        bankAccountNumber,
+                        statementDate.toLocalDate(),
+                        ApiResponseConstants.BAD_REQUEST_CODE,
+                        e.getMessage()
+                );
+
+                // Send notification via Telegram bot
+                telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
@@ -512,7 +524,7 @@ public class BankStatementController {
                         bankStatementDTO.setStatementId(statementId);
 
                         // Import bank statement
-                        bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+                        bankStatementService.importBankStatement(partnerId, bankStatementDTO);
 
                         // Construct notification to Telegram Bot
                         String telegramMessage = TelegramUtil.buildBankStatementNotification(
@@ -538,7 +550,19 @@ public class BankStatementController {
                         bankStatementDTO.setStatus(false);
 
                         // Capture error
-                        bankStatementService.createBankStatement(partnerId, bankStatementDTO);
+                        bankStatementService.importBankStatement(partnerId, bankStatementDTO);
+
+                        // Construct notification for error
+                        String telegramMessage = TelegramUtil.buildBankStatementNotification(
+                                partner,
+                                bankAccountNumber,
+                                statementDate.toLocalDate(),
+                                ApiResponseConstants.BAD_GATEWAY_CODE,
+                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + responseHost
+                        );
+
+                        // Send notification via Telegram bot
+                        telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
 
                         // Handle failure in sending data to FMIS
                         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -548,6 +572,18 @@ public class BankStatementController {
                                 ));
                     }
                 } else {
+                    // Construct notification for error
+                    String telegramMessage = TelegramUtil.buildBankStatementNotification(
+                            partner,
+                            bankAccountNumber,
+                            statementDate.toLocalDate(),
+                            ApiResponseConstants.NOT_FOUND_CODE,
+                            ApiResponseConstants.BASE_URL_NOT_FOUND
+                    );
+
+                    // Send notification via Telegram bot
+                    telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+
                     // Handle case when FMIS URL is not found
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(new ApiResponse<>(
@@ -565,6 +601,21 @@ public class BankStatementController {
                     ));
 
         } catch (Exception e) {
+            Long partnerId = partnerService.findIdByPublicKey(partnerCode);
+            Optional<Partner> partner = partnerService.findById(partnerId);
+
+            // Construct notification for error
+            String telegramMessage = TelegramUtil.buildBankStatementNotification(
+                    partner,
+                    "N/A",
+                    null,
+                    ApiResponseConstants.BAD_REQUEST_CODE,
+                    ApiResponseConstants.NO_STATEMENT_RECORDS
+            );
+
+            // Send notification via Telegram bot
+            telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+
             // Handle any server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
@@ -736,8 +787,8 @@ public class BankStatementController {
             // Create a BindingResult for validation
             BindingResult bindingResult = new BeanPropertyBindingResult(dto, "bankStatementDTO");
 
-            // Call the original createBankStatement method with the parsed DTO and binding result
-            return createBankStatement(partnerCode, dto, endpoint, filename, bindingResult);
+            // Call the original importBankStatement method with the parsed DTO and binding result
+            return importBankStatement(partnerCode, dto, endpoint, filename, bindingResult);
 
         } catch (IOException e) {
             // Handle parsing error (e.g., malformed JSON)

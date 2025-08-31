@@ -1,11 +1,12 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Utility class for escaping special characters in Telegram messages
@@ -91,10 +92,10 @@ public final class TelegramUtil {
         String statusEmoji = (responseCode == 201) ? "✅" : "❌";
 
         String requestMessage =
-                "📨 <b>New Request</b>\n\n" +
-                "From: <b>" + escapeHtml(partnerName) + "</b>\n" +
-                "Action: Import Bank Statement\n" +
-                "Time: <code>" + LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma")) + "</code>";
+                "📨 <b>Bank Interface</b>\n\n" +
+                "🏦 From: <b>" + escapeHtml(partnerName) + "</b>\n" +
+                "📥 Action: Import Bank Statement\n" +
+                "⏰ Time: <code>" + LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma")) + "</code>";
 
         String telegramMessage =
                 requestMessage + "\n\n" +
@@ -108,5 +109,108 @@ public final class TelegramUtil {
                 "• Message: " + escapeHtml(responseMessage != null ? responseMessage : "");
 
         return telegramMessage;
+    }
+
+    /**
+     * Builds a formatted Telegram notification message for the Sarmis Batch Purchase Order Callback.
+     * The message includes the interface code, purchase order IDs, PO-level validation errors,
+     * and item-level validation errors (if any), formatted with HTML tags for Telegram.
+     *
+     * @param jsonBody the JsonNode representing the parsed JSON callback payload from FMIS/Sarmis
+     * @return a formatted String message ready to be sent via Telegram, with HTML escaping applied
+     */
+    public static String buildBatchPOCallbackNotification(JsonNode jsonBody) {
+        StringBuilder message = new StringBuilder();
+        String interfaceCode = jsonBody.has("interface_code") ? jsonBody.get("interface_code").asText() : "N/A";
+
+        // Updated titles
+        message.append("📨 <b>SARMIS Interface</b>\n\n");
+        message.append("📦 <b>Batch Purchase Order Callback</b>\n");
+
+        // Add current time
+        String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma"));
+        message.append("⏰ <b>Time</b>: ").append("<code>" + currentTime + "</code>").append("\n\n");
+
+        // Interface code
+        message.append("🔗 <b>Interface Code</b>: <code>").append(escapeHtml(interfaceCode)).append("</code>\n\n");
+
+        JsonNode purchaseOrders = jsonBody.get("purchase_orders");
+        if (purchaseOrders == null || !purchaseOrders.isArray() || purchaseOrders.size() == 0) {
+            message.append("ℹ️ No purchase orders found.\n");
+        } else {
+            for (JsonNode po : purchaseOrders) {
+                String poId = po.has("purchase_order_id") ? po.get("purchase_order_id").asText() : "N/A";
+                message.append("🧾 <b>Purchase Order ID</b>: <code>").append(escapeHtml(poId)).append("</code>\n");
+
+                JsonNode poErrors = po.get("validation_errors");
+                if (poErrors != null && poErrors.isArray() && poErrors.size() > 0) {
+                    message.append("❗ <b>PO-Level Errors:</b>\n");
+                    for (JsonNode err : poErrors) {
+                        String msg = err.get("message").asText();
+                        String code = err.get("error").asText();
+                        message.append("• ").append(escapeHtml(msg)).append(" (<code>").append(code).append("</code>)\n");
+                    }
+                }
+
+                JsonNode items = po.get("items");
+                if (items != null && items.isArray() && items.size() > 0) {
+                    // Convert JsonNode items to a List<JsonNode> for sorting
+                    List<JsonNode> itemList = new ArrayList<>();
+                    items.forEach(itemList::add);
+
+                    // Sort by "index" ascending
+                    itemList.sort(Comparator.comparingInt(item -> item.has("index") ? item.get("index").asInt() : -1));
+
+                    // Iterate sorted list
+                    for (JsonNode item : itemList) {
+                        int index = item.has("index") ? item.get("index").asInt() : -1;
+                        int displayIndex = (index >= 0) ? index + 1 : -1;
+                        message.append("\n📦 <b>Line Item:</b> ").append(displayIndex).append("\n");
+
+                        JsonNode itemErrors = item.get("validation_errors");
+                        if (itemErrors != null && itemErrors.isArray() && itemErrors.size() > 0) {
+                            Map<String, Integer> errorCountMap = new HashMap<>();
+
+                            for (JsonNode err : itemErrors) {
+                                String key = err.get("message").asText() + " (" + err.get("error").asText() + ")";
+                                errorCountMap.put(key, errorCountMap.getOrDefault(key, 0) + 1);
+                            }
+
+                            for (Map.Entry<String, Integer> entry : errorCountMap.entrySet()) {
+                                message.append("• ").append(escapeHtml(entry.getKey()));
+                                if (entry.getValue() > 1) {
+                                    message.append(" ×").append(entry.getValue());
+                                }
+                                message.append("\n");
+                            }
+                        }
+                    }
+                }
+
+                message.append("\n");
+            }
+        }
+
+        return message.toString().trim();
+    }
+
+    /**
+     * Creates a Telegram message for FMIS Batch PO callback validation errors.
+     *
+     * @param errorMessage Description of the validation error.
+     * @return Formatted and escaped message string for Telegram.
+     */
+    public static String buildBatchPOCallbackErrorNotification(String errorMessage) {
+        String time = java.time.LocalTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("hh:mma"));
+
+        return String.format(
+                "📨 <b>SARMIS Interface</b>\n\n" +
+                "⚠️ Batch Purchase Order Callback\n" +
+                "⏰ Time: <code>%s</code>\n" +
+                "❗ Error: %s",
+                time,
+                escapeHtml(errorMessage)
+        );
     }
 }

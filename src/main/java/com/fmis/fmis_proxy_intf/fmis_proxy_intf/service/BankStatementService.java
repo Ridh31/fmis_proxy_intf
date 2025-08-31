@@ -19,7 +19,7 @@ public interface BankStatementService {
      * @param bankStatementDTO The {@link BankStatementDTO} containing the details to create the bank statement.
      * @return The created {@link BankStatement} entity.
      */
-    BankStatement createBankStatement(Long partnerId, BankStatementDTO bankStatementDTO);
+    BankStatement importBankStatement(Long partnerId, BankStatementDTO bankStatementDTO);
 
     /**
      * Retrieves a paginated list of all bank statements.
