@@ -1066,7 +1066,7 @@ public class SarmisInterfaceController {
                     "search", search
             );
 
-            String endpoint = apiPrefix + "/sarmis/institution-closing-list?" +
+            String endpoint = apiPrefix + "/sarmis/asset-kind-list?" +
                     params.entrySet().stream()
                             .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
                             .map(e -> e.getKey() + "=" + e.getValue())
