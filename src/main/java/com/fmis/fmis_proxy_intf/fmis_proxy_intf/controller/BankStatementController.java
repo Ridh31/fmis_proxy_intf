@@ -317,7 +317,7 @@ public class BankStatementController {
             );
 
             // Send notification via Telegram bot
-            telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+            telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
 
             // Return HTTP 400 Bad Request with validation error message
             return ResponseEntity.badRequest()
@@ -418,7 +418,7 @@ public class BankStatementController {
                 );
 
                 // Send notification via Telegram bot
-                telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+                telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
@@ -536,7 +536,7 @@ public class BankStatementController {
                         );
 
                         if (responseCode != 201) {
-                            telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+                            telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
                         }
 
                         return ResponseEntity.status(status)
@@ -562,7 +562,7 @@ public class BankStatementController {
                         );
 
                         // Send notification via Telegram bot
-                        telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+                        telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
 
                         // Handle failure in sending data to FMIS
                         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
@@ -582,7 +582,7 @@ public class BankStatementController {
                     );
 
                     // Send notification via Telegram bot
-                    telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+                    telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
 
                     // Handle case when FMIS URL is not found
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -614,7 +614,7 @@ public class BankStatementController {
             );
 
             // Send notification via Telegram bot
-            telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+            telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
 
             // Handle any server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

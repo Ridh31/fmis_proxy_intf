@@ -11,10 +11,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Telegram bot that handles subscriptions for bank statement notifications.
+ * Telegram bot that handles subscriptions for proxy interface notifications.
  */
 @Component
-public class BankInterfaceNotification extends TelegramLongPollingBot {
+public class ProxyInterfaceNotification extends TelegramLongPollingBot {
 
     private final String botToken;
     private final String botUsername;
@@ -26,9 +26,9 @@ public class BankInterfaceNotification extends TelegramLongPollingBot {
      * @param botToken    the bot token from BotFather
      * @param botUsername the bot username (without '@')
      */
-    public BankInterfaceNotification(
-            @Value("${bank.interface.telegram.bot.token}") String botToken,
-            @Value("${bank.interface.telegram.bot.username}") String botUsername) {
+    public ProxyInterfaceNotification(
+            @Value("${proxy.interface.telegram.bot.token}") String botToken,
+            @Value("${proxy.interface.telegram.bot.username}") String botUsername) {
         this.botToken = botToken;
         this.botUsername = botUsername;
     }
@@ -48,7 +48,7 @@ public class BankInterfaceNotification extends TelegramLongPollingBot {
             if ("/start".equalsIgnoreCase(messageText)) {
                 SendMessage startMessage = new SendMessage();
                 startMessage.setChatId(chatId);
-                startMessage.setText("✅ You’re now set to receive bank interface updates.");
+                startMessage.setText("✅ You’re now set to receive interface updates.");
 
                 try {
                     execute(startMessage);

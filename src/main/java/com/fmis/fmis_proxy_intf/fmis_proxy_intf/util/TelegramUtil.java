@@ -129,11 +129,25 @@ public final class TelegramUtil {
 
         // Add current time
         String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma"));
-        message.append("⏰ <b>Time</b>: ").append("<code>" + currentTime + "</code>").append("\n\n");
+        message.append("⏰ <b>Time</b>: <code>").append(currentTime).append("</code>\n\n");
 
         // Interface code
         message.append("🔗 <b>Interface Code</b>: <code>").append(escapeHtml(interfaceCode)).append("</code>\n\n");
 
+        // Handle top-level validation errors
+        JsonNode rootErrors = jsonBody.get("validation_errors");
+        if (rootErrors != null && rootErrors.isArray() && rootErrors.size() > 0) {
+            message.append("⚠️ <b>Interface-Level Errors:</b>\n");
+            for (JsonNode err : rootErrors) {
+                String msg = err.has("message") ? err.get("message").asText() : "Unknown";
+                String code = err.has("error") ? err.get("error").asText() : "-";
+                message.append("• ").append(escapeHtml(msg))
+                        .append(" (<code>").append(code).append("</code>)\n");
+            }
+            message.append("\n");
+        }
+
+        // Handle purchase orders
         JsonNode purchaseOrders = jsonBody.get("purchase_orders");
         if (purchaseOrders == null || !purchaseOrders.isArray() || purchaseOrders.size() == 0) {
             message.append("ℹ️ No purchase orders found.\n");
@@ -142,26 +156,25 @@ public final class TelegramUtil {
                 String poId = po.has("purchase_order_id") ? po.get("purchase_order_id").asText() : "N/A";
                 message.append("🧾 <b>Purchase Order ID</b>: <code>").append(escapeHtml(poId)).append("</code>\n");
 
+                // PO-level errors
                 JsonNode poErrors = po.get("validation_errors");
                 if (poErrors != null && poErrors.isArray() && poErrors.size() > 0) {
                     message.append("❗ <b>PO-Level Errors:</b>\n");
                     for (JsonNode err : poErrors) {
-                        String msg = err.get("message").asText();
-                        String code = err.get("error").asText();
-                        message.append("• ").append(escapeHtml(msg)).append(" (<code>").append(code).append("</code>)\n");
+                        String msg = err.has("message") ? err.get("message").asText() : "Unknown";
+                        String code = err.has("error") ? err.get("error").asText() : "-";
+                        message.append("• ").append(escapeHtml(msg))
+                                .append(" (<code>").append(code).append("</code>)\n");
                     }
                 }
 
+                // Item-level errors
                 JsonNode items = po.get("items");
                 if (items != null && items.isArray() && items.size() > 0) {
-                    // Convert JsonNode items to a List<JsonNode> for sorting
                     List<JsonNode> itemList = new ArrayList<>();
                     items.forEach(itemList::add);
-
-                    // Sort by "index" ascending
                     itemList.sort(Comparator.comparingInt(item -> item.has("index") ? item.get("index").asInt() : -1));
 
-                    // Iterate sorted list
                     for (JsonNode item : itemList) {
                         int index = item.has("index") ? item.get("index").asInt() : -1;
                         int displayIndex = (index >= 0) ? index + 1 : -1;
@@ -172,7 +185,8 @@ public final class TelegramUtil {
                             Map<String, Integer> errorCountMap = new HashMap<>();
 
                             for (JsonNode err : itemErrors) {
-                                String key = err.get("message").asText() + " (" + err.get("error").asText() + ")";
+                                String key = (err.has("message") ? err.get("message").asText() : "Unknown")
+                                        + " (" + (err.has("error") ? err.get("error").asText() : "-") + ")";
                                 errorCountMap.put(key, errorCountMap.getOrDefault(key, 0) + 1);
                             }
 
@@ -186,7 +200,6 @@ public final class TelegramUtil {
                         }
                     }
                 }
-
                 message.append("\n");
             }
         }

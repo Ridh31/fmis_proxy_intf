@@ -1,6 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.bot.BankInterfaceNotification;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.bot.ProxyInterfaceNotification;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +21,7 @@ import java.net.http.HttpResponse;
 @Configuration
 public class TelegramBotConfig {
 
-    @Value("${bank.interface.telegram.bot.token}")
+    @Value("${proxy.interface.telegram.bot.token}")
     private String botToken;
 
     /**
@@ -51,14 +51,14 @@ public class TelegramBotConfig {
     /**
      * Registers the Telegram bot with {@link TelegramBotsApi} for long polling.
      *
-     * @param bankBot the custom Telegram bot implementation
+     * @param interfaceBot the custom Telegram bot implementation
      * @return a configured instance of {@code TelegramBotsApi}
      * @throws TelegramApiException if bot registration fails
      */
     @Bean
-    public TelegramBotsApi telegramBotsApi(BankInterfaceNotification bankBot) throws TelegramApiException {
+    public TelegramBotsApi telegramBotsApi(ProxyInterfaceNotification interfaceBot) throws TelegramApiException {
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        botsApi.registerBot(bankBot);
+        botsApi.registerBot(interfaceBot);
         return botsApi;
     }
 }
