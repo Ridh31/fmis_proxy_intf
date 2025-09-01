@@ -38,8 +38,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.TelegramUtil.escapeHtml;
-
 /**
  * Controller for handling SARMIS interface interactions, including logging
  * and processing requests for FMIS purchase orders sent to SARMIS.
