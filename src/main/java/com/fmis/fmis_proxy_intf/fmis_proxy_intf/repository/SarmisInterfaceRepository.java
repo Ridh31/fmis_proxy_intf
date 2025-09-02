@@ -37,7 +37,11 @@ public interface SarmisInterfaceRepository extends JpaRepository<SarmisInterface
             sarmis_interface si
         WHERE
             si.is_deleted = FALSE
-            AND (:endpoint IS NULL OR si.endpoint = :endpoint)
+            AND (
+                :endpoint IS NULL
+                OR si.endpoint = :endpoint
+                OR si.endpoint LIKE CONCAT(:endpoint, '?%')
+            )
             AND (:interfaceCode IS NULL OR si.interface_code LIKE CONCAT('%', :interfaceCode, '%'))
             AND (:purchaseOrderId IS NULL OR payload LIKE CONCAT('%', :purchaseOrderId, '%'))
             AND (:actionDate IS NULL OR (
