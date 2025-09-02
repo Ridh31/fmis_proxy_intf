@@ -93,9 +93,9 @@ public final class TelegramUtil {
 
         String requestMessage =
                 "📨 <b>Bank Interface</b>\n\n" +
-                "🏦 From: <b>" + escapeHtml(partnerName) + "</b>\n" +
-                "📥 Action: Import Bank Statement\n" +
-                "⏰ Time: <code>" + LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma")) + "</code>";
+                "From: <b>" + escapeHtml(partnerName) + "</b>\n" +
+                "Action: Import Bank Statement\n" +
+                "Time: <code>" + LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma")) + "</code>";
 
         String telegramMessage =
                 requestMessage + "\n\n" +
@@ -125,11 +125,11 @@ public final class TelegramUtil {
 
         // Updated titles
         message.append("📨 <b>SARMIS Interface</b>\n\n");
-        message.append("📦 <b>Batch Purchase Order Callback</b>\n");
+        message.append("<b>Batch Purchase Order Callback</b>\n");
 
         // Add current time
         String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mma"));
-        message.append("⏰ <b>Time</b>: <code>").append(currentTime).append("</code>\n\n");
+        message.append("<b>Time</b>: <code>").append(currentTime).append("</code>\n\n");
 
         // Interface code
         message.append("🔗 <b>Interface Code</b>: <code>").append(escapeHtml(interfaceCode)).append("</code>\n\n");
@@ -156,10 +156,10 @@ public final class TelegramUtil {
                 String poId = po.has("purchase_order_id") ? po.get("purchase_order_id").asText() : "N/A";
                 message.append("🧾 <b>Purchase Order ID</b>: <code>").append(escapeHtml(poId)).append("</code>\n");
 
-                // PO-level errors
+                // Validation errors
                 JsonNode poErrors = po.get("validation_errors");
                 if (poErrors != null && poErrors.isArray() && poErrors.size() > 0) {
-                    message.append("❗ <b>PO-Level Errors:</b>\n");
+                    message.append("❗ <b>Validation Errors:</b>\n");
                     for (JsonNode err : poErrors) {
                         String msg = err.has("message") ? err.get("message").asText() : "Unknown";
                         String code = err.has("error") ? err.get("error").asText() : "-";
@@ -178,7 +178,7 @@ public final class TelegramUtil {
                     for (JsonNode item : itemList) {
                         int index = item.has("index") ? item.get("index").asInt() : -1;
                         int displayIndex = (index >= 0) ? index + 1 : -1;
-                        message.append("\n📦 <b>Line Item:</b> ").append(displayIndex).append("\n");
+                        message.append("📦 <b>Line Item: ").append(displayIndex).append("</b>\n");
 
                         JsonNode itemErrors = item.get("validation_errors");
                         if (itemErrors != null && itemErrors.isArray() && itemErrors.size() > 0) {
