@@ -324,7 +324,7 @@ public class SarmisInterfaceController {
 
                 // Build Telegram message for validation failed
                 String telegramMessage = TelegramUtil.buildBatchPOCallbackErrorNotification(e.getMessage());
-                telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
+                telegramNotificationService.sendSarmisInterfaceMessage(telegramMessage);
 
                 // Return custom error response with HTTP 400
                 Map<String, Object> errorResponse = new HashMap<>();
@@ -355,7 +355,7 @@ public class SarmisInterfaceController {
 
             // Build Telegram message for notification
             String telegramMessage = TelegramUtil.buildBatchPOCallbackNotification(jsonBody);
-            telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
+            telegramNotificationService.sendSarmisInterfaceMessage(telegramMessage);
 
             // Return custom success response with HTTP 200 and include the data
             Map<String, Object> successResponse = new HashMap<>();
@@ -382,7 +382,7 @@ public class SarmisInterfaceController {
 
             // Build Telegram message for error notification
             String telegramMessage = TelegramUtil.buildBatchPOCallbackErrorNotification(e.getMessage());
-            telegramNotificationService.sendProxyInterfaceMessage(telegramMessage);
+            telegramNotificationService.sendSarmisInterfaceMessage(telegramMessage);
 
             // Return custom error response with HTTP 500
             Map<String, Object> errorResponse = new HashMap<>();
