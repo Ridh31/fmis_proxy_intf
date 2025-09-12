@@ -4,6 +4,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Role;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.UserRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseMessageUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -70,7 +71,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException(ResponseMessageUtil.notFound("User")));
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())

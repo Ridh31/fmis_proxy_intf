@@ -1,6 +1,11 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ResponseCodeDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResourceNotFoundException;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseCodeUtil;
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +28,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFoundException(ResourceNotFoundException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Resource not found. The requested resource does not exist."
+                ResponseCodeUtil.notFound(),
+                ApiResponseConstants.NOT_FOUND_RESOURCE
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
@@ -38,26 +43,35 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred."
+                ResponseCodeUtil.internalError(),
+                ApiResponseConstants.INTERNAL_SERVER_ERROR
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
     /**
-     * DTO class for structured error responses.
+     * DTO for structured error responses.
+     * Includes HTTP code, FMIS response code, and message.
      */
+    @JsonPropertyOrder({ "code", "response_code", "message" })
     public static class ErrorResponse {
         private final int code;
+        @JsonProperty("response_code")
+        private final String responseCode;
         private final String message;
 
-        public ErrorResponse(int code, String message) {
-            this.code = code;
+        public ErrorResponse(ResponseCodeDTO responseCodeDTO, String message) {
+            this.code = responseCodeDTO.getHttpCode();
+            this.responseCode = responseCodeDTO.getFmisCode();
             this.message = message;
         }
 
         public int getCode() {
             return code;
+        }
+
+        public String getResponseCode() {
+            return responseCode;
         }
 
         public String getMessage() {

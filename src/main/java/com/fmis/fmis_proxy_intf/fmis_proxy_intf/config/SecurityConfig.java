@@ -2,12 +2,14 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.config;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ResponseCodeDTO;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseCodeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.config.Customizer;
@@ -100,30 +102,40 @@ public class SecurityConfig {
                 // Handle authentication errors
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            response.setContentType(HeaderConstants.CONTENT_TYPE_JSON);
+                            ResponseCodeDTO responseCode;
+                            String message;
 
                             // Check if the exception is a BadCredentialsException
-                            String message = ApiResponseConstants.UNAUTHORIZED_ACCESS;
                             if (authException instanceof BadCredentialsException) {
-                                message = ApiResponseConstants.INVALID_CREDENTIALS;
+                                responseCode = ResponseCodeUtil.unauthorized();
+                                message = ApiResponseConstants.UNAUTHORIZED_INVALID_CREDENTIALS;
+                            } else {
+                                responseCode = ResponseCodeUtil.unauthorizedAccess();
+                                message = ApiResponseConstants.UNAUTHORIZED_ACCESS;
                             }
 
-                            String jsonResponse = String.format(
-                                    "{\"code\":%d, \"message\":\"%s\"}",
-                                    HttpStatus.UNAUTHORIZED.value(),
-                                    message
-                            );
+                            // Build ApiResponse with response_code
+                            ApiResponse<?> apiResponse = new ApiResponse<>(responseCode, message);
+
+                            response.setStatus(responseCode.getHttpCode());
+                            response.setContentType(HeaderConstants.CONTENT_TYPE_JSON);
+
+                            // Convert ApiResponse to JSON
+                            String jsonResponse = new com.fasterxml.jackson.databind.ObjectMapper()
+                                    .writeValueAsString(apiResponse);
+
                             response.getWriter().write(jsonResponse);
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            ResponseCodeDTO responseCode = ResponseCodeUtil.forbidden();
+                            ApiResponse<?> apiResponse = new ApiResponse<>(responseCode, ApiResponseConstants.FORBIDDEN);
+
+                            response.setStatus(responseCode.getHttpCode());
                             response.setContentType(HeaderConstants.CONTENT_TYPE_JSON);
-                            String jsonResponse = String.format(
-                                    "{\"code\":%d, \"message\":\"%s\"}",
-                                    HttpStatus.FORBIDDEN.value(),
-                                    ApiResponseConstants.FORBIDDEN
-                            );
+
+                            String jsonResponse = new com.fasterxml.jackson.databind.ObjectMapper()
+                                    .writeValueAsString(apiResponse);
+
                             response.getWriter().write(jsonResponse);
                         })
                 );

@@ -1,9 +1,9 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.CookieUtils;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseMessageUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -94,7 +94,7 @@ public class PageController {
                     HttpStatus.OK
             );
         } catch (IOException e) {
-            String errorMessage = ApiResponseConstants.ERROR_READING_FILE;
+            String errorMessage = ResponseMessageUtil.internalError("document");
 
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");

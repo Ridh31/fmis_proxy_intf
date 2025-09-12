@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SarmisInterface;
@@ -153,8 +152,8 @@ public class SarmisInterfaceController {
             } else {
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.UNSUPPORTED_CONTENT_TYPE + contentType
+                                ResponseCodeUtil.unsupportedMediaType(),
+                                ResponseMessageUtil.unsupportedMediaType(contentType)
                         ));
             }
 
@@ -166,10 +165,10 @@ public class SarmisInterfaceController {
             // Retrieve SecurityServer configuration by config key
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(FMIS_BATCH_PO_SARMIS);
             if (optionalConfig.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.CONFIG_NOT_FOUND_FOR_KEY + FMIS_BATCH_PO_SARMIS
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound(FMIS_BATCH_PO_SARMIS)
                         ));
             }
 
@@ -187,8 +186,8 @@ public class SarmisInterfaceController {
             if (camDigiKey.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + SARMIS_APP_KEY + ")"
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
                         ));
             }
 
@@ -221,15 +220,15 @@ public class SarmisInterfaceController {
 
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
-                                        ApiResponseConstants.SUCCESS_CODE,
-                                        ApiResponseConstants.SUCCESS,
+                                        ResponseCodeUtil.processed(),
+                                        ResponseMessageUtil.processed("Batch Purchase Orders"),
                                         objectMapper.readTree(sarmisResponse.getBody())
                                 ));
                             } else {
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                                         .body(new ApiResponse<>(
-                                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                                ApiResponseConstants.SERVICE_UNAVAILABLE + " Detail: " + sarmisResponse
+                                                ResponseCodeUtil.serviceUnavailable(),
+                                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
                                         ));
                             }
                         } catch (RestClientException e) {
@@ -240,8 +239,8 @@ public class SarmisInterfaceController {
 
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
-                                            ApiResponseConstants.BAD_GATEWAY_CODE,
-                                            ApiResponseConstants.UPSTREAM_SERVICE_ERROR_MESSAGE,
+                                            ResponseCodeUtil.upstreamServiceError(),
+                                            ResponseMessageUtil.upstreamServiceError(),
                                             sarmisError
                                     ));
                         }
@@ -250,7 +249,7 @@ public class SarmisInterfaceController {
                         String message = root.path("message").asText("Unknown error");
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(new ApiResponse<>(
-                                        ApiResponseConstants.BAD_REQUEST_CODE,
+                                        ResponseCodeUtil.invalid(),
                                         message
                                 ));
                     }
@@ -258,16 +257,16 @@ public class SarmisInterfaceController {
                 } catch (JsonProcessingException e) {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(new ApiResponse<>(
-                                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                    ApiResponseConstants.CAMDIGIKEY_JSON_PARSE_ERROR
+                                    ResponseCodeUtil.internalError(),
+                                    ResponseMessageUtil.internalError("JSON response")
                             ));
                 }
             } else {
                 // Handle failed CamDigiKey token retrieval
-                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
-                                camDigiKeyResponse.getStatusCodeValue(),
-                                ApiResponseConstants.CAMDIGIKEY_ORG_TOKEN_RETRIEVAL_FAILED
+                                ResponseCodeUtil.fetchError(),
+                                ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
@@ -275,121 +274,103 @@ public class SarmisInterfaceController {
             // Catch any unexpected errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Batch purchase order")
                     ));
         }
     }
 
     /**
-     * Handles the FMIS purchase order callback, validates the request, logs data,
-     * and returns a custom response.
+     * Handles FMIS purchase order callbacks by validating the request, logging results,
+     * sending Telegram notifications, and returning a standardized {@link ApiResponse}.
      *
-     * Success response: {"error": "0000", "message": "Success", "data": <data>}
-     * Error response: {"error": "<status_code>", "message": "<error_message>"}
-     *
-     * @param requestBody Raw JSON payload from FMIS.
-     * @return ResponseEntity with the success or error response.
+     * @param requestBody raw JSON payload from FMIS
+     * @return ResponseEntity with success or error response
      */
     @PostMapping("/sarmis/fmis-purchase-orders-callback")
     public ResponseEntity<?> fmisPurchaseOrdersCallback(@RequestBody String requestBody) {
-        // Initialize Jackson's ObjectMapper with JavaTime support for date/time deserialization
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
-        // Prepare the logging entity
         SarmisInterface sarmisInterface = new SarmisInterface();
         String endpoint = apiPrefix + "/sarmis/fmis-purchase-orders-callback";
 
         try {
-            // Convert the incoming JSON string into a JsonNode for easy parsing and logging
+            // Convert request into JsonNode for logging & validation
             JsonNode jsonBody = objectMapper.readTree(requestBody);
 
-            // Perform request validation
             try {
+                // Perform request validation
                 BodyValidationUtil.validateBatchPOCallback(objectMapper.convertValue(jsonBody, Map.class));
             } catch (IllegalArgumentException e) {
-                // Validation failed — log the request and error message
+                // Validation failed — log + notify
                 sarmisInterface.setMethod("POST");
                 sarmisInterface.setEndpoint(endpoint);
                 sarmisInterface.setPayload(jsonBody.toString());
-                sarmisInterface.setResponse(String.format(
-                        "{\n  \"error\": \"%d\",\n  \"message\": \"%s\"\n}",
-                        ApiResponseConstants.BAD_REQUEST_CODE,
+                sarmisInterface.setResponse(new ApiResponse<>(
+                        ResponseCodeUtil.invalid(),
                         e.getMessage()
-                ));
+                ).toString());
                 sarmisInterface.setStatus(false);
-
-                // Save the log entry to the database
                 sarmisInterfaceService.save(sarmisInterface);
 
-                // Build Telegram message for validation failed
                 String telegramMessage = TelegramUtil.buildBatchPOCallbackErrorNotification(e.getMessage());
                 telegramNotificationService.sendSarmisInterfaceMessage(telegramMessage);
 
-                // Return custom error response with HTTP 400
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", String.valueOf(ApiResponseConstants.BAD_REQUEST_CODE));
-                errorResponse.put("message", e.getMessage());
-
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ResponseCodeUtil.invalid(),
+                                e.getMessage()
+                        ));
             }
 
-            // Extract the 'interface_code' if it's available in the request
-            String interfaceCode = jsonBody.has("interface_code") ? jsonBody.get("interface_code").asText() : null;
+            // Extract interface_code if present
+            String interfaceCode = jsonBody.has("interface_code")
+                    ? jsonBody.get("interface_code").asText()
+                    : null;
 
-            // Log successful validation and request content
+            // Log successful validation
             sarmisInterface.setMethod("POST");
             sarmisInterface.setEndpoint(endpoint);
             sarmisInterface.setInterfaceCode(interfaceCode);
             sarmisInterface.setPayload(jsonBody.toString());
-            sarmisInterface.setResponse(String.format(
-                    "{\n  \"error\": \"%s\",\n  \"message\": \"%s\",\n  \"data\": %s\n}",
-                    "0000",
-                    ApiResponseConstants.SUCCESS,
-                    jsonBody.toString()
-            ));
+            sarmisInterface.setResponse(new ApiResponse<>(
+                    ResponseCodeUtil.processed(),
+                    ResponseMessageUtil.processed("Purchases Orders Callback"),
+                    jsonBody
+            ).toString());
             sarmisInterface.setStatus(true);
-
-            // Persist the success log
             sarmisInterfaceService.save(sarmisInterface);
 
-            // Build Telegram message for notification
+            // Send Telegram notification
             String telegramMessage = TelegramUtil.buildBatchPOCallbackNotification(jsonBody);
             telegramNotificationService.sendSarmisInterfaceMessage(telegramMessage);
 
-            // Return custom success response with HTTP 200 and include the data
-            Map<String, Object> successResponse = new HashMap<>();
-            successResponse.put("error", "0000");
-            successResponse.put("message", ApiResponseConstants.SUCCESS);
-            successResponse.put("data", jsonBody);
-
-            return ResponseEntity.ok(successResponse);
+            return ResponseEntity.ok(new ApiResponse<>(
+                    ResponseCodeUtil.processed(),
+                    ResponseMessageUtil.processed("Purchases Orders Callback"),
+                    jsonBody
+            ));
 
         } catch (JsonProcessingException e) {
-            // JSON parsing failed — log the raw request and error details
+            // JSON parsing failed — log + notify
             sarmisInterface.setMethod("POST");
             sarmisInterface.setEndpoint(endpoint);
             sarmisInterface.setPayload(requestBody);
-            sarmisInterface.setResponse(String.format(
-                    "{\n  \"error\": \"%d\",\n  \"message\": \"%s\"\n}",
-                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                    e.getMessage()
-            ));
+            sarmisInterface.setResponse(new ApiResponse<>(
+                    ResponseCodeUtil.internalError(),
+                    ResponseMessageUtil.internalError("Purchase Order Callback")
+            ).toString());
             sarmisInterface.setStatus(false);
-
-            // Save the failure log entry
             sarmisInterfaceService.save(sarmisInterface);
 
-            // Build Telegram message for error notification
             String telegramMessage = TelegramUtil.buildBatchPOCallbackErrorNotification(e.getMessage());
             telegramNotificationService.sendSarmisInterfaceMessage(telegramMessage);
 
-            // Return custom error response with HTTP 500
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", String.valueOf(ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE));
-            errorResponse.put("message", ApiResponseConstants.ERROR_OCCURRED + e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Purchase Order Callback")
+                    ));
         }
     }
 
@@ -431,7 +412,7 @@ public class SarmisInterfaceController {
             // Retrieve SecurityServer configuration
             SecurityServer securityServer = securityServerService.getByConfigKey(LONG_TERM_ASSET_REPORT_SARMIS)
                     .orElseThrow(() -> new RuntimeException(
-                            ApiResponseConstants.CONFIG_NOT_FOUND_FOR_KEY + LONG_TERM_ASSET_REPORT_SARMIS));
+                            ResponseMessageUtil.configurationNotFound(LONG_TERM_ASSET_REPORT_SARMIS)));
 
             // Build URI with query parameters
             UriComponentsBuilder uriBuilder = UriComponentsBuilder
@@ -453,16 +434,16 @@ public class SarmisInterfaceController {
             // CamDigiKey Authorization
             InternalCamDigiKey camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY)
                     .orElseThrow(() -> new RuntimeException(
-                            ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + SARMIS_APP_KEY + ")"));
+                            ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)));
 
             String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
-                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
-                                camDigiKeyResponse.getStatusCodeValue(),
-                                ApiResponseConstants.CAMDIGIKEY_ORG_TOKEN_RETRIEVAL_FAILED
+                                ResponseCodeUtil.fetchError(),
+                                ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
@@ -470,7 +451,7 @@ public class SarmisInterfaceController {
             if (camDigiKeyJson.path("error").asInt() != 0) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ResponseCodeUtil.invalid(),
                                 camDigiKeyJson.path("message").asText("Unknown error")
                         ));
             }
@@ -490,15 +471,15 @@ public class SarmisInterfaceController {
 
             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.ok(new ApiResponse<>(
-                        ApiResponseConstants.SUCCESS_CODE,
-                        ApiResponseConstants.SUCCESS,
+                        ResponseCodeUtil.processed(),
+                        ResponseMessageUtil.processed("Long Term Asset Report"),
                         objectMapper.readTree(sarmisResponse.getBody())
                 ));
             } else {
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                ApiResponseConstants.SERVICE_UNAVAILABLE + " Detail: " + sarmisResponse
+                                ResponseCodeUtil.serviceUnavailable(),
+                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
                         ));
             }
 
@@ -510,8 +491,8 @@ public class SarmisInterfaceController {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage(),
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Long Term Asset Report"),
                             sarmisError
                     ));
         }
@@ -570,7 +551,7 @@ public class SarmisInterfaceController {
                         responseMap.put("message", newMessageMap);
 
                     } catch (Exception ex) {
-                        System.err.println(ApiResponseConstants.ERROR_OCCURRED + ex.getMessage());
+                        System.err.println(ResponseMessageUtil.internalError("Long Term Asset Report (XML)"));
                     }
                 } else if (messageStr.startsWith("{") && messageStr.endsWith("}")) {
                     try {
@@ -578,7 +559,7 @@ public class SarmisInterfaceController {
                                 messageStr, new TypeReference<Map<String, Object>>() {});
                         responseMap.put("message", innerMessageMap);
                     } catch (Exception ex) {
-                        System.err.println(ApiResponseConstants.ERROR_OCCURRED + ex.getMessage());
+                        System.err.println(ResponseMessageUtil.internalError("Long Term Asset Report (XML)"));
                     }
                 }
             }
@@ -641,7 +622,7 @@ public class SarmisInterfaceController {
             // Retrieve SecurityServer configuration
             SecurityServer securityServer = securityServerService.getByConfigKey(DEPRECIATION_ASSET_REPORT_SARMIS)
                     .orElseThrow(() -> new RuntimeException(
-                            ApiResponseConstants.CONFIG_NOT_FOUND_FOR_KEY + DEPRECIATION_ASSET_REPORT_SARMIS));
+                            ResponseMessageUtil.configurationNotFound(DEPRECIATION_ASSET_REPORT_SARMIS)));
 
             // Build URI with query parameters
             UriComponentsBuilder uriBuilder = UriComponentsBuilder
@@ -663,16 +644,16 @@ public class SarmisInterfaceController {
             // CamDigiKey Authorization
             InternalCamDigiKey camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY)
                     .orElseThrow(() -> new RuntimeException(
-                            ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + SARMIS_APP_KEY + ")"));
+                            ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)));
 
             String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
-                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
-                                camDigiKeyResponse.getStatusCodeValue(),
-                                ApiResponseConstants.CAMDIGIKEY_ORG_TOKEN_RETRIEVAL_FAILED
+                                ResponseCodeUtil.fetchError(),
+                                ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
@@ -680,7 +661,7 @@ public class SarmisInterfaceController {
             if (camDigiKeyJson.path("error").asInt() != 0) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ResponseCodeUtil.invalid(),
                                 camDigiKeyJson.path("message").asText("Unknown error")
                         ));
             }
@@ -700,15 +681,15 @@ public class SarmisInterfaceController {
 
             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.ok(new ApiResponse<>(
-                        ApiResponseConstants.SUCCESS_CODE,
-                        ApiResponseConstants.SUCCESS,
+                        ResponseCodeUtil.processed(),
+                        ResponseMessageUtil.processed("Depreciation Asset Report"),
                         objectMapper.readTree(sarmisResponse.getBody())
                 ));
             } else {
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                ApiResponseConstants.SERVICE_UNAVAILABLE + " Detail: " + sarmisResponse
+                                ResponseCodeUtil.serviceUnavailable(),
+                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
                         ));
             }
 
@@ -720,8 +701,8 @@ public class SarmisInterfaceController {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage(),
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Depreciation Asset Report"),
                             sarmisError
                     ));
         }
@@ -780,7 +761,7 @@ public class SarmisInterfaceController {
                         responseMap.put("message", newMessageMap);
 
                     } catch (Exception ex) {
-                        System.err.println(ApiResponseConstants.ERROR_OCCURRED + ex.getMessage());
+                        System.err.println(ResponseMessageUtil.internalError("Depreciation Asset Report (XML)"));
                     }
                 } else if (messageStr.startsWith("{") && messageStr.endsWith("}")) {
                     try {
@@ -788,7 +769,7 @@ public class SarmisInterfaceController {
                                 messageStr, new TypeReference<Map<String, Object>>() {});
                         responseMap.put("message", innerMessageMap);
                     } catch (Exception ex) {
-                        System.err.println(ApiResponseConstants.ERROR_OCCURRED + ex.getMessage());
+                        System.err.println(ResponseMessageUtil.internalError("Depreciation Asset Report (XML)"));
                     }
                 }
             }
@@ -852,10 +833,10 @@ public class SarmisInterfaceController {
             // Retrieve SARMIS configuration from database
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(INSTITUTION_CLOSING_LIST_SARMIS);
             if (optionalConfig.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.CONFIG_NOT_FOUND_FOR_KEY + INSTITUTION_CLOSING_LIST_SARMIS
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound(INSTITUTION_CLOSING_LIST_SARMIS)
                         ));
             }
 
@@ -873,8 +854,8 @@ public class SarmisInterfaceController {
             if (camDigiKey.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + SARMIS_APP_KEY + ")"
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
                         ));
             }
 
@@ -927,16 +908,16 @@ public class SarmisInterfaceController {
                             // Return success response
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
-                                        ApiResponseConstants.SUCCESS_CODE,
-                                        ApiResponseConstants.SUCCESS,
+                                        ResponseCodeUtil.processed(),
+                                        ResponseMessageUtil.processed("Institution Closing List"),
                                         sarmisResponseJSON
                                 ));
                             } else {
                                 // SARMIS responded but not with 2xx
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                                         .body(new ApiResponse<>(
-                                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                                ApiResponseConstants.SERVICE_UNAVAILABLE + " Detail: " + sarmisResponse
+                                                ResponseCodeUtil.serviceUnavailable(),
+                                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
                                         ));
                             }
                         } catch (RestClientException e) {
@@ -948,8 +929,8 @@ public class SarmisInterfaceController {
                             // Failed to connect to SARMIS
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
-                                            ApiResponseConstants.BAD_GATEWAY_CODE,
-                                            ApiResponseConstants.UPSTREAM_SERVICE_ERROR_MESSAGE,
+                                            ResponseCodeUtil.upstreamServiceError(),
+                                            ResponseMessageUtil.upstreamServiceError(),
                                             sarmisError
                                     ));
                         }
@@ -958,7 +939,7 @@ public class SarmisInterfaceController {
                         String message = root.path("message").asText("Unknown error");
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(new ApiResponse<>(
-                                        ApiResponseConstants.BAD_REQUEST_CODE,
+                                        ResponseCodeUtil.invalid(),
                                         message
                                 ));
                     }
@@ -967,16 +948,16 @@ public class SarmisInterfaceController {
                     // JSON parsing error
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(new ApiResponse<>(
-                                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                    ApiResponseConstants.CAMDIGIKEY_JSON_PARSE_ERROR
+                                    ResponseCodeUtil.internalError(),
+                                    ResponseMessageUtil.internalError("JSON response")
                             ));
                 }
             } else {
                 // CamDigiKey failed to provide a token
-                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
-                                camDigiKeyResponse.getStatusCodeValue(),
-                                ApiResponseConstants.CAMDIGIKEY_ORG_TOKEN_RETRIEVAL_FAILED
+                                ResponseCodeUtil.fetchError(),
+                                ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
@@ -984,8 +965,8 @@ public class SarmisInterfaceController {
             // Catch-all for unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Institution Closing List")
                     ));
         }
     }
@@ -1080,10 +1061,10 @@ public class SarmisInterfaceController {
             // Retrieve SARMIS configuration from database
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(ASSET_KIND_LIST_SARMIS);
             if (optionalConfig.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.CONFIG_NOT_FOUND_FOR_KEY + ASSET_KIND_LIST_SARMIS
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound(ASSET_KIND_LIST_SARMIS)
                         ));
             }
 
@@ -1101,8 +1082,8 @@ public class SarmisInterfaceController {
             if (camDigiKey.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + SARMIS_APP_KEY + ")"
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
                         ));
             }
 
@@ -1155,16 +1136,16 @@ public class SarmisInterfaceController {
                             // Return success response
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
-                                        ApiResponseConstants.SUCCESS_CODE,
-                                        ApiResponseConstants.SUCCESS,
+                                        ResponseCodeUtil.processed(),
+                                        ResponseMessageUtil.processed("Asset Kind List"),
                                         assetKindList
                                 ));
                             } else {
                                 // SARMIS responded but not with 2xx
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                                         .body(new ApiResponse<>(
-                                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                                ApiResponseConstants.SERVICE_UNAVAILABLE + " Detail: " + sarmisResponse
+                                                ResponseCodeUtil.serviceUnavailable(),
+                                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
                                         ));
                             }
                         } catch (RestClientException e) {
@@ -1176,8 +1157,8 @@ public class SarmisInterfaceController {
                             // Failed to connect to SARMIS
                             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                     .body(new ApiResponse<>(
-                                            ApiResponseConstants.BAD_GATEWAY_CODE,
-                                            ApiResponseConstants.UPSTREAM_SERVICE_ERROR_MESSAGE,
+                                            ResponseCodeUtil.upstreamServiceError(),
+                                            ResponseMessageUtil.upstreamServiceError(),
                                             sarmisError
                                     ));
                         }
@@ -1186,7 +1167,7 @@ public class SarmisInterfaceController {
                         String message = root.path("message").asText("Unknown error");
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(new ApiResponse<>(
-                                        ApiResponseConstants.BAD_REQUEST_CODE,
+                                        ResponseCodeUtil.invalid(),
                                         message
                                 ));
                     }
@@ -1195,16 +1176,16 @@ public class SarmisInterfaceController {
                     // JSON parsing error
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(new ApiResponse<>(
-                                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                    ApiResponseConstants.CAMDIGIKEY_JSON_PARSE_ERROR
+                                    ResponseCodeUtil.internalError(),
+                                    ResponseMessageUtil.internalError("JSON response")
                             ));
                 }
             } else {
                 // CamDigiKey failed to provide a token
-                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
-                                camDigiKeyResponse.getStatusCodeValue(),
-                                ApiResponseConstants.CAMDIGIKEY_ORG_TOKEN_RETRIEVAL_FAILED
+                                ResponseCodeUtil.fetchError(),
+                                ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
@@ -1212,8 +1193,8 @@ public class SarmisInterfaceController {
             // Catch-all for unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Asset Kind List")
                     ));
         }
     }
@@ -1313,8 +1294,8 @@ public class SarmisInterfaceController {
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.BAD_REQUEST_INVALID_STATUS_VALUE
+                                ResponseCodeUtil.invalidField(),
+                                ResponseMessageUtil.invalidField("Status", "boolean")
                         ));
             }
         }
@@ -1325,16 +1306,16 @@ public class SarmisInterfaceController {
                     page, size, endpoint, interfaceCode, purchaseOrderId, actionDate, statusValue);
 
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.SUCCESS,
+                    ResponseCodeUtil.processed(),
+                    ResponseMessageUtil.processed("SARMIS Interface"),
                     sarmisInterface
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_FETCHING_DATA + e.getMessage()
+                            ResponseCodeUtil.fetchError(),
+                            ResponseMessageUtil.fetchError("SARMIS Interface")
                     ));
         }
     }

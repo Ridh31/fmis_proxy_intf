@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.BankStatementDTO;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ResponseCodeDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
@@ -170,7 +171,7 @@ public class BankStatementController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.CREATED_CODE_STRING,
-                            description = ApiResponseConstants.CREATED,
+                            description = ApiResponseConstants.BANK_STATEMENT_IMPORTED,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -198,7 +199,7 @@ public class BankStatementController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.UNAUTHORIZED_CODE_STRING,
-                            description = ApiResponseConstants.INVALID_PARTNER_TOKEN,
+                            description = ApiResponseConstants.UNAUTHORIZED_INVALID_PARTNER_TOKEN,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -220,7 +221,7 @@ public class BankStatementController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.NOT_FOUND_CODE_STRING,
-                            description = ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
+                            description = ApiResponseConstants.NOT_FOUND_FMIS_CONFIG,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -275,7 +276,7 @@ public class BankStatementController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -290,7 +291,7 @@ public class BankStatementController {
             bankStatementDTO.setPayload("{}");
             bankStatementDTO.setXml("<?xml version=\"1.0\"?><Data></Data>");
             bankStatementDTO.setStatus(false);
-            bankStatementDTO.setMessage(ApiResponseConstants.NO_STATEMENT_RECORDS);
+            bankStatementDTO.setMessage(ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS);
 
             // Retrieve current user info and set creator ID
             String username = userService.getAuthenticatedUsername();
@@ -313,7 +314,7 @@ public class BankStatementController {
                     "N/A",
                     null,
                     ApiResponseConstants.BAD_REQUEST_CODE,
-                    ApiResponseConstants.NO_STATEMENT_RECORDS
+                    ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS
             );
 
             // Send notification via Telegram bot
@@ -322,8 +323,8 @@ public class BankStatementController {
             // Return HTTP 400 Bad Request with validation error message
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.BAD_REQUEST_INVALID_DATA
+                            ResponseCodeUtil.invalid(),
+                            ResponseMessageUtil.invalid("Data")
                     ));
         }
 
@@ -341,7 +342,7 @@ public class BankStatementController {
             // Set the createdBy and partnerId values
             Long userId = userService.findByUsername(username)
                     .map(User::getId)
-                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
+                    .orElseThrow(() -> new RuntimeException(ResponseMessageUtil.notFound("User")));
 
             bankStatementDTO.setCreatedBy(userId);
 
@@ -422,7 +423,7 @@ public class BankStatementController {
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
+                                ResponseCodeUtil.validationFailed(),
                                 e.getMessage()
                         ));
             }
@@ -487,7 +488,7 @@ public class BankStatementController {
                                     responseMessage = messageNode.getTextContent();
                                     fmisResponseData.put("message", responseMessage);
                                 } else {
-                                    responseMessage = ApiResponseConstants.ERROR_FMIS_RESPONSE_EMPTY;
+                                    responseMessage = ResponseMessageUtil.noContent("FMIS");
                                 }
 
                                 // Extract message from <statement_id></statement_id>
@@ -499,23 +500,26 @@ public class BankStatementController {
                                     }
                                 }
                             } catch (Exception e) {
-                                responseMessage = ApiResponseConstants.ERROR_FMIS_RESPONSE_PARSE;
+                                responseMessage = ResponseMessageUtil.internalError("XML");
                                 fmisResponseData.put("message", responseMessage);
                                 responseCode = ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE;
                             }
                         } else {
-                            responseMessage = ApiResponseConstants.ERROR_FMIS_RESPONSE_EMPTY;
+                            responseMessage = ResponseMessageUtil.noContent("FMIS");;
                             fmisResponseData.put("message", responseMessage);
                             responseCode = ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE;
                         }
 
                         HttpStatus status;
+                        ResponseCodeDTO fmisResponseCode;
 
                         // Set importing status & message
                         if (responseCode == ApiResponseConstants.CREATED_CODE) {
+                            fmisResponseCode = ResponseCodeUtil.created();
                             status = HttpStatus.CREATED;
                             bankStatementDTO.setStatus(true);
                         } else {
+                            fmisResponseCode = ResponseCodeUtil.internalError();
                             status = HttpStatus.INTERNAL_SERVER_ERROR;
                             bankStatementDTO.setStatus(false);
                         }
@@ -541,7 +545,7 @@ public class BankStatementController {
 
                         return ResponseEntity.status(status)
                                 .body(new ApiResponse<>(
-                                        responseCode,
+                                        fmisResponseCode,
                                         responseMessage
                                 ));
                     } else {
@@ -558,7 +562,7 @@ public class BankStatementController {
                                 bankAccountNumber,
                                 statementDate.toLocalDate(),
                                 ApiResponseConstants.BAD_GATEWAY_CODE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + responseHost
+                                ResponseMessageUtil.badGatewayNotConnect(responseHost)
                         );
 
                         // Send notification via Telegram bot
@@ -567,8 +571,8 @@ public class BankStatementController {
                         // Handle failure in sending data to FMIS
                         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                                 .body(new ApiResponse<>(
-                                        ApiResponseConstants.BAD_GATEWAY_CODE,
-                                        ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + responseHost
+                                        ResponseCodeUtil.badGatewayNotConnect(),
+                                        ResponseMessageUtil.badGatewayNotConnect(responseHost)
                                 ));
                     }
                 } else {
@@ -578,7 +582,7 @@ public class BankStatementController {
                             bankAccountNumber,
                             statementDate.toLocalDate(),
                             ApiResponseConstants.NOT_FOUND_CODE,
-                            ApiResponseConstants.BASE_URL_NOT_FOUND
+                            ResponseMessageUtil.notFound("Base URL")
                     );
 
                     // Send notification via Telegram bot
@@ -587,8 +591,8 @@ public class BankStatementController {
                     // Handle case when FMIS URL is not found
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(new ApiResponse<>(
-                                    ApiResponseConstants.NOT_FOUND_CODE,
-                                    ApiResponseConstants.BASE_URL_NOT_FOUND
+                                    ResponseCodeUtil.notFound(),
+                                    ResponseMessageUtil.notFound("Base URL")
                             ));
                 }
             }
@@ -596,8 +600,8 @@ public class BankStatementController {
             // Return error if no valid bank statement data is provided
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.NO_VALID_BANK_STATEMENT
+                            ResponseCodeUtil.invalid(),
+                            ResponseMessageUtil.invalid("Bank statement")
                     ));
 
         } catch (Exception e) {
@@ -610,7 +614,7 @@ public class BankStatementController {
                     "N/A",
                     null,
                     ApiResponseConstants.BAD_REQUEST_CODE,
-                    ApiResponseConstants.NO_STATEMENT_RECORDS
+                    ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS
             );
 
             // Send notification via Telegram bot
@@ -619,8 +623,8 @@ public class BankStatementController {
             // Handle any server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Bank statement")
                     ));
         }
     }
@@ -650,7 +654,7 @@ public class BankStatementController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.CREATED_CODE_STRING,
-                            description = ApiResponseConstants.CREATED,
+                            description = ApiResponseConstants.BANK_STATEMENT_IMPORTED,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -690,7 +694,7 @@ public class BankStatementController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.UNAUTHORIZED_CODE_STRING,
-                            description = ApiResponseConstants.INVALID_PARTNER_TOKEN,
+                            description = ApiResponseConstants.UNAUTHORIZED_INVALID_PARTNER_TOKEN,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -712,7 +716,7 @@ public class BankStatementController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.NOT_FOUND_CODE_STRING,
-                            description = ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
+                            description = ApiResponseConstants.NOT_FOUND_FMIS_CONFIG,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -758,8 +762,8 @@ public class BankStatementController {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.BAD_REQUEST_FILE_MISSING_OR_EMPTY
+                            ResponseCodeUtil.invalid(),
+                            ResponseMessageUtil.invalid("File")
                     ));
         }
 
@@ -768,8 +772,8 @@ public class BankStatementController {
         if (contentType == null || !contentType.equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.BAD_REQUEST_INVALID_FILE_TYPE
+                            ResponseCodeUtil.invalid(),
+                            ResponseMessageUtil.invalid("File")
                     ));
         }
 
@@ -794,15 +798,15 @@ public class BankStatementController {
             // Handle parsing error (e.g., malformed JSON)
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.BAD_REQUEST_FAILED_TO_PARSE_JSON
+                            ResponseCodeUtil.failedProcess(),
+                            ResponseMessageUtil.failedProcess("File")
                     ));
         } catch (Exception e) {
             // Handle unexpected internal errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Bank statement")
                     ));
         }
     }
@@ -859,8 +863,8 @@ public class BankStatementController {
             } catch (NumberFormatException ex) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.BAD_REQUEST_PARTNER_ID_NOT_NUMERIC
+                                ResponseCodeUtil.invalidField(),
+                                ResponseMessageUtil.invalidField("Partner ID", "numeric")
                         ));
             }
         }
@@ -880,8 +884,8 @@ public class BankStatementController {
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.BAD_REQUEST_INVALID_STATUS_VALUE
+                                ResponseCodeUtil.invalidField(),
+                                ResponseMessageUtil.invalidField("Status", "boolean")
                         ));
             }
         }
@@ -940,8 +944,8 @@ public class BankStatementController {
 
             // Return the paginated list of BankStatementDTO wrapped in a successful API response
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.BANK_STATEMENTS_FETCHED,
+                    ResponseCodeUtil.fetched(),
+                    ResponseMessageUtil.fetched("Bank statement"),
                     bankStatementDTOPage
             ));
 
@@ -949,8 +953,8 @@ public class BankStatementController {
             // Handle any exceptions and return an internal server error response
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_FETCHING_BANK_STATEMENTS + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.fetchError("Bank statement")
                     ));
         }
     }

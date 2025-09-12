@@ -7,8 +7,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
-import static org.apache.commons.lang3.StringUtils.isNumeric;
-
 /**
  * Utility class to validate bank statement data.
  * It checks if the required fields are present in the provided data.
@@ -94,11 +92,18 @@ public class BodyValidationUtil {
             // Check numeric fields
             for (String numericKey : numericFields) {
                 JsonNode valueNode = stmt.get(numericKey);
-                if (!valueNode.isNumber()) {
-                    // Try parsing string numbers
-                    if (!valueNode.isTextual() || !isNumeric(valueNode.asText())) {
+
+                double value;
+                if (valueNode.isNumber()) {
+                    value = valueNode.asDouble();
+                } else if (valueNode.isTextual()) {
+                    try {
+                        value = Double.parseDouble(valueNode.asText());
+                    } catch (NumberFormatException e) {
                         throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be numeric. (Entry: " + (i + 1) + ")");
                     }
+                } else {
+                    throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be numeric. (Entry: " + (i + 1) + ")");
                 }
             }
         }
@@ -117,7 +122,7 @@ public class BodyValidationUtil {
 
         // Check if the "interface_code" field is present and non-blank
         if (!rootNode.has("interface_code") || rootNode.get("interface_code").asText().isBlank()) {
-            throw new IllegalArgumentException("The field (interface_code) is missing or blank.");
+            throw new IllegalArgumentException(ResponseMessageUtil.invalid("interface_code"));
         }
     }
 }

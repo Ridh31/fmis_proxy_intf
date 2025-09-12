@@ -2,7 +2,6 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
@@ -51,14 +50,14 @@ public class AuthorizationHelper {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            return unauthorizedResponse(ApiResponseConstants.UNAUTHORIZED_LOGIN_REQUIRED);
+            return unauthorizedResponse(ResponseMessageUtil.unauthorized("perform action"));
         }
 
         String username = authentication.getName();
         Optional<User> userOptional = userService.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            return unauthorizedResponse(ApiResponseConstants.UNAUTHORIZED_ACCESS);
+            return unauthorizedResponse(ResponseMessageUtil.unauthorizedAccess());
         }
 
         return userOptional.get();
@@ -72,11 +71,11 @@ public class AuthorizationHelper {
      */
     public ResponseEntity<ApiResponse<Object>> validateSuperAdmin(User user) {
         if (!roleService.existsById(user.getRole().getId())) {
-            return notFoundResponse(ApiResponseConstants.ROLE_NOT_FOUND);
+            return notFoundResponse(ResponseMessageUtil.notFound("Role"));
         }
 
         if (user.getRole().getLevel() != 1) {
-            return forbiddenResponse(ApiResponseConstants.FORBIDDEN);
+            return forbiddenResponse(ResponseMessageUtil.forbidden("access the resource"));
         }
 
         return null;
@@ -90,12 +89,12 @@ public class AuthorizationHelper {
      */
     public ResponseEntity<ApiResponse<Object>> validateAdmin(User user) {
         if (!roleService.existsById(user.getRole().getId())) {
-            return notFoundResponse(ApiResponseConstants.ROLE_NOT_FOUND);
+            return notFoundResponse(ResponseMessageUtil.notFound("Role"));
         }
 
         int level = user.getRole().getLevel();
         if (level != 1 && level != 2) {
-            return forbiddenResponse(ApiResponseConstants.FORBIDDEN);
+            return forbiddenResponse(ResponseMessageUtil.forbidden("access the resource"));
         }
 
         return null;
@@ -151,15 +150,15 @@ public class AuthorizationHelper {
      */
     public ResponseEntity<ApiResponse<Object>> validatePartner(Partner partner) {
         if (partnerService.findByName(partner.getName()).isPresent()) {
-            return badRequestResponse(ApiResponseConstants.PARTNER_NAME_TAKEN);
+            return badRequestResponse(ResponseMessageUtil.taken("Partner name"));
         }
 
         if (partnerService.findByIdentifier(partner.getIdentifier()).isPresent()) {
-            return badRequestResponse(ApiResponseConstants.PARTNER_IDENTIFIER_TAKEN);
+            return badRequestResponse(ResponseMessageUtil.taken("Partner identifier"));
         }
 
         if (partnerService.findByCode(partner.getCode()).isPresent()) {
-            return badRequestResponse(ApiResponseConstants.PARTNER_CODE_TAKEN);
+            return badRequestResponse(ResponseMessageUtil.taken("Partner code"));
         }
 
         return null;
@@ -212,7 +211,7 @@ public class AuthorizationHelper {
     private ResponseEntity<ApiResponse<Object>> unauthorizedResponse(String message) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(
-                        ApiResponseConstants.UNAUTHORIZED_CODE,
+                        ResponseCodeUtil.unauthorized(),
                         message
                 ));
     }
@@ -227,7 +226,7 @@ public class AuthorizationHelper {
     private ResponseEntity<ApiResponse<Object>> notFoundResponse(String message) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiResponse<>(
-                        ApiResponseConstants.NOT_FOUND_CODE,
+                        ResponseCodeUtil.notFound(),
                         message
                 ));
     }
@@ -242,7 +241,7 @@ public class AuthorizationHelper {
     private ResponseEntity<ApiResponse<Object>> forbiddenResponse(String message) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ApiResponse<>(
-                        ApiResponseConstants.FORBIDDEN_CODE,
+                        ResponseCodeUtil.forbidden(),
                         message
                 ));
     }
@@ -257,7 +256,7 @@ public class AuthorizationHelper {
     private ResponseEntity<ApiResponse<Object>> badRequestResponse(String message) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(
-                        ApiResponseConstants.BAD_REQUEST_CODE,
+                        ResponseCodeUtil.taken(),
                         message
                 ));
     }

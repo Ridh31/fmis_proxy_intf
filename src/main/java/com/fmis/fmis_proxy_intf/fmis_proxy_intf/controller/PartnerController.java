@@ -132,7 +132,7 @@ public class PartnerController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
-                            description = ApiResponseConstants.PARTNER_NAME_TAKEN,
+                            description = ApiResponseConstants.BAD_REQUEST_PARTNER_NAME_TAKEN,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -143,7 +143,7 @@ public class PartnerController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
-                            description = ApiResponseConstants.PARTNER_IDENTIFIER_TAKEN,
+                            description = ApiResponseConstants.BAD_REQUEST_PARTNER_IDENTIFIER_TAKEN,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -154,7 +154,7 @@ public class PartnerController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.BAD_REQUEST_CODE_STRING,
-                            description = ApiResponseConstants.PARTNER_CODE_TAKEN,
+                            description = ApiResponseConstants.BAD_REQUEST_PARTNER_IDENTIFIER_TAKEN,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -176,7 +176,7 @@ public class PartnerController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = ApiResponseConstants.NOT_FOUND_CODE_STRING,
-                            description = ApiResponseConstants.USER_NOT_FOUND,
+                            description = ApiResponseConstants.NOT_FOUND_USER,
                             content = @Content(
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     examples = @ExampleObject(
@@ -210,7 +210,7 @@ public class PartnerController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -239,8 +239,8 @@ public class PartnerController {
             // Return success response
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.CREATED_CODE,
-                            ApiResponseConstants.CREATED,
+                            ResponseCodeUtil.created(),
+                            ResponseMessageUtil.created("Partner"),
                             savedPartner
                     ));
 
@@ -248,8 +248,8 @@ public class PartnerController {
             // Handle unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Partner")
                     ));
         }
     }
@@ -307,16 +307,16 @@ public class PartnerController {
             );
 
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.PARTNERS_FETCHED,
+                    ResponseCodeUtil.fetched(),
+                    ResponseMessageUtil.fetched("Partner"),
                     partners
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_FETCHING_PARTNERS + e.getMessage()
+                            ResponseCodeUtil.fetchError(),
+                            ResponseMessageUtil.fetchError("Partner")
                     ));
         }
     }
@@ -357,19 +357,10 @@ public class PartnerController {
                     )
             );
 
-            // Handle empty result
-            if (partners.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.NO_CONTENT_CODE,
-                                ApiResponseConstants.NO_PARTNERS_FOUND
-                        ));
-            }
-
             // Return success response
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.PARTNERS_FETCHED,
+                    ResponseCodeUtil.fetched(),
+                    ResponseMessageUtil.fetched("Bank partner"),
                     partnerDTO
             ));
 
@@ -377,8 +368,8 @@ public class PartnerController {
             // Handle unexpected error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_FETCHING_PARTNERS + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Bank partner")
                     ));
         }
     }
@@ -414,7 +405,7 @@ public class PartnerController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -426,8 +417,8 @@ public class PartnerController {
         } catch (NumberFormatException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.BAD_REQUEST_PARTNER_ID_NOT_NUMERIC
+                            ResponseCodeUtil.invalidField(),
+                            ResponseMessageUtil.invalidField("Partner ID", "numeric")
                     ));
         }
 
@@ -443,8 +434,8 @@ public class PartnerController {
             if (existingPartnerOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.NOT_FOUND_CODE,
-                                ApiResponseConstants.NO_PARTNERS_FOUND
+                                ResponseCodeUtil.notFound(),
+                                ResponseMessageUtil.notFound("Partner")
                         ));
             }
 
@@ -455,8 +446,8 @@ public class PartnerController {
                     && partnerService.findByName(updatedPartner.getName()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.PARTNER_NAME_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Partner name")
                         ));
             }
 
@@ -464,8 +455,8 @@ public class PartnerController {
                     && partnerService.findByIdentifier(updatedPartner.getIdentifier()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.PARTNER_IDENTIFIER_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Partner identifier")
                         ));
             }
 
@@ -473,8 +464,8 @@ public class PartnerController {
                     && partnerService.findBySystemCode(updatedPartner.getSystemCode()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.PARTNER_SYSTEM_CODE_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Partner system or bank code")
                         ));
             }
 
@@ -482,8 +473,8 @@ public class PartnerController {
                     && partnerService.findByCode(updatedPartner.getCode()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.PARTNER_CODE_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Partner code")
                         ));
             }
 
@@ -507,8 +498,8 @@ public class PartnerController {
 
             // Respond success
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.UPDATED,
+                    ResponseCodeUtil.updated(),
+                    ResponseMessageUtil.updated("Partner"),
                     savedPartner
             ));
 
@@ -516,8 +507,8 @@ public class PartnerController {
             // Handle unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Partner")
                     ));
         }
     }

@@ -1,6 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseMessageUtil;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -67,7 +67,7 @@ public class ReDocController {
                     HttpStatus.OK
             );
         } catch (IOException e) {
-            String errorMessage = ApiResponseConstants.ERROR_READING_FILE;
+            String errorMessage = ResponseMessageUtil.internalError("document");
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
             return new ResponseEntity<>(

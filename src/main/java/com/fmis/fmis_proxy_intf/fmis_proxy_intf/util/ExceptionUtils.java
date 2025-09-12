@@ -63,7 +63,7 @@ public class ExceptionUtils {
     public static String formatHostFromContent(String content) {
         String safeContent = Optional.ofNullable(content).orElse("");
         String baseUrl = extractBaseUrl(safeContent);
-        return !baseUrl.isEmpty() ? " (" + baseUrl + ")" : "";
+        return !baseUrl.isEmpty() ? "(" + baseUrl + ")" : "";
     }
 
     /**

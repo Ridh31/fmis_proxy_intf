@@ -9,10 +9,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.UserDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.RoleService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.UserService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.HeaderValidationUtil;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -100,7 +97,7 @@ public class AuthController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -110,8 +107,8 @@ public class AuthController {
             if (userService.findByUsername(userDTO.getUsername()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.USERNAME_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Username")
                         ));
             }
 
@@ -119,29 +116,29 @@ public class AuthController {
             if (userService.findByEmail(userDTO.getEmail()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.EMAIL_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Email")
                         ));
             }
 
             // Validate roleId from DTO and set default if null
             Long roleId = (userDTO.getRoleId() != null) ? userDTO.getRoleId() : 5L;
             Role role = roleService.findById(roleId)
-                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.ROLE_NOT_FOUND));
+                    .orElseThrow(() -> new RuntimeException(ResponseMessageUtil.notFound("Role")));
 
             // Validate partnerId from DTO
             Long partnerId = userDTO.getPartnerId();
             if (partnerId == null || !partnerService.existsById(partnerId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.NOT_FOUND_CODE,
-                                ApiResponseConstants.NO_PARTNERS_FOUND
+                                ResponseCodeUtil.notFound(),
+                                ResponseMessageUtil.notFound("Partner")
                         ));
             }
 
             // Fetch the partner entity
             Partner partner = partnerService.findById(partnerId)
-                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.NO_PARTNERS_FOUND));
+                    .orElseThrow(() -> new RuntimeException(ResponseMessageUtil.notFound("Partner")));
 
             // Create User entity and set its properties
             User user = new User();
@@ -157,16 +154,17 @@ public class AuthController {
             // Return a successful response with the saved user details
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.CREATED_CODE,
-                            ApiResponseConstants.CREATED
+                            ResponseCodeUtil.created(),
+                            ResponseMessageUtil.created("User"),
+                            savedUser
                     ));
 
         } catch (RuntimeException e) {
             // Handle unexpected errors and return a concise internal server error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("User")
                     ));
         }
     }
@@ -206,7 +204,7 @@ public class AuthController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -219,33 +217,33 @@ public class AuthController {
 
             // Fetch authenticated user from the database
             User loggedInUser = userService.findByUsername(user.getUsername())
-                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
+                    .orElseThrow(() -> new RuntimeException(ResponseMessageUtil.notFound("User")));
 
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.SUCCESS,
+                    ResponseCodeUtil.processed(),
+                    ApiResponseConstants.LOGIN_SUCCESS,
                     loggedInUser
             ));
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.UNAUTHORIZED_CODE,
-                            ApiResponseConstants.INVALID_CREDENTIALS
+                            ResponseCodeUtil.unauthorized(),
+                            ApiResponseConstants.UNAUTHORIZED_INVALID_CREDENTIALS
                     ));
 
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.NOT_FOUND_CODE,
-                            ApiResponseConstants.USER_NOT_FOUND
+                            ResponseCodeUtil.notFound(),
+                            ResponseMessageUtil.notFound("User")
                     ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("User")
                     ));
         }
     }
@@ -274,7 +272,7 @@ public class AuthController {
         try {
             // Fetch the target user by username
             User targetUser = userService.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException(ApiResponseConstants.USER_NOT_FOUND));
+                    .orElseThrow(() -> new RuntimeException(ResponseMessageUtil.notFound("User")));
 
             // Hash the new password before saving
             String encodedPassword = passwordEncoder.encode(password);
@@ -284,15 +282,15 @@ public class AuthController {
             userService.save(targetUser);
 
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.UPDATED_CODE,
-                    ApiResponseConstants.PASSWORD_RESET_SUCCESS + username
+                    ResponseCodeUtil.updated(),
+                    ResponseMessageUtil.reset("Password")
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("User")
                     ));
         }
     }
@@ -338,19 +336,10 @@ public class AuthController {
             // Fetch paginated list of users
             Page<User> users = userService.getAllUsers(page, size);
 
-            // Return 204 if no users found
-            if (users.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
-                        new ApiResponse<>(
-                                ApiResponseConstants.NO_CONTENT_CODE,
-                                ApiResponseConstants.NOT_FOUND
-                        ));
-            }
-
             // Return successful response with user list
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.USERS_FETCHED,
+                    ResponseCodeUtil.fetched(),
+                    ResponseMessageUtil.fetched("User"),
                     users
             ));
 
@@ -358,8 +347,8 @@ public class AuthController {
             // Return 500 in case of an internal error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_FETCHING_USERS + e.getMessage()
+                            ResponseCodeUtil.fetchError(),
+                            ResponseMessageUtil.fetchError("User")
                     ));
         }
     }
@@ -391,8 +380,8 @@ public class AuthController {
             if (optionalUser.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.UNAUTHORIZED_CODE,
-                                ApiResponseConstants.INVALID_CREDENTIALS,
+                                ResponseCodeUtil.unauthorized(),
+                                ApiResponseConstants.UNAUTHORIZED_INVALID_CREDENTIALS,
                                 false
                         ));
             }
@@ -403,8 +392,8 @@ public class AuthController {
             if (!passwordEncoder.matches(password, user.getPassword())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.UNAUTHORIZED_CODE,
-                                ApiResponseConstants.INVALID_CREDENTIALS,
+                                ResponseCodeUtil.unauthorized(),
+                                ApiResponseConstants.UNAUTHORIZED_INVALID_CREDENTIALS,
                                 false
                         ));
             }
@@ -413,7 +402,7 @@ public class AuthController {
             boolean isAdmin = userService.isAdmin(user);
             return ResponseEntity.ok(
                     new ApiResponse<>(
-                            ApiResponseConstants.SUCCESS_CODE,
+                            ResponseCodeUtil.processed(),
                             isAdmin ? ApiResponseConstants.ACCESS_GRANTED : ApiResponseConstants.ACCESS_DENIED,
                             isAdmin
                     )
@@ -422,8 +411,8 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR,
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("User"),
                             false
                     ));
         }

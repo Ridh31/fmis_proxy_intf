@@ -6,9 +6,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Test;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TestService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponseExamples;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ExceptionUtils;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -89,7 +87,7 @@ public class TestController {
                                     mediaType = HeaderConstants.CONTENT_TYPE_JSON,
                                     schema = @Schema(implementation = Map.class),
                                     examples = @ExampleObject(
-                                            name = ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
+                                            name = ApiResponseConstants.NOT_FOUND_FMIS_CONFIG,
                                             value = ApiResponseExamples.FMIS_TEST_NO_CONFIG_FOUND
                                     )
                             )
@@ -119,8 +117,8 @@ public class TestController {
                 // Return success response
                 return ResponseEntity.status(HttpStatus.OK)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.SUCCESS_CODE,
-                                ApiResponseConstants.SUCCESS,
+                                ResponseCodeUtil.processed(),
+                                ResponseMessageUtil.processed("Resource"),
                                 fmisResponseBody
                         ));
             } else {
@@ -129,17 +127,17 @@ public class TestController {
                 // Handle failure in sending data to FMIS
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_GATEWAY_CODE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + responseHost
+                                ResponseCodeUtil.badGatewayNotConnect(),
+                                ResponseMessageUtil.badGatewayNotConnect(responseHost)
                         ));
             }
         }
 
         // Return response if FMIS configuration is not found
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(
-                        ApiResponseConstants.NOT_FOUND_CODE,
-                        ApiResponseConstants.NO_FMIS_CONFIG_FOUND,
+                        ResponseCodeUtil.configurationNotFound(),
+                        ResponseMessageUtil.configurationNotFound("FMIS"),
                         null
                 ));
     }
@@ -171,7 +169,7 @@ public class TestController {
     public ResponseEntity<ApiResponse<?>> test() {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse<>(
-                        ApiResponseConstants.SUCCESS_CODE,
+                        ResponseCodeUtil.processed(),
                         "FMIS Interface Web Service."
                 ));
     }
@@ -247,6 +245,6 @@ public class TestController {
     public ResponseEntity<String> save(@RequestBody Test test) {
         testService.addTest(test);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponseConstants.CREATED);
+                .body(ResponseMessageUtil.created("Resource"));
     }
 }

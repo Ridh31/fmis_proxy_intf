@@ -2,14 +2,11 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ResponseCodeDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.InternalCamDigiKeyService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ExceptionUtils;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +75,7 @@ public class InternalCamDigiKeyController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -96,29 +93,29 @@ public class InternalCamDigiKeyController {
             if (internalCamDigiKeyService.existsByName(internalCamDigiKey.getName())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.NAME_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Name")
                         ));
             }
             if (internalCamDigiKeyService.existsByAppKey(internalCamDigiKey.getAppKey())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.APP_KEY_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("App key")
                         ));
             }
             if (internalCamDigiKeyService.existsByIpAddress(internalCamDigiKey.getIpAddress())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.IP_ADDRESS_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("IP Address")
                         ));
             }
             if (internalCamDigiKeyService.existsByAccessURL(internalCamDigiKey.getAccessURL())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ACCESS_URL_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Access URL")
                         ));
             }
 
@@ -128,16 +125,16 @@ public class InternalCamDigiKeyController {
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.CREATED_CODE,
-                            ApiResponseConstants.CREATED,
+                            ResponseCodeUtil.created(),
+                            ResponseMessageUtil.created("Host"),
                             saved
                     ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Host")
                     ));
         }
     }
@@ -176,16 +173,16 @@ public class InternalCamDigiKeyController {
                     page, size, name, appKey, ipAddress, accessURL, createdDate);
 
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.SUCCESS,
+                    ResponseCodeUtil.fetched(),
+                    ResponseMessageUtil.fetched("Host"),
                     hosts
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Host")
                     ));
         }
     }
@@ -211,7 +208,7 @@ public class InternalCamDigiKeyController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -223,8 +220,8 @@ public class InternalCamDigiKeyController {
         } catch (NumberFormatException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.BAD_REQUEST_ID_NOT_NUMERIC
+                            ResponseCodeUtil.invalidField(),
+                            ResponseMessageUtil.invalidField("ID", "numeric")
                     ));
         }
 
@@ -240,8 +237,8 @@ public class InternalCamDigiKeyController {
             if (optionalExisting.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.NOT_FOUND_CODE,
-                                ApiResponseConstants.HOST_NOT_FOUND
+                                ResponseCodeUtil.notFound(),
+                                ResponseMessageUtil.notFound("Host")
                         ));
             }
 
@@ -252,8 +249,8 @@ public class InternalCamDigiKeyController {
             if (appKeyOwner.isPresent() && !appKeyOwner.get().getId().equals(existing.getId())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.APP_KEY_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("App key")
                         ));
             }
 
@@ -262,8 +259,8 @@ public class InternalCamDigiKeyController {
                     && internalCamDigiKeyService.existsByName(updatedData.getName())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.NAME_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Name")
                         ));
             }
 
@@ -272,8 +269,8 @@ public class InternalCamDigiKeyController {
                     && internalCamDigiKeyService.existsByAccessURL(updatedData.getAccessURL())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ACCESS_URL_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Access URL")
                         ));
             }
 
@@ -290,16 +287,16 @@ public class InternalCamDigiKeyController {
 
             // Return success response
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.UPDATED_CODE,
-                    ApiResponseConstants.UPDATED,
+                    ResponseCodeUtil.updated(),
+                    ResponseMessageUtil.updated("Host"),
                     saved
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Host")
                     ));
         }
     }
@@ -316,12 +313,14 @@ public class InternalCamDigiKeyController {
     @GetMapping("/organization-token")
     public ResponseEntity<ApiResponse<?>> getOrganizationAccessToken(@RequestParam(required = false) String appKey) {
 
+        String resource = "Organization token";
+
         // Validate input
         if (appKey == null || appKey.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+                            ResponseCodeUtil.invalid(),
+                            ResponseMessageUtil.invalid("appKey")
                     ));
         }
 
@@ -332,8 +331,8 @@ public class InternalCamDigiKeyController {
             if (host.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + appKey + ")"
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound(appKey)
                         ));
             }
 
@@ -349,8 +348,8 @@ public class InternalCamDigiKeyController {
                 JsonNode data = root.path("data");
 
                 return ResponseEntity.ok(new ApiResponse<>(
-                        ApiResponseConstants.SUCCESS_CODE,
-                        ApiResponseConstants.SUCCESS,
+                        ResponseCodeUtil.processed(),
+                        ResponseMessageUtil.processed(resource),
                         data
                 ));
 
@@ -360,15 +359,23 @@ public class InternalCamDigiKeyController {
                 HttpStatus status = HttpStatus.resolve(rawStatusCode);
                 if (status == null) status = HttpStatus.BAD_REQUEST;
 
-                String message = switch (status) {
-                    case NOT_FOUND -> ApiResponseConstants.EXTERNAL_RESOURCE_NOT_FOUND;
-                    case BAD_REQUEST -> ApiResponseConstants.EXTERNAL_BAD_REQUEST;
-                    default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
+                // Map HTTP status to FMIS ResponseCodeDTO
+                ResponseCodeDTO fmisResponseCode = switch (status) {
+                    case NOT_FOUND -> ResponseCodeUtil.externalResourceNotFound();
+                    case BAD_REQUEST -> ResponseCodeUtil.externalError();
+                    default -> ResponseCodeUtil.externalClientError();
                 };
 
+                String message = switch (status) {
+                    case NOT_FOUND -> ResponseMessageUtil.externalResourceNotFound(resource);
+                    case BAD_REQUEST -> ResponseMessageUtil.externalError(resource);
+                    default -> ResponseMessageUtil.externalClientError(resource);
+                };
+
+                // Return ApiResponse with FMIS response_code
                 return ResponseEntity.status(status)
                         .body(new ApiResponse<>(
-                                status.value(),
+                                fmisResponseCode,
                                 message,
                                 rawStatusCode + " - " + status.getReasonPhrase()
                         ));
@@ -377,8 +384,8 @@ public class InternalCamDigiKeyController {
                 // Handle 5xx errors from external server
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_GATEWAY_CODE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                                ResponseCodeUtil.badGatewayNotConnect(),
+                                ResponseMessageUtil.badGatewayNotConnect(url),
                                 e.getStatusCode() + " - " + e.getStatusText()
                         ));
 
@@ -388,17 +395,17 @@ public class InternalCamDigiKeyController {
 
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                ApiResponseConstants.SERVICE_UNAVAILABLE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + " (" + targetHost + ")"
+                                ResponseCodeUtil.serviceUnavailable(),
+                                ResponseMessageUtil.serviceUnavailable(),
+                                ResponseMessageUtil.badGatewayNotConnect(targetHost)
                         ));
 
             } catch (Exception e) {
                 // Handle unexpected external error
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                                ResponseCodeUtil.internalError(),
+                                ResponseMessageUtil.internalError(resource)
                         ));
             }
 
@@ -406,8 +413,8 @@ public class InternalCamDigiKeyController {
             // Handle unexpected internal error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError(resource)
                     ));
         }
     }
@@ -421,12 +428,14 @@ public class InternalCamDigiKeyController {
     @GetMapping("/login-token")
     public ResponseEntity<ApiResponse<?>> getLoginToken(@RequestParam(required = false) String appKey) {
 
+        String resource = "Login token";
+
         // Validate input
         if (appKey == null || appKey.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+                            ResponseCodeUtil.invalid(),
+                            ResponseMessageUtil.invalid("appKey")
                     ));
         }
 
@@ -437,8 +446,8 @@ public class InternalCamDigiKeyController {
             if (host.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + appKey + ")"
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound("appKey")
                         ));
             }
 
@@ -454,8 +463,8 @@ public class InternalCamDigiKeyController {
                 JsonNode data = root.path("data");
 
                 return ResponseEntity.ok(new ApiResponse<>(
-                        ApiResponseConstants.SUCCESS_CODE,
-                        ApiResponseConstants.SUCCESS,
+                        ResponseCodeUtil.processed(),
+                        ResponseMessageUtil.processed(resource),
                         data
                 ));
 
@@ -465,15 +474,23 @@ public class InternalCamDigiKeyController {
                 HttpStatus status = HttpStatus.resolve(rawStatusCode);
                 if (status == null) status = HttpStatus.BAD_REQUEST;
 
-                String message = switch (status) {
-                    case NOT_FOUND -> ApiResponseConstants.EXTERNAL_RESOURCE_NOT_FOUND;
-                    case BAD_REQUEST -> ApiResponseConstants.EXTERNAL_BAD_REQUEST;
-                    default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
+                // Map HTTP status to FMIS ResponseCodeDTO
+                ResponseCodeDTO fmisResponseCode = switch (status) {
+                    case NOT_FOUND -> ResponseCodeUtil.externalResourceNotFound();
+                    case BAD_REQUEST -> ResponseCodeUtil.externalError();
+                    default -> ResponseCodeUtil.externalClientError();
                 };
 
+                String message = switch (status) {
+                    case NOT_FOUND -> ResponseMessageUtil.externalResourceNotFound(resource);
+                    case BAD_REQUEST -> ResponseMessageUtil.externalError(resource);
+                    default -> ResponseMessageUtil.externalClientError(resource);
+                };
+
+                // Return ApiResponse with FMIS response_code
                 return ResponseEntity.status(status)
                         .body(new ApiResponse<>(
-                                status.value(),
+                                fmisResponseCode,
                                 message,
                                 rawStatusCode + " - " + status.getReasonPhrase()
                         ));
@@ -482,8 +499,8 @@ public class InternalCamDigiKeyController {
                 // Handle 5xx errors from external server
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_GATEWAY_CODE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                                ResponseCodeUtil.badGatewayNotConnect(),
+                                ResponseMessageUtil.badGatewayNotConnect(url),
                                 e.getStatusCode() + " - " + e.getStatusText()
                         ));
 
@@ -493,17 +510,17 @@ public class InternalCamDigiKeyController {
 
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                ApiResponseConstants.SERVICE_UNAVAILABLE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + " (" + targetHost + ")"
+                                ResponseCodeUtil.serviceUnavailable(),
+                                ResponseMessageUtil.serviceUnavailable(),
+                                ResponseMessageUtil.badGatewayNotConnect(targetHost)
                         ));
 
             } catch (Exception e) {
                 // Handle unexpected external error
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                                ResponseCodeUtil.internalError(),
+                                ResponseMessageUtil.internalError(resource)
                         ));
             }
 
@@ -511,8 +528,8 @@ public class InternalCamDigiKeyController {
             // Handle unexpected internal error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError(resource)
                     ));
         }
     }
@@ -530,18 +547,20 @@ public class InternalCamDigiKeyController {
             @RequestParam(required = false) String appKey,
             @RequestParam(required = false) String authCode) {
 
+        String resource = "Access token";
+
         // Input validation
         if (appKey == null || appKey.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(
-                    ApiResponseConstants.BAD_REQUEST_CODE,
-                    ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+                    ResponseCodeUtil.invalid(),
+                    ResponseMessageUtil.invalid("appKey")
             ));
         }
 
         if (authCode == null || authCode.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(
-                    ApiResponseConstants.BAD_REQUEST_CODE,
-                    ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "authCode"
+                    ResponseCodeUtil.invalid(),
+                    ResponseMessageUtil.invalid("authCode")
             ));
         }
 
@@ -550,8 +569,8 @@ public class InternalCamDigiKeyController {
             Optional<InternalCamDigiKey> host = internalCamDigiKeyService.findByAppKey(appKey);
             if (host.isEmpty()) {
                 return ResponseEntity.badRequest().body(new ApiResponse<>(
-                        ApiResponseConstants.BAD_REQUEST_CODE,
-                        ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + " (" + appKey + ")"
+                        ResponseCodeUtil.configurationNotFound(),
+                        ResponseMessageUtil.configurationNotFound("appKey")
                 ));
             }
 
@@ -574,8 +593,8 @@ public class InternalCamDigiKeyController {
 
                 if (jwtBody == null || jwtBody.getData() == null) {
                     return ResponseEntity.badRequest().body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.ERROR_JWT_VALIDATION_FAILED,
+                            ResponseCodeUtil.jwtValidationFailed(),
+                            ResponseMessageUtil.jwtValidationFailed(),
                             root.path("message")
                     ));
                 }
@@ -586,40 +605,50 @@ public class InternalCamDigiKeyController {
                 // Check payload status
                 if (!payload.path("status").asBoolean()) {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(
-                            ApiResponseConstants.UNAUTHORIZED_CODE,
-                            ApiResponseConstants.ERROR_ACCESS_TOKEN_INVALID_OR_EXPIRED
+                            ResponseCodeUtil.accessTokenInvalidOrExpired(),
+                            ResponseMessageUtil.accessTokenInvalidOrExpired()
                     ));
                 }
 
                 // Return successful response
                 return ResponseEntity.ok(new ApiResponse<>(
-                        ApiResponseConstants.SUCCESS_CODE,
-                        ApiResponseConstants.SUCCESS,
+                        ResponseCodeUtil.processed(),
+                        ResponseMessageUtil.processed(resource),
                         payload
                 ));
 
             } catch (HttpClientErrorException e) {
-                // Handle client-side HTTP errors (4xx)
-                HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
+                // Handle 4xx errors
+                int rawStatusCode = e.getStatusCode().value();
+                HttpStatus status = HttpStatus.resolve(rawStatusCode);
                 if (status == null) status = HttpStatus.BAD_REQUEST;
 
-                String message = switch (status) {
-                    case NOT_FOUND -> ApiResponseConstants.EXTERNAL_RESOURCE_NOT_FOUND;
-                    case BAD_REQUEST -> ApiResponseConstants.EXTERNAL_BAD_REQUEST;
-                    default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
+                // Map HTTP status to FMIS ResponseCodeDTO
+                ResponseCodeDTO fmisResponseCode = switch (status) {
+                    case NOT_FOUND -> ResponseCodeUtil.externalResourceNotFound();
+                    case BAD_REQUEST -> ResponseCodeUtil.externalError();
+                    default -> ResponseCodeUtil.externalClientError();
                 };
 
-                return ResponseEntity.status(status).body(new ApiResponse<>(
-                        status.value(),
-                        message,
-                        e.getResponseBodyAsString()
-                ));
+                String message = switch (status) {
+                    case NOT_FOUND -> ResponseMessageUtil.externalResourceNotFound(resource);
+                    case BAD_REQUEST -> ResponseMessageUtil.externalError(resource);
+                    default -> ResponseMessageUtil.externalClientError(resource);
+                };
+
+                // Return ApiResponse with FMIS response_code
+                return ResponseEntity.status(status)
+                        .body(new ApiResponse<>(
+                                fmisResponseCode,
+                                message,
+                                rawStatusCode + " - " + status.getReasonPhrase()
+                        ));
 
             } catch (HttpServerErrorException e) {
                 // Handle server-side HTTP errors (5xx)
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ApiResponse<>(
-                        ApiResponseConstants.BAD_GATEWAY_CODE,
-                        ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                        ResponseCodeUtil.badGatewayNotConnect(),
+                        ResponseMessageUtil.badGatewayNotConnect(url),
                         e.getStatusCode() + " - " + e.getStatusText()
                 ));
 
@@ -628,24 +657,24 @@ public class InternalCamDigiKeyController {
                 String targetHost = ExceptionUtils.extractTargetHost(e.getMessage());
 
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ApiResponse<>(
-                        ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                        ApiResponseConstants.SERVICE_UNAVAILABLE,
-                        ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + " (" + targetHost + ")"
+                        ResponseCodeUtil.serviceUnavailable(),
+                        ResponseMessageUtil.serviceUnavailable(),
+                        ResponseMessageUtil.badGatewayNotConnect(targetHost)
                 ));
 
             } catch (Exception e) {
                 // Handle unexpected errors during external request
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(
-                        ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                        ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                        ResponseCodeUtil.internalError(),
+                        ResponseMessageUtil.internalError(resource)
                 ));
             }
 
         } catch (Exception e) {
             // Catch-all for any other server errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(
-                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                    ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                    ResponseCodeUtil.internalError(),
+                    ResponseMessageUtil.internalError(resource)
             ));
         }
     }
@@ -663,20 +692,22 @@ public class InternalCamDigiKeyController {
             @RequestParam(required = false) String appKey,
             @RequestParam(required = false) String jwt) {
 
+        String resource = "JWT";
+
         // Validate input
         if (appKey == null || appKey.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "appKey"
+                            ResponseCodeUtil.invalid(),
+                            ResponseMessageUtil.invalid("appKey")
                     ));
         }
 
         if (jwt == null || jwt.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "jwt"
+                            ResponseCodeUtil.invalid(),
+                            ResponseMessageUtil.invalid("jwt")
                     ));
         }
 
@@ -687,8 +718,8 @@ public class InternalCamDigiKeyController {
             if (host.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.ERROR_NO_CONFIGURATION_FOUND + "(" + appKey + ")"
+                                ResponseCodeUtil.configurationNotFound(),
+                                ResponseMessageUtil.configurationNotFound("appKey")
                         ));
             }
 
@@ -704,8 +735,8 @@ public class InternalCamDigiKeyController {
                 JsonNode data = objectMapper.readTree(response.getBody());
 
                 return ResponseEntity.ok(new ApiResponse<>(
-                        ApiResponseConstants.SUCCESS_CODE,
-                        ApiResponseConstants.SUCCESS,
+                        ResponseCodeUtil.processed(),
+                        ResponseMessageUtil.processed(resource),
                         data
                 ));
 
@@ -715,15 +746,23 @@ public class InternalCamDigiKeyController {
                 HttpStatus status = HttpStatus.resolve(rawStatusCode);
                 if (status == null) status = HttpStatus.BAD_REQUEST;
 
-                String message = switch (status) {
-                    case NOT_FOUND -> ApiResponseConstants.EXTERNAL_RESOURCE_NOT_FOUND;
-                    case BAD_REQUEST -> ApiResponseConstants.EXTERNAL_BAD_REQUEST;
-                    default -> ApiResponseConstants.EXTERNAL_CLIENT_ERROR;
+                // Map HTTP status to FMIS ResponseCodeDTO
+                ResponseCodeDTO fmisResponseCode = switch (status) {
+                    case NOT_FOUND -> ResponseCodeUtil.externalResourceNotFound();
+                    case BAD_REQUEST -> ResponseCodeUtil.externalError();
+                    default -> ResponseCodeUtil.externalClientError();
                 };
 
+                String message = switch (status) {
+                    case NOT_FOUND -> ResponseMessageUtil.externalResourceNotFound(resource);
+                    case BAD_REQUEST -> ResponseMessageUtil.externalError(resource);
+                    default -> ResponseMessageUtil.externalClientError(resource);
+                };
+
+                // Return ApiResponse with FMIS response_code
                 return ResponseEntity.status(status)
                         .body(new ApiResponse<>(
-                                status.value(),
+                                fmisResponseCode,
                                 message,
                                 rawStatusCode + " - " + status.getReasonPhrase()
                         ));
@@ -732,8 +771,8 @@ public class InternalCamDigiKeyController {
                 // Handle 5xx errors from external server
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_GATEWAY_CODE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT,
+                                ResponseCodeUtil.badGatewayNotConnect(),
+                                ResponseMessageUtil.badGatewayNotConnect(url),
                                 e.getStatusCode() + " - " + e.getStatusText()
                         ));
 
@@ -743,17 +782,17 @@ public class InternalCamDigiKeyController {
 
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.SERVICE_UNAVAILABLE_CODE,
-                                ApiResponseConstants.SERVICE_UNAVAILABLE,
-                                ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + " (" + targetHost + ")"
+                                ResponseCodeUtil.serviceUnavailable(),
+                                ResponseMessageUtil.serviceUnavailable(),
+                                ResponseMessageUtil.badGatewayNotConnect(targetHost)
                         ));
 
             } catch (Exception e) {
                 // Handle unexpected external error
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                                ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                                ResponseCodeUtil.internalError(),
+                                ResponseMessageUtil.internalError(resource)
                         ));
             }
 
@@ -761,8 +800,8 @@ public class InternalCamDigiKeyController {
             // Handle unexpected internal error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError(resource)
                     ));
         }
     }

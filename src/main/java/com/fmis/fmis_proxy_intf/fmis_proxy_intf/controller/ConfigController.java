@@ -4,10 +4,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ConfigDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.FMIS;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.FmisRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.FmisService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.Page;
@@ -71,25 +68,17 @@ public class ConfigController {
             // Fetch paginated FMIS config list
             Page<FMIS> config = fmisService.getConfig(page, size);
 
-            if (config.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(new ApiResponse<>(
-                                ApiResponseConstants.NO_CONTENT_CODE,
-                                ApiResponseConstants.NOT_FOUND
-                        ));
-            }
-
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.SUCCESS,
+                    ResponseCodeUtil.fetched(),
+                    ResponseMessageUtil.fetched("Config"),
                     config
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_FETCHING_PARTNERS + e.getMessage()
+                            ResponseCodeUtil.fetchError(),
+                            ResponseMessageUtil.fetchError("Config")
                     ));
         }
     }
@@ -119,7 +108,7 @@ public class ConfigController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -136,8 +125,8 @@ public class ConfigController {
             if (optionalConfig.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.NO_CONFIG_TO_UPDATE
+                                ResponseCodeUtil.notFound(),
+                                ResponseMessageUtil.notFound("Config")
                         ));
             }
 
@@ -155,16 +144,16 @@ public class ConfigController {
 
             // Return success response
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.UPDATED
+                    ResponseCodeUtil.updated(),
+                    ResponseMessageUtil.updated("Config")
             ));
 
         } catch (Exception e) {
             // Handle unexpected errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Config")
                     ));
         }
     }

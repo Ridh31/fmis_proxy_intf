@@ -1,6 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseMessageUtil;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,7 +47,7 @@ public class PortalController {
     public ResponseEntity<Map<String, Object>> validateJwt(@RequestParam(required = false) String jwt) {
         if (jwt == null || jwt.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "jwt");
+            errorResponse.put("error", ResponseMessageUtil.requiredField("jwt"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
 
@@ -115,7 +115,7 @@ public class PortalController {
     public ResponseEntity<Map<String, Object>> getUserAccessToken(@RequestParam(required = false) String authCode) {
         if (authCode == null || authCode.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "authCode");
+            errorResponse.put("error", ResponseMessageUtil.requiredField("authCode"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
 
@@ -150,7 +150,7 @@ public class PortalController {
     public ResponseEntity<Map<String, Object>> verifyAccountToken(@RequestParam(required = false) String accountToken) {
         if (accountToken == null || accountToken.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", ApiResponseConstants.ERROR_MISSING_REQUIRED_PARAM + "accountToken");
+            errorResponse.put("error", ResponseMessageUtil.requiredField("accountToken"));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
 

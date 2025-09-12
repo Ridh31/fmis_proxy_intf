@@ -5,6 +5,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.PartnerRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResourceNotFoundException;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseMessageUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -136,7 +137,7 @@ public class PartnerServiceImpl implements PartnerService {
         return partnerRepository.findIdByPublicKey(publicKey)
                 .map(Partner::getId)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(ApiResponseConstants.ERROR_PARTNER_TOKEN_NOT_FOUND));
+                        new ResourceNotFoundException(ResponseMessageUtil.notFound("Partner token")));
     }
 
     /**

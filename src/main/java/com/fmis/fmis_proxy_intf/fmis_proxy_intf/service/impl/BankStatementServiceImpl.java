@@ -6,6 +6,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.BankStatementRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.PartnerRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.BankStatementService;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseMessageUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,7 +49,7 @@ public class BankStatementServiceImpl implements BankStatementService {
     public BankStatement importBankStatement(Long partnerId, BankStatementDTO bankStatementDTO) {
         // Retrieve the Partner entity or throw an exception if not found
         Partner partner = partnerRepository.findById(partnerId)
-                .orElseThrow(() -> new RuntimeException("Partner not found"));
+                .orElseThrow(() -> new RuntimeException(ResponseMessageUtil.notFound("Partner")));
 
         // Convert the DTO to the BankStatement entity
         BankStatement bankStatement = new BankStatement();

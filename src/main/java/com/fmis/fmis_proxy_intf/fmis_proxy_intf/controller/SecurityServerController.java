@@ -1,12 +1,9 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SecurityServer;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.SecurityServerService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.AuthorizationHelper;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ValidationErrorUtils;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
@@ -67,7 +64,7 @@ public class SecurityServerController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -76,8 +73,8 @@ public class SecurityServerController {
         if (securityServerService.existsByName(securityServer.getName())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.NAME_TAKEN + " (" + securityServer.getName() + ")"
+                            ResponseCodeUtil.taken(),
+                            ResponseMessageUtil.taken(securityServer.getName())
                     ));
         }
 
@@ -85,8 +82,8 @@ public class SecurityServerController {
         if (securityServerService.existsByConfigKey(securityServer.getConfigKey())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.CONFIG_KEY_TAKEN + " (" + securityServer.getConfigKey() + ")"
+                            ResponseCodeUtil.taken(),
+                            ResponseMessageUtil.taken(securityServer.getConfigKey())
                     ));
         }
 
@@ -109,16 +106,16 @@ public class SecurityServerController {
             // Return a successful response with the saved SecurityServer details
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.CREATED_CODE,
-                            ApiResponseConstants.CREATED,
+                            ResponseCodeUtil.created(),
+                            ResponseMessageUtil.created("Security server"),
                             savedServer
                     ));
         } catch (Exception e) {
             // Handle any unexpected errors that occur while saving the SecurityServer
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Security server")
                     ));
         }
     }
@@ -156,16 +153,16 @@ public class SecurityServerController {
                     page, size, name, configKey, description, createdDate);
 
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.SUCCESS,
+                    ResponseCodeUtil.fetched(),
+                    ResponseMessageUtil.fetched("Security server"),
                     server
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Security server")
                     ));
         }
     }
@@ -193,7 +190,7 @@ public class SecurityServerController {
         if (!validationErrors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
+                            ResponseCodeUtil.validationFailed(),
                             validationErrors
                     ));
         }
@@ -205,8 +202,8 @@ public class SecurityServerController {
         } catch (NumberFormatException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.BAD_REQUEST_CODE,
-                            ApiResponseConstants.BAD_REQUEST_ID_NOT_NUMERIC
+                            ResponseCodeUtil.invalidField(),
+                            ResponseMessageUtil.invalidField("ID", "numeric")
                     ));
         }
 
@@ -222,8 +219,8 @@ public class SecurityServerController {
             if (optionalExisting.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.NOT_FOUND_CODE,
-                                String.format(ApiResponseConstants.ENTITY_NOT_FOUND, "Security Server")
+                                ResponseCodeUtil.notFound(),
+                                ResponseMessageUtil.notFound("Security Server")
                         ));
             }
 
@@ -232,8 +229,8 @@ public class SecurityServerController {
             if (nameOwner.isPresent() && !nameOwner.get().getId().equals(serverId)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.NAME_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Name")
                         ));
             }
 
@@ -242,8 +239,8 @@ public class SecurityServerController {
             if (configKeyOwner.isPresent() && !configKeyOwner.get().getId().equals(serverId)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
-                                ApiResponseConstants.BAD_REQUEST_CODE,
-                                ApiResponseConstants.CONFIG_KEY_TAKEN
+                                ResponseCodeUtil.taken(),
+                                ResponseMessageUtil.taken("Config key")
                         ));
             }
 
@@ -266,16 +263,16 @@ public class SecurityServerController {
 
             // Return success response with updated data
             return ResponseEntity.ok(new ApiResponse<>(
-                    ApiResponseConstants.SUCCESS_CODE,
-                    ApiResponseConstants.SUCCESS,
+                    ResponseCodeUtil.updated(),
+                    ResponseMessageUtil.updated("Security server"),
                     existing
             ));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
-                            ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
-                            ApiResponseConstants.ERROR_OCCURRED + e.getMessage()
+                            ResponseCodeUtil.internalError(),
+                            ResponseMessageUtil.internalError("Security server")
                     ));
         }
     }

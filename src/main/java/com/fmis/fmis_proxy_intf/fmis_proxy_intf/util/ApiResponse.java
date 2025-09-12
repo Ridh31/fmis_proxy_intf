@@ -1,14 +1,25 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ResponseCodeDTO;
 
 import java.util.Map;
 
+/**
+ * Standardized API response wrapper.
+ * Supports both success and error responses, including
+ *
+ * @param <T> Type of the data payload
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({ "code", "response_code", "message", "data", "error" })
 public class ApiResponse<T> {
+
     private int code;
+    @JsonProperty("response_code")
+    private String responseCode;
     private String message;
     private T data;
     private T error;
@@ -23,9 +34,9 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Constructor for responses with custom code and message.
+     * Constructor for responses with custom HTTP code and message.
      *
-     * @param code    Response status code
+     * @param code    HTTP status code
      * @param message Human-readable response message
      */
     public ApiResponse(int code, String message) {
@@ -34,9 +45,9 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Constructor for successful responses with data payload.
+     * Constructor for successful responses with a data payload.
      *
-     * @param data Data payload (could be XML or other formats)
+     * @param data Data payload (e.g., entity, list, or DTO)
      */
     public ApiResponse(T data) {
         this();
@@ -44,9 +55,9 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Full constructor for custom responses with data payload.
+     * Constructor for responses with custom HTTP code, message, and data payload.
      *
-     * @param code    Response status code
+     * @param code    HTTP status code
      * @param message Human-readable response message
      * @param data    Data payload
      */
@@ -57,61 +68,59 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Constructor for responses with a Map of field-specific error messages.
+     * NEW: Constructor for responses using ResponseCode DTO.
+     * Automatically maps HTTP code and FMIS response code.
      *
-     * @param code            Response status code
-     * @param validationErrors Map of field-specific validation error messages
+     * @param responseCode ResponseCode DTO containing HTTP and FMIS codes
+     * @param message      Human-readable response message
+     * @param data         Data payload (optional)
      */
-    public ApiResponse(int code, Map<String, String> validationErrors) {
-        this.code = code;
+    public ApiResponse(ResponseCodeDTO responseCode, String message, T data) {
+        this.code = responseCode.getHttpCode();
+        this.responseCode = responseCode.getFmisCode();
+        this.message = message;
+        this.data = data;
+    }
+
+    /**
+     * Constructor for responses using ResponseCode DTO with no data.
+     *
+     * @param responseCode ResponseCode DTO containing HTTP and FMIS codes
+     * @param message      Human-readable response message
+     */
+    public ApiResponse(ResponseCodeDTO responseCode, String message) {
+        this.code = responseCode.getHttpCode();
+        this.responseCode = responseCode.getFmisCode();
+        this.message = message;
+    }
+
+    /**
+     * Constructor for responses using ResponseCode DTO with validation errors.
+     *
+     * @param responseCode      ResponseCode DTO containing HTTP and FMIS codes
+     * @param validationErrors  Map of field-specific error messages
+     */
+    public ApiResponse(ResponseCodeDTO responseCode, Map<String, String> validationErrors) {
+        this.code = responseCode.getHttpCode();
+        this.responseCode = responseCode.getFmisCode();
         this.message = "Validation failed";
         this.error = (T) validationErrors;
     }
 
-    /* Static Factory Methods */
-
-    /**
-     * Creates a successful response with data payload.
-     *
-     * @param data Data payload
-     * @return ApiResponse instance with success status
-     * @param <T> Type of the data payload
-     */
-    public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(data);
-    }
-
-    /**
-     * Creates an error response with custom code and message.
-     *
-     * @param code    Error status code
-     * @param message Error description
-     * @return ApiResponse instance with error details
-     */
-    public static ApiResponse<?> error(int code, String message) {
-        return new ApiResponse<>(code, message);
-    }
-
-    /**
-     * Creates an error response with custom code, message, and optional data.
-     *
-     * @param code    Error status code
-     * @param message Error description
-     * @param data    Additional error data
-     * @return ApiResponse instance with error details
-     * @param <T> Type of the error data
-     */
-    public static <T> ApiResponse<T> error(int code, String message, T data) {
-        return new ApiResponse<>(code, message, data);
-    }
-
-    // Manually defined getters and setters
     public int getCode() {
         return code;
     }
 
     public void setCode(int code) {
         this.code = code;
+    }
+
+    public String getResponseCode() {
+        return responseCode;
+    }
+
+    public void setResponseCode(String responseCode) {
+        this.responseCode = responseCode;
     }
 
     public String getMessage() {
