@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ResponseCodeDTO;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResourceNotFoundException;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.exception.ResourceNotFoundException;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseCodeUtil;
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
+package com.fmis.fmis_proxy_intf.fmis_proxy_intf.exception;
 
 /**
  * Custom exception to handle cases where a resource is not found.

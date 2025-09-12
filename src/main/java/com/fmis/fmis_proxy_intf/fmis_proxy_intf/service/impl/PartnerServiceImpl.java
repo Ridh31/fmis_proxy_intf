@@ -1,10 +1,9 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.impl;
 
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.PartnerRepository;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.PartnerService;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResourceNotFoundException;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.exception.ResourceNotFoundException;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseMessageUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
