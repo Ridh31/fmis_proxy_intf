@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<body>
+<div layout:fragment="content">
+    <div class="content-card">
+
+        <!-- Card Title -->
+        <div class="card-header">
+            <h2 th:text="${heading}"></h2>
+        </div>
+
+        <!-- Input Parameters -->
+        <div class="card-body">
+            <div class="filter-form">
+                <div class="input-group">
+                    <label for="categorySelect">CATEGORY</label>
+                    <select class="select" id="categorySelect" title="Select a category">
+                        <option value="" selected>All</option>
+                        <option th:value="${apiPrefix + '/sarmis/fmis-purchase-orders'}">Batch Purchase Orders</option>
+                        <option th:value="${apiPrefix + '/sarmis/fmis-purchase-orders-callback'}">Batch Purchase Orders Callback</option>
+                        <option th:value="${apiPrefix + '/sarmis/long-term-asset-report'}">Long Term Asset Report</option>
+                        <option th:value="${apiPrefix + '/sarmis/depreciation-asset-report'}">Depreciation Asset Report</option>
+                        <option th:value="${apiPrefix + '/sarmis/institution-closing-list'}">Institution Closing List</option>
+                        <option th:value="${apiPrefix + '/sarmis/asset-kind-list'}">Asset Kind List</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="interfaceCode">INTERFACE CODE</label>
+                    <input id="interfaceCode" type="text" placeholder="ххх - ххх - ххх" title="Enter interface code">
+                </div>
+                <div class="input-group">
+                    <label for="purchaseOrderId">PURCHASE ORDER ID</label>
+                    <input id="purchaseOrderId" type="text" placeholder="Purchase Order ID" title="Enter purchase order id">
+                </div>
+                <div class="input-group">
+                    <label for="actionDate">ACTION DATE</label>
+                    <input id="actionDate" type="text" title="Select action date" placeholder="ᴅᴅ / ᴍᴍ / ʏʏʏʏ">
+                </div>
+                <div class="input-group">
+                    <label for="statusSelect">STATUS</label>
+                    <select class="select" id="statusSelect" title="Select a status">
+                        <option value="" selected>All</option>
+                        <option class="success" value="true">Processed</option>
+                        <option class="error" value="false">Failed</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" id="filter-button" class="btn-primary">Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card-table">
+        <table id="logTable" class="datatable">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Interface Code</th>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Status</th>
+                <th>Action Date</th>
+                <th>Payload</th>
+                <th>Response</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-close" onclick="closeModal()">&times;</span>
+                <h2 id="modalTitle">Records</h2>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+    <script th:src="@{/js/sarmis-interface-log.js}"></script>
+</div>
+</body>
+</html>

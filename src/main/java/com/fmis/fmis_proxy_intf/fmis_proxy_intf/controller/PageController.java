@@ -13,11 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -108,58 +109,93 @@ public class PageController {
     }
 
     /**
+     * Adds commonly used admin page URLs to the model for use in views.
+     * Each attribute corresponds to a specific menu or page link in the admin interface.
+     */
+    @ModelAttribute
+    public void addMenuUrls(Model model) {
+        model.addAttribute("loginUrl", apiPrefix + "/admin/login");
+        model.addAttribute("logoutUrl", apiPrefix + "/admin/logout");
+        model.addAttribute("dashboardUrl", apiPrefix + "/admin/dashboard");
+        model.addAttribute("bankStatementUrl", apiPrefix + "/admin/bank-statement-log");
+        model.addAttribute("sarmisInterfaceUrl", apiPrefix + "/admin/sarmis-interface-log");
+        model.addAttribute("internalCamDigiKeyUrl", apiPrefix + "/admin/internal-camdigikey");
+        model.addAttribute("securityServerUrl", apiPrefix + "/admin/security-server");
+        model.addAttribute("partnerManagementUrl", apiPrefix + "/admin/partner-management");
+        model.addAttribute("fmisConfigUrl", apiPrefix + "/admin/fmis-config");
+    }
+
+    /**
      * Handles GET requests to the bank statement log page.
      *
      * @return ResponseEntity containing the bank statement log HTML page or an error message if the file is not found.
      */
-    @GetMapping("/bank-statement-log")
-    public Object bankStatementLog(
+    @GetMapping("/dashboard")
+    public String dashboard(
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
             @CookieValue(name = "adminUsername", required = false) String adminUsername,
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
             HttpServletResponse response
     ) {
+        // Check authentication
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView(apiPrefix + "/admin/login");
+            return "redirect:" + apiPrefix + "/admin/login";
         }
 
-        try {
-            Optional<User> userOptional = userService.findByUsername(adminUsername);
-            String partnerToken = userOptional.get().getPartner().getPublicKey();
+        // Load user and partner info
+        User user = userService.findByUsername(adminUsername).orElseThrow();
+        String partnerToken = user.getPartner().getPublicKey();
 
-            Resource resource = new ClassPathResource("templates/bank-statement-log.html");
-            String title = "Bank Statement History | FMIS Proxy Interface";
-            String heading = "Bank Statement History";
-            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
-            content = content.replace("{{title}}", title)
-                    .replace("{{heading}}", heading)
-                    .replace("{{username}}", adminUsername)
-                    .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken)
-                    .replace("{{apiPrefix}}", apiPrefix);
+        // Set cookies again (optional)
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
 
-            // Set cookie expire duration
-            CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
-            CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
-            CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "Dashboard | FMIS Proxy Interface");
+        model.addAttribute("heading", "Dashboard");
+        model.addAttribute("username", adminUsername);
+        model.addAttribute("password", adminPassword);
+        model.addAttribute("partnerToken", partnerToken);
+        model.addAttribute("apiPrefix", apiPrefix);
+        model.addAttribute("currentPage", "dashboard");
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
+        return "pages/dashboard";
+    }
 
-            return new ResponseEntity<>(
-                    content.getBytes(StandardCharsets.UTF_8),
-                    headers,
-                    HttpStatus.OK
-            );
-        } catch (IOException e) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-            return new ResponseEntity<>(
-                    "Error loading file.".getBytes(),
-                    headers,
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
+    @GetMapping("/bank-statement-log")
+    public String bankStatementLog(
+            @CookieValue(name = "isAdmin", required = false) String isAdmin,
+            @CookieValue(name = "adminUsername", required = false) String adminUsername,
+            @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
+            HttpServletResponse response
+    ) {
+        // Check authentication
+        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
+            return "redirect:" + apiPrefix + "/admin/login";
         }
+
+        // Load user and partner info
+        User user = userService.findByUsername(adminUsername).orElseThrow();
+        String partnerToken = user.getPartner().getPublicKey();
+
+        // Set cookies again (optional)
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "Bank Statement | FMIS Proxy Interface");
+        model.addAttribute("heading", "Bank Statement");
+        model.addAttribute("username", adminUsername);
+        model.addAttribute("password", adminPassword);
+        model.addAttribute("partnerToken", partnerToken);
+        model.addAttribute("apiPrefix", apiPrefix);
+        model.addAttribute("currentPage", "bank-statement-log");
+
+        return "pages/bank-statement-log";
     }
 
     /**
@@ -168,53 +204,37 @@ public class PageController {
      * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
      */
     @GetMapping("/sarmis-interface-log")
-    public Object sarmisInterfaceLog(
+    public String sarmisInterfaceLog(
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
             @CookieValue(name = "adminUsername", required = false) String adminUsername,
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
             HttpServletResponse response
     ) {
+        // Check authentication
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView(apiPrefix + "/admin/login");
+            return "redirect:" + apiPrefix + "/admin/login";
         }
 
-        try {
-            Optional<User> userOptional = userService.findByUsername(adminUsername);
-            String partnerToken = userOptional.get().getPartner().getPublicKey();
+        // Load user and partner info
+        User user = userService.findByUsername(adminUsername).orElseThrow();
+        String partnerToken = user.getPartner().getPublicKey();
 
-            Resource resource = new ClassPathResource("templates/sarmis-interface-log.html");
-            String title = "SARMIS Interface History | FMIS Proxy Interface";
-            String heading = "SARMIS Interface History";
-            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
-            content = content.replace("{{title}}", title)
-                    .replace("{{heading}}", heading)
-                    .replace("{{username}}", adminUsername)
-                    .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken)
-                    .replace("{{apiPrefix}}", apiPrefix);
+        // Set cookies again (optional)
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
 
-            // Set cookie expire duration
-            CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
-            CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
-            CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "SARMIS Interface | FMIS Proxy Interface");
+        model.addAttribute("heading", "SARMIS Interface");
+        model.addAttribute("username", adminUsername);
+        model.addAttribute("password", adminPassword);
+        model.addAttribute("partnerToken", partnerToken);
+        model.addAttribute("apiPrefix", apiPrefix);
+        model.addAttribute("currentPage", "sarmis-interface-log");
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
-
-            return new ResponseEntity<>(
-                    content.getBytes(StandardCharsets.UTF_8),
-                    headers,
-                    HttpStatus.OK
-            );
-        } catch (IOException e) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-            return new ResponseEntity<>(
-                    "Error loading file.".getBytes(),
-                    headers,
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
+        return "pages/sarmis-interface-log";
     }
 
     /**
@@ -227,49 +247,33 @@ public class PageController {
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
             @CookieValue(name = "adminUsername", required = false) String adminUsername,
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
             HttpServletResponse response
     ) {
+        // Check authentication
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView(apiPrefix + "/admin/login");
+            return "redirect:" + apiPrefix + "/admin/login";
         }
 
-        try {
-            Optional<User> userOptional = userService.findByUsername(adminUsername);
-            String partnerToken = userOptional.get().getPartner().getPublicKey();
+        // Load user and partner info
+        User user = userService.findByUsername(adminUsername).orElseThrow();
+        String partnerToken = user.getPartner().getPublicKey();
 
-            Resource resource = new ClassPathResource("templates/internal-camdigikey.html");
-            String title = "Internal CamDigiKey | FMIS Proxy Interface";
-            String heading = "Internal CamDigiKey";
-            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
-            content = content.replace("{{title}}", title)
-                    .replace("{{heading}}", heading)
-                    .replace("{{username}}", adminUsername)
-                    .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken)
-                    .replace("{{apiPrefix}}", apiPrefix);
+        // Set cookies again (optional)
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
 
-            // Set cookie expire duration
-            CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
-            CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
-            CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "Internal CamDigiKey | FMIS Proxy Interface");
+        model.addAttribute("heading", "Internal CamDigiKey");
+        model.addAttribute("username", adminUsername);
+        model.addAttribute("password", adminPassword);
+        model.addAttribute("partnerToken", partnerToken);
+        model.addAttribute("apiPrefix", apiPrefix);
+        model.addAttribute("currentPage", "internal-camdigikey");
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
-
-            return new ResponseEntity<>(
-                    content.getBytes(StandardCharsets.UTF_8),
-                    headers,
-                    HttpStatus.OK
-            );
-        } catch (IOException e) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-            return new ResponseEntity<>(
-                    "Error loading file.".getBytes(),
-                    headers,
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
+        return "pages/internal-camdigikey";
     }
 
     /**
@@ -278,53 +282,37 @@ public class PageController {
      * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
      */
     @GetMapping("/security-server")
-    public Object securityServer(
+    public String securityServer(
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
             @CookieValue(name = "adminUsername", required = false) String adminUsername,
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
             HttpServletResponse response
     ) {
+        // Check authentication
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView(apiPrefix + "/admin/login");
+            return "redirect:" + apiPrefix + "/admin/login";
         }
 
-        try {
-            Optional<User> userOptional = userService.findByUsername(adminUsername);
-            String partnerToken = userOptional.get().getPartner().getPublicKey();
+        // Load user and partner info
+        User user = userService.findByUsername(adminUsername).orElseThrow();
+        String partnerToken = user.getPartner().getPublicKey();
 
-            Resource resource = new ClassPathResource("templates/security-server.html");
-            String title = "Security Server | FMIS Proxy Interface";
-            String heading = "Security Server";
-            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
-            content = content.replace("{{title}}", title)
-                    .replace("{{heading}}", heading)
-                    .replace("{{username}}", adminUsername)
-                    .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken)
-                    .replace("{{apiPrefix}}", apiPrefix);
+        // Set cookies again (optional)
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
 
-            // Set cookie expire duration
-            CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
-            CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
-            CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "Security Server | FMIS Proxy Interface");
+        model.addAttribute("heading", "Security Server");
+        model.addAttribute("username", adminUsername);
+        model.addAttribute("password", adminPassword);
+        model.addAttribute("partnerToken", partnerToken);
+        model.addAttribute("apiPrefix", apiPrefix);
+        model.addAttribute("currentPage", "security-server");
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
-
-            return new ResponseEntity<>(
-                    content.getBytes(StandardCharsets.UTF_8),
-                    headers,
-                    HttpStatus.OK
-            );
-        } catch (IOException e) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-            return new ResponseEntity<>(
-                    "Error loading file.".getBytes(),
-                    headers,
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
+        return "pages/security-server";
     }
 
     /**
@@ -333,53 +321,37 @@ public class PageController {
      * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
      */
     @GetMapping("/partner-management")
-    public Object partnership(
+    public Object partnerManagement(
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
             @CookieValue(name = "adminUsername", required = false) String adminUsername,
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
             HttpServletResponse response
     ) {
+        // Check authentication
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView(apiPrefix + "/admin/login");
+            return "redirect:" + apiPrefix + "/admin/login";
         }
 
-        try {
-            Optional<User> userOptional = userService.findByUsername(adminUsername);
-            String partnerToken = userOptional.get().getPartner().getPublicKey();
+        // Load user and partner info
+        User user = userService.findByUsername(adminUsername).orElseThrow();
+        String partnerToken = user.getPartner().getPublicKey();
 
-            Resource resource = new ClassPathResource("templates/partner-management.html");
-            String title = "Partner Management | FMIS Proxy Interface";
-            String heading = "Partner Management";
-            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
-            content = content.replace("{{title}}", title)
-                    .replace("{{heading}}", heading)
-                    .replace("{{username}}", adminUsername)
-                    .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken)
-                    .replace("{{apiPrefix}}", apiPrefix);
+        // Set cookies again (optional)
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
 
-            // Set cookie expire duration
-            CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
-            CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
-            CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "Partner | FMIS Proxy Interface");
+        model.addAttribute("heading", "Partner");
+        model.addAttribute("username", adminUsername);
+        model.addAttribute("password", adminPassword);
+        model.addAttribute("partnerToken", partnerToken);
+        model.addAttribute("apiPrefix", apiPrefix);
+        model.addAttribute("currentPage", "partner-management");
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
-
-            return new ResponseEntity<>(
-                    content.getBytes(StandardCharsets.UTF_8),
-                    headers,
-                    HttpStatus.OK
-            );
-        } catch (IOException e) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-            return new ResponseEntity<>(
-                    "Error loading file.".getBytes(),
-                    headers,
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
+        return "pages/partner-management";
     }
 
     /**
@@ -392,48 +364,32 @@ public class PageController {
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
             @CookieValue(name = "adminUsername", required = false) String adminUsername,
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
             HttpServletResponse response
     ) {
+        // Check authentication
         if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return new RedirectView(apiPrefix + "/admin/login");
+            return "redirect:" + apiPrefix + "/admin/login";
         }
 
-        try {
-            Optional<User> userOptional = userService.findByUsername(adminUsername);
-            String partnerToken = userOptional.get().getPartner().getPublicKey();
+        // Load user and partner info
+        User user = userService.findByUsername(adminUsername).orElseThrow();
+        String partnerToken = user.getPartner().getPublicKey();
 
-            Resource resource = new ClassPathResource("templates/fmis-config.html");
-            String title = "Configuration | FMIS Proxy Interface";
-            String heading = "FMIS Configuration";
-            String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
-            content = content.replace("{{title}}", title)
-                    .replace("{{heading}}", heading)
-                    .replace("{{username}}", adminUsername)
-                    .replace("{{password}}", adminPassword)
-                    .replace("{{partnerToken}}", partnerToken)
-                    .replace("{{apiPrefix}}", apiPrefix);
+        // Set cookies again (optional)
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
 
-            // Set cookie expire duration
-            CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
-            CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
-            CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "Integration Gateway | FMIS Proxy Interface");
+        model.addAttribute("heading", "Integration Gateway");
+        model.addAttribute("username", adminUsername);
+        model.addAttribute("password", adminPassword);
+        model.addAttribute("partnerToken", partnerToken);
+        model.addAttribute("apiPrefix", apiPrefix);
+        model.addAttribute("currentPage", "fmis-config");
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/html; charset=UTF-8");
-
-            return new ResponseEntity<>(
-                    content.getBytes(StandardCharsets.UTF_8),
-                    headers,
-                    HttpStatus.OK
-            );
-        } catch (IOException e) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
-            return new ResponseEntity<>(
-                    "Error loading file.".getBytes(),
-                    headers,
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
+        return "pages/fmis-config";
     }
 }

@@ -12,17 +12,12 @@ const baseUrl = window.location.origin;
 const url = `${baseUrl}${apiPrefix}/internal/camdigikey/list-host`;
 
 // Elements references
-const filterBtn = document.querySelector(".filter-button");
+const filterBtn = document.querySelector("#filter-button");
 let fullData = [];
-let modalContent = $(".modal-content");
+let logTable = $("#logTable");
 
 // Initialize jQuery UI draggable for modal and flatpickr datepicker
 $(() => {
-    modalContent.draggable({
-        handle: ".modal-header",
-        cursor: "move"
-    });
-
     flatpickr("#createdDate", {
         dateFormat: "d/m/Y",
         allowInput: true
@@ -34,7 +29,7 @@ $(() => {
  * Clears existing table body and shows a single row with "Loading..." message.
  */
 function showLoading() {
-    const tbody = document.querySelector("#internalCamDigiKeyTable tbody");
+    const tbody = document.querySelector("#logTable tbody");
     tbody.innerHTML = "";
 
     const row = document.createElement("tr");
@@ -52,7 +47,7 @@ function showLoading() {
  * Remove the "Loading..." row from the table body after data has loaded.
  */
 function hideLoading() {
-    const tbody = document.querySelector("#internalCamDigiKeyTable tbody");
+    const tbody = document.querySelector("#logTable tbody");
     const rows = tbody.querySelectorAll("tr");
 
     rows.forEach(row => {
@@ -63,52 +58,40 @@ function hideLoading() {
 }
 
 /**
- * Fetch data from the API with optional filters, then render the data table.
- * Shows loading indicator during fetch and handles errors gracefully.
+ * Show error when fetching data
+ *
+ * @param message - The data to display.
+ */
+function showError(message) {
+    const tbody = document.querySelector("#logTable tbody");
+    tbody.innerHTML = "";
+
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 11;
+    cell.style.textAlign = "center";
+    cell.style.color = "red";
+    cell.style.fontWeight = "bold";
+    cell.style.padding = "0.75rem";
+    cell.innerText = message || "Error fetching data.";
+    row.appendChild(cell);
+    tbody.appendChild(row);
+}
+
+/**
+ * Loads or refreshes the DataTable.
+ * - Calls renderTable() on first load.
+ * - Uses ajax.reload() for filter changes.
  */
 async function fetchData() {
-    const tbody = document.querySelector("#internalCamDigiKeyTable tbody");
-    tbody.innerHTML = "";
     showLoading();
 
-    // Collect filter values from input fields
-    const name = document.getElementById("name").value;
-    const appKey = document.getElementById("appKey").value;
-    const ipAddress = document.getElementById("ipAddress").value;
-    const accessURL = document.getElementById("accessURL").value;
-    const createdDate = document.getElementById("createdDate").value;
-
-    // Prepare query parameters based on filled filters
-    const params = new URLSearchParams();
-    if (name) params.append("name", name);
-    if (appKey) params.append("appKey", appKey);
-    if (ipAddress) params.append("ipAddress", ipAddress);
-    if (accessURL) params.append("accessURL", accessURL);
-    if (createdDate) params.append("createdDate", formatDate(createdDate));
-
-    try {
-        const response = await fetch(`${url}?${params.toString()}`, {
-            headers: {
-                "Authorization": `Basic ${basicAuth}`,
-                "X-Partner-Token": partnerToken
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        // Normalize data array for rendering
-        fullData = Array.isArray(responseData?.data) ? responseData.data : (responseData?.data?.content || []);
-        renderTable();
-
-    } catch (err) {
-        console.error("Fetch failed:", err);
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error fetching data.</td></tr>`;
-    } finally {
-        hideLoading();
+    if ($.fn.DataTable.isDataTable("#logTable")) {
+        logTable.DataTable().ajax.reload();
+        return;
     }
+
+    renderTable();
 }
 
 /**
@@ -122,45 +105,78 @@ function formatDate(input) {
 }
 
 /**
- * Render the data table using DataTables jQuery plugin.
- * Reinitializes DataTable if already initialized.
+ * Initializes the DataTable for CamDigikey logs with server-side processing.
+ * - Fetches only the current page from the server.
+ * - Applies filters dynamically.
+ * - Shows loading spinner during AJAX requests.
  */
 function renderTable() {
-    let table = $('#internalCamDigiKeyTable');
-
-    if ($.fn.DataTable.isDataTable('#internalCamDigiKeyTable')) {
-        table.DataTable().destroy();
+    if ($.fn.DataTable.isDataTable("#logTable")) {
+        logTable.DataTable().destroy();
     }
 
-    table.DataTable({
-        data: fullData.map((item, i) => [
-            i + 1,
-            item.name,
-            item.appKey,
-            item.ipAddress,
-            item.accessURL,
-            item.createdDate || 'N/A',
-            `<span class="view-link" data-index='${i}'>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 24 24" fill="none">
-                    <path d="M21.2799 6.40005L11.7399 15.94C10.7899 16.89 7.96987 17.33 7.33987 16.7C6.70987 16.07 7.13987 13.25 8.08987 12.3L17.6399 2.75002C17.8754 2.49308 18.1605 2.28654 18.4781 2.14284C18.7956 1.99914 19.139 1.92124 19.4875 1.9139C19.8359 1.90657 20.1823 1.96991 20.5056 2.10012C20.8289 2.23033 21.1225 2.42473 21.3686 2.67153C21.6147 2.91833 21.8083 3.21243 21.9376 3.53609C22.0669 3.85976 22.1294 4.20626 22.1211 4.55471C22.1128 4.90316 22.0339 5.24635 21.8894 5.5635C21.7448 5.88065 21.5375 6.16524 21.2799 6.40005V6.40005Z" stroke="#1A73E8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M11 4H6C4.93913 4 3.92178 4.42142 3.17163 5.17157C2.42149 5.92172 2 6.93913 2 8V18C2 19.0609 2.42149 20.0783 3.17163 20.8284C3.92178 21.5786 4.93913 22 6 22H17C19.21 22 20 20.2 20 18V13" stroke="#1A73E8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>`
-        ]),
-        columns: [
-            { title: "#" },
-            { title: "Name" },
-            { title: "App Key" },
-            { title: "IP Address" },
-            { title: "Access URL" },
-            { title: "Created Date" },
-            { title: "Action" }
-        ],
+    const table = logTable.DataTable({
+        serverSide: true,
+        processing: true,
         pageLength: 10,
-        lengthMenu: [10, 25, 50, 100],
         scrollX: true,
-        destroy: true
+        scrollCollapse: true,
+        lengthMenu: [10, 25, 50, 100, 200],
+        fixedHeader: true,
+        ajax: {
+            url: url,
+            type: "GET",
+            data: function (d) {
+                const page = Math.floor(d.start / d.length);
+                return {
+                    page: page,
+                    size: d.length,
+                    name: document.getElementById("name").value || undefined,
+                    appKey: document.getElementById("appKey").value || undefined,
+                    ipAddress: document.getElementById("ipAddress").value || undefined,
+                    accessURL: document.getElementById("accessURL").value || undefined,
+                    createdDate: document.getElementById("createdDate").value
+                        ? formatDate(document.getElementById("createdDate").value)
+                        : undefined
+                };
+            },
+            beforeSend: showLoading,
+            complete: hideLoading,
+            headers: {
+                "Authorization": `Basic ${basicAuth}`,
+                "X-Partner-Token": partnerToken
+            },
+            dataSrc: function (json) {
+                json.recordsTotal = json?.data?.totalElements || 0;
+                json.recordsFiltered = json?.data?.totalElements || 0;
+                return json?.data?.content || [];
+            },
+            error: function () {
+                showError("Error fetching data");
+            }
+        },
+        columns: [
+            { data: null, title: "#", render: (data, type, row, meta) => meta.row + 1 },
+            { data: "name", title: "Name" },
+            { data: "appKey", title: "App Key" },
+            { data: "ipAddress", title: "IP Address" },
+            { data: "accessURL", title: "Access URL" },
+            { data: "createdDate", title: "Created Date", defaultContent: "N/A" },
+            {
+                data: null,
+                title: "Action",
+                render: () => `
+                    <span class="edit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#1A73E8" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/>
+                        </svg>
+                    </span>`
+            }
+        ]
     });
+
+    // attach handler once per render
+    attachEditHandler(table);
 }
 
 // Variable to track the currently edited item ID
@@ -171,6 +187,11 @@ let currentEditId = null;
  * @param {object} item - Data item to edit
  */
 function openEditModal(item) {
+    if (!item) {
+        console.error("No row data found for edit");
+        return;
+    }
+
     currentEditId = item.id;
 
     document.getElementById("modalName").value = item.name || "";
@@ -179,6 +200,16 @@ function openEditModal(item) {
     document.getElementById("modalURL").value = item.accessURL || "";
 
     document.getElementById("modal").style.display = "flex";  // Show modal
+}
+
+/**
+ * Attach edit handler to table
+ */
+function attachEditHandler(table) {
+    $('#logTable').off('click', '.edit-link').on('click', '.edit-link', function () {
+        const rowData = table.row($(this).closest('tr')).data(); // ✅ always works
+        openEditModal(rowData);
+    });
 }
 
 /**
@@ -219,7 +250,7 @@ function showError(input, message) {
     let errorElem = input.nextElementSibling;
     if (!errorElem || !errorElem.classList.contains("error-message")) {
         errorElem = document.createElement("div");
-        errorElem.className = "error-message text-red-600 text-sm";
+        errorElem.className = "error-message";
         input.parentNode.insertBefore(errorElem, input.nextSibling);
     }
     errorElem.textContent = message;
@@ -357,29 +388,9 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
     }
 });
 
-// Attach event listener to view icons inside the table to open modal with data for editing
-$("#internalCamDigiKeyTable tbody").on("click", ".view-link", function () {
-    const index = $(this).data("index");
-    const item = fullData[index];
-    openEditModal(item);
-});
-
 // Filter button triggers data fetch with current filter inputs
 filterBtn.addEventListener("click", () => {
     fetchData();
-});
-
-// Logout button clears cookies and redirects to login page
-document.querySelector(".btn-logout")?.addEventListener("click", () => {
-    const deleteCookie = name => {
-        document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax;`;
-    };
-
-    deleteCookie("isAdmin");
-    deleteCookie("adminUsername");
-    deleteCookie("adminPassword");
-
-    window.location.href = `${apiPrefix}/admin/login`;
 });
 
 // Initial data fetch on page load

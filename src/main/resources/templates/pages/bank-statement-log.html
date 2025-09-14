@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<body>
+<div layout:fragment="content">
+    <div class="content-card">
+
+        <!-- Card Title -->
+        <div class="card-header">
+            <h2 th:text="${heading}"></h2>
+        </div>
+
+        <!-- Input Parameters -->
+        <div class="card-body">
+            <div class="filter-form">
+                <div class="input-group">
+                    <label for="partner">BANK PARTNER</label>
+                    <select class="select" id="partner" title="Select a bank partner">
+                        <option value="" selected>All</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="bankAccount">BANK ACCOUNT NUMBER</label>
+                    <input id="bankAccount" type="text" placeholder="ххх - ххх - ххх" title="Enter bank account number">
+                </div>
+                <div class="input-group">
+                    <label for="statementId">STATEMENT ID</label>
+                    <input id="statementId" type="text" placeholder="Statement ID" title="Enter statement id">
+                </div>
+                <div class="input-group">
+                    <label for="statementDate">STATEMENT DATE</label>
+                    <input id="statementDate" type="text" title="Select statement date" placeholder="ᴅᴅ / ᴍᴍ / ʏʏʏʏ">
+                </div>
+                <div class="input-group">
+                    <label for="importedDate">IMPORTED DATE</label>
+                    <input id="importedDate" type="text" title="Select import date" placeholder="ᴅᴅ / ᴍᴍ / ʏʏʏʏ">
+                </div>
+                <div class="input-group">
+                    <label for="status">STATUS</label>
+                    <select class="select" id="status" title="Select a status">
+                        <option value="" selected>All</option>
+                        <option class="success" value="true">Processed</option>
+                        <option class="error" value="false">Failed</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" id="filter-button" class="btn-primary">Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card-table">
+        <table id="logTable" class="datatable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Bank Account</th>
+                    <th>Statement ID</th>
+                    <th>Statement Date</th>
+                    <th>Status</th>
+                    <th>Method</th>
+                    <th>Endpoint</th>
+                    <th>Imported By</th>
+                    <th>Imported Date</th>
+                    <th>Action</th>
+                    <th>Export</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-close" onclick="closeModal()">&times;</span>
+                <h2 id="modalTitle">Statement Records</h2>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+    <script th:src="@{/js/bank-statement-log.js}"></script>
+</div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<body>
+<div layout:fragment="content">
+    <div class="content-card">
+
+        <!-- Card Title -->
+        <div class="card-header">
+            <h2 th:text="${heading}"></h2>
+        </div>
+
+        <!-- Input Parameters -->
+        <div class="card-body">
+            <div class="filter-form">
+                <div class="input-group">
+                    <label for="name">NAME</label>
+                    <input id="name" type="text" placeholder="Name" title="Enter name">
+                </div>
+                <div class="input-group">
+                    <label for="identifier">IDENTIFIER</label>
+                    <input id="identifier" type="text" placeholder="Identifier" title="Enter identifier">
+                </div>
+                <div class="input-group">
+                    <label for="systemCode">SYSTEM CODE</label>
+                    <input id="systemCode" type="text" placeholder="System Code" title="Enter System Code">
+                </div>
+                <div class="input-group">
+                    <label for="description">DESCRIPTION</label>
+                    <input id="description" type="text" placeholder="Description" title="Enter description">
+                </div>
+                <div class="input-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" id="filter-button" class="btn-primary">Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card-table">
+        <table id="logTable" class="datatable">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Identifier</th>
+                <th>System Code</th>
+                <th>Bank</th>
+                <th>Description</th>
+                <th>Secret</th>
+                <th>Key</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span id="modalClose" class="modal-close">&times;</span>
+            <h2 id="modalTitle">Edit Partner</h2>
+            <div id="modalBody">
+                <form id="editPartnerForm" class="modal-form">
+                    <div class="input-group">
+                        <label for="modalName">Name</label>
+                        <input type="text" id="modalName" name="name"/>
+                        <div class="error-message" id="errorName"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalIdentifier">Identifier</label>
+                        <input type="text" id="modalIdentifier" name="identifier"/>
+                        <div class="error-message" id="errorIdentifier"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalSystemCode">System Code</label>
+                        <input type="text" id="modalSystemCode" name="systemCode"/>
+                        <div class="error-message" id="errorSystemCode"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalCode">Secret</label>
+                        <input type="text" id="modalCode" name="code"/>
+                        <div class="error-message" id="errorCode"></div>
+                    </div>
+                    <div class="input-group description-group">
+                        <label for="modalDescription">Description</label>
+                        <textarea id="modalDescription" name="description"></textarea>
+                        <div class="error-message" id="errorDescription"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                <button type="submit" form="editPartnerForm" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    <script th:src="@{/js/partner-management.js}"></script>
+</div>
+</body>
+</html>

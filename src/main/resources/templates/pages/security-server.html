@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base}">
+<body>
+<div layout:fragment="content">
+    <div class="content-card">
+
+        <!-- Card Title -->
+        <div class="card-header">
+            <h2 th:text="${heading}"></h2>
+        </div>
+
+        <!-- Input Parameters -->
+        <div class="card-body">
+            <div class="filter-form">
+                <div class="input-group">
+                    <label for="name">NAME</label>
+                    <input id="name" type="text" placeholder="Name" title="Enter name">
+                </div>
+                <div class="input-group">
+                    <label for="configKey">CONFIG KEY</label>
+                    <input id="configKey" type="text" placeholder="Config Key" title="Enter config key">
+                </div>
+                <div class="input-group">
+                    <label for="description">DESCRIPTION</label>
+                    <input id="description" type="text" placeholder="Description" title="Enter description">
+                </div>
+                <div class="input-group">
+                    <label for="createdDate">CREATED DATE</label>
+                    <input id="createdDate" type="text" title="Select created date" placeholder="ᴅᴅ / ᴍᴍ / ʏʏʏʏ">
+                </div>
+                <div class="input-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" id="filter-button" class="btn-primary">Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card-table">
+        <table id="logTable" class="datatable">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Config Key</th>
+                <th>Base URL</th>
+                <th>Endpoint</th>
+                <th>Subsystem</th>
+                <th>Username</th>
+                <th>Password</th>
+                <th>Content Type</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span id="modalClose" class="modal-close">&times;</span>
+            <h2 id="modalTitle">Edit Server Configuration</h2>
+            <div id="modalBody">
+                <form id="editServerForm" class="modal-form">
+                    <div class="input-group">
+                        <label for="modalName">Name</label>
+                        <input type="text" id="modalName" name="name"/>
+                        <div class="error-message" id="errorName"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalConfigKey">App Key</label>
+                        <input type="text" id="modalConfigKey" name="configKey"/>
+                        <div class="error-message" id="errorConfigKey"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalBaseURL">Base URL</label>
+                        <input type="text" id="modalBaseURL" name="baseURL"/>
+                        <div class="error-message" id="errorBaseURL"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalEndpoint">Endpoint</label>
+                        <input type="text" id="modalEndpoint" name="endpoint"/>
+                        <div class="error-message" id="errorEndpoint"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalSubsystem">Subsystem</label>
+                        <input type="text" id="modalSubsystem" name="subsystem"/>
+                        <div class="error-message" id="errorSubsystem"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalContentType">ContentType</label>
+                        <input type="text" id="modalContentType" name="contentType"/>
+                        <div class="error-message" id="errorContentType"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalUsername">Username</label>
+                        <input type="text" id="modalUsername" name="username"/>
+                        <div class="error-message" id="errorUsername"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalPassword">Password</label>
+                        <input type="text" id="modalPassword" name="password"/>
+                        <div class="error-message" id="errorPassword"></div>
+                    </div>
+                    <div class="input-group description-group">
+                        <label for="modalDescription">Description</label>
+                        <textarea id="modalDescription" name="description"></textarea>
+                        <div class="error-message" id="errorDescription"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                <button type="submit" form="editServerForm" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    <script th:src="@{/js/security-server.js}"></script>
+</div>
+</body>
+</html>

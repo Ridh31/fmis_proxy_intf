@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Login form submission handler
     form.addEventListener("submit", async function (e) {
-        e.preventDefault(); // Prevent default form behavior (page reload)
+        e.preventDefault();
 
         let isValid = true;
 
@@ -49,18 +49,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!isValid) return;
 
-        // Show spinner and disable button during request
+        // Show spinner
         loginBtn.disabled = true;
         spinner.style.display = "inline-block";
         buttonText.style.display = "none";
 
-        // Build form data
         const formData = new FormData();
         formData.append("username", username.value.trim());
         formData.append("password", password.value.trim());
 
         try {
-            // Send login credentials to API
             const response = await fetch(`${window.location.origin}${apiPrefix}/auth/verify-admin`, {
                 method: "POST",
                 body: formData
@@ -69,30 +67,30 @@ document.addEventListener("DOMContentLoaded", () => {
             const result = await response.json();
 
             if (result.code === 200 && result.data === true) {
-                // On success, store admin credentials in cookies
+                // Save admin cookies
                 document.cookie = "isAdmin=true; path=/; SameSite=Lax; Secure";
                 document.cookie = `adminUsername=${username.value.trim()}; path=/; SameSite=Lax; Secure`;
                 document.cookie = `adminPassword=${password.value.trim()}; path=/; SameSite=Lax; Secure`;
 
-                // Show the admin modal
-                popupModal.style.display = "flex";
+                // Determine where to redirect
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectTo = urlParams.get("redirect") || `${apiPrefix}/admin/dashboard`;
+
+                // Redirect
+                window.location.href = redirectTo;
             } else {
-                // Show error if credentials are invalid
                 username.classList.add("error");
                 password.classList.add("error");
                 usernameError.textContent = "Access denied: Invalid admin credentials.";
                 usernameError.style.display = "block";
             }
-
         } catch (err) {
-            // Show error if the request fails
             console.error("Error verifying admin: ", err);
             username.classList.add("error");
             password.classList.add("error");
             usernameError.textContent = "An unexpected error occurred. Please try again.";
             usernameError.style.display = "block";
         } finally {
-            // Re-enable the button and reset spinner
             loginBtn.disabled = false;
             spinner.style.display = "none";
             buttonText.style.display = "inline";

@@ -5,10 +5,11 @@ const basicAuth = btoa(`${username}:${password}`);
 const baseUrl = window.location.origin;
 const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 const url = `${baseUrl}${apiPrefix}/list-bank-statement`;
-const filterBtn = document.querySelector(".filter-button");
+const filterBtn = document.querySelector("#filter-button");
 
 let fullData = [];
 const jsonDataMap = {};
+const logTable = $("#logTable");
 let modalContent = $(".modal-content");
 
 $(() => {
@@ -61,14 +62,35 @@ function hideLoading() {
 }
 
 /**
+ * Show error when fetching data
+ *
+ * @param message - The data to display.
+ */
+function showError(message) {
+    const tbody = document.querySelector("#logTable tbody");
+    tbody.innerHTML = "";
+
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 11;
+    cell.style.textAlign = "center";
+    cell.style.color = "red";
+    cell.style.fontWeight = "bold";
+    cell.style.padding = "0.75rem";
+    cell.innerText = message || "Error fetching data.";
+    row.appendChild(cell);
+    tbody.appendChild(row);
+}
+
+/**
  * Asynchronously loads partner options into the select input.
  *
  * Fetches the list of partners from the public API endpoint using basic authentication,
- * then populates the <select> dropdown (`#partnerSelect`) with each partner's identifier and name.
+ * then populates the <select> dropdown (`#partner`) with each partner's identifier and name.
  * Handles API errors gracefully and logs them to the console.
  */
 async function loadPartners() {
-    const partnerSelect = document.getElementById("partnerSelect");
+    const partnerSelect = document.getElementById("partner");
 
     try {
         // Make a request to fetch the list of partners using basic auth
@@ -101,68 +123,20 @@ async function loadPartners() {
 }
 
 /**
- * Fetches paginated bank statement data from the API based on filter inputs,
- * aggregates all pages, and updates the table display.
- * Handles loading state, authorization headers, and errors gracefully.
+ * Loads or refreshes the DataTable.
+ * - Calls renderTable() on first load.
+ * - Uses ajax.reload() for filter changes.
+ * - Maintains custom loading state with showLoading() / hideLoading().
  */
 async function fetchData() {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
     showLoading();
 
-    const bankId = document.getElementById("partnerSelect").value;
-    const account = document.getElementById("bankAccount").value;
-    const statementId = document.getElementById("statementId").value;
-    const statementDate = document.getElementById("statementDate").value;
-    const importedDate = document.getElementById("importedDate").value;
-    const status = document.getElementById("statusSelect").value;
-
-    const params = new URLSearchParams();
-    params.append("size", 100);
-    if (bankId) params.append("bankId", bankId);
-    if (account) params.append("bankAccountNumber", account);
-    if (statementId) params.append("statementId", statementId);
-    if (statementDate) params.append("statementDate", formatDate(statementDate));
-    if (importedDate) params.append("importedDate", formatDate(importedDate));
-    if (status) params.append("status", status);
-
-    try {
-        let allData = [];
-        let currentPage = 0;
-        let totalPages = 1;
-
-        while (currentPage < totalPages) {
-            params.set("page", currentPage);
-
-            const response = await fetch(`${url}?${params.toString()}`, {
-                headers: {
-                    "Authorization": `Basic ${basicAuth}`,
-                    "X-Partner-Token": partnerToken
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            const responseList = data?.data?.content || [];
-            allData = allData.concat(responseList);
-
-            totalPages = data?.data?.totalPages || 1;
-            currentPage++;
-        }
-
-        fullData = allData;
-        renderTable();
-
-    } catch (err) {
-        console.error("Fetch failed:", err);
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: red;">Error fetching data.</td></tr>`;
-    } finally {
-        hideLoading();
+    if ($.fn.DataTable.isDataTable("#logTable")) {
+        logTable.DataTable().ajax.reload();
+        return;
     }
+
+    renderTable();
 }
 
 /**
@@ -176,55 +150,81 @@ function formatDate(input) {
 }
 
 /**
- * Renders the DataTable for bank statement logs.
- * Destroys any existing instance, then initializes a new one
- * using `fullData`, sets columns, pagination, and action handlers.
+ * Initializes the DataTable for bank statement logs with server-side processing.
+ * - Destroys any existing table instance.
+ * - Fetches only the current page from the server using filters.
+ * - Shows a custom spinner during AJAX requests.
+ * - Maps server response to columns and action buttons.
  */
 function renderTable() {
-    let bankStatementDataTable = $('#logTable');
 
     if ($.fn.DataTable.isDataTable("#logTable")) {
-        bankStatementDataTable.DataTable().destroy();
+        logTable.DataTable().destroy();
     }
 
-    bankStatementDataTable.DataTable({
-        data: fullData.map((item, i) => {
-            const filename = generateFilename(item);
-            jsonDataMap[i] = {
-                data: item,
-                filename: filename
-            };
-            return [
-                i + 1,
-                item.bankAccountNumber,
-                item.statementId,
-                item.statementDate,
-                `<span class="${item.status === "Processed" ? "success" : "error"}">${item.status}</span>`,
-                item.method,
-                item.endpoint,
-                item.importedBy || "N/A",
-                item.createdDate || "N/A",
-                `<span class="view-link" data-index="${i}" onclick="handleViewClick(this)">View</span>`,
-                `<span class="download-json" data-index="${i}" onclick="downloadJSON(${i})">📄</span>`
-            ];
-        }),
-        columns: [
-            { title: "#" },
-            { title: "Bank Account" },
-            { title: "Statement ID" },
-            { title: "Statement Date" },
-            { title: "Status" },
-            { title: "Method" },
-            { title: "Endpoint" },
-            { title: "Imported By" },
-            { title: "Imported Date" },
-            { title: "Action" },
-            { title: "Export" }
-        ],
+    logTable.DataTable({
+        serverSide: true,
+        processing: true,
         pageLength: 10,
-        lengthMenu: [10, 25, 50, 100, 200],
         scrollX: true,
-        destroy: true
+        scrollCollapse: true,
+        lengthMenu: [10, 25, 50, 100, 200],
+        fixedColumns: { leftColumns: 2 },
+        ajax: {
+            url: url,
+            type: "GET",
+            data: function (d) {
+                // Map DataTables params to backend params
+                const page = Math.floor(d.start / d.length);
+                const params = {
+                    page: page,
+                    size: d.length,
+                    bankId: document.getElementById("partner").value || undefined,
+                    bankAccountNumber: document.getElementById("bankAccount").value || undefined,
+                    statementId: document.getElementById("statementId").value || undefined,
+                    statementDate: document.getElementById("statementDate").value
+                        ? formatDate(document.getElementById("statementDate").value)
+                        : undefined,
+                    importedDate: document.getElementById("importedDate").value
+                        ? formatDate(document.getElementById("importedDate").value)
+                        : undefined,
+                    status: document.getElementById("status").value || undefined
+                };
+                return params;
+            },
+            beforeSend: function () {
+                showLoading();
+            },
+            complete: function () {
+                hideLoading();
+            },
+            headers: {
+                "Authorization": `Basic ${basicAuth}`,
+                "X-Partner-Token": partnerToken
+            },
+            dataSrc: function (json) {
+                json.recordsTotal = json?.data?.totalElements || 0;
+                json.recordsFiltered = json?.data?.totalElements || 0;
+
+                return json?.data?.content || [];
+            },
+            error: function(xhr, status, error) {
+                showError("Error fetching data");
+            }
+        },
+        columns: [
+            { data: null, title: "#", render: (data, type, row, meta) => meta.row + 1 },
+            { data: "bankAccountNumber", title: "Bank Account" },
+            { data: "statementId", title: "Statement ID" },
+            { data: "statementDate", title: "Statement Date" },
+            { data: "status", title: "Status", render: (data) => `<span class="${data === "Processed" ? "success" : "error"}">${data}</span>` },
+            { data: "method", title: "Method" },
+            { data: "endpoint", title: "Endpoint" },
+            { data: "importedBy", title: "Imported By", defaultContent: "N/A" },
+            { data: "createdDate", title: "Imported Date", defaultContent: "N/A" },
+            { data: null, title: "Action", render: (data, type, row, meta) => `<span class="view-link">View</span>` },
+            { data: null, title: "Export", render: (data, type, row, meta) => `<span class="download-json">📄</span>` }
+        ]
     });
 }
 
@@ -262,10 +262,69 @@ function openModal(item) {
         return;
     }
 
+    let html = "";
+
     const modal = document.getElementById("modal");
     const body = document.getElementById("modalBody");
-
     const message = typeof item.message === "string" ? item.message : "";
+    const hasCMB = message.includes("CMB_");
+    const hasEntryStar = message.includes("Entry: *");
+    const hasEntries = item.Data && Array.isArray(item.Data.CMB_BANKSTM_STG) && item.Data.CMB_BANKSTM_STG.length > 0;
+
+    // Fallback error without CMB or Entry: *
+    if (item.status === "Failed" && !hasCMB && !hasEntryStar) {
+        html += `<div style="
+            background-color: #F8D7DA;
+            color: #842029;
+            border: 1px solid #F5C2C7;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            padding: 1rem;
+            margin-bottom: 1rem;">
+            <strong>Error:</strong> ${message || "Unknown error"}
+        </div>`;
+
+        // Show entries like success style if available
+        if (hasEntries) {
+            item.Data.CMB_BANKSTM_STG.forEach((entry, i) => {
+                html += `<div style="
+                    padding:1rem;
+                    margin-bottom:1rem;
+                    border-radius:8px;
+                    font-size:0.85rem;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    border: 1px solid #E4E4E4;
+                    background-color:#F9F9F9;
+                ">`;
+
+                // Badge for Entry
+                html += `<div style="display:flex; justify-content:flex-start; margin-bottom:4px;">
+                    <span style="
+                        background-color: #4C5F85;
+                        color: white;
+                        padding: 4px 7px;
+                        border-radius: 5px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    ">Entry ${i + 1}</span>
+                </div>`;
+
+                Object.entries(entry).forEach(([key, value]) => {
+                    html += `<p style="margin:4px 0;">
+                        <span style="font-weight:600;">${key}:</span>
+                        <span style="color:#8C7F77;"> ${value}</span>
+                    </p>`;
+                });
+
+                html += `</div>`;
+            });
+        }
+
+        body.innerHTML = html;
+        modal.style.display = "flex";
+        return;
+    }
 
     // Get the specific Entry number
     let highlightedIndex = -1;
@@ -280,8 +339,6 @@ function openModal(item) {
     if (fieldMatch) {
         fieldMatch.forEach(f => fieldsToHighlight.add(f));
     }
-
-    let html = "";
 
     if (item.Data && Array.isArray(item.Data.CMB_BANKSTM_STG)) {
         const isGlobalError = message && message.includes('Entry: *');
@@ -333,7 +390,7 @@ function openModal(item) {
             html += `
                 <div style="display: flex; justify-content: flex-start;">
                     <span style="
-                        background-color: ${isHighlighted ? '#E6A8A1' : '#B0B0B0'};
+                        background-color: ${isHighlighted ? '#EF4444' : '#3B82F6'};
                         color: white;
                         padding: 4px 7px;
                         border-radius: 5px;
@@ -371,15 +428,6 @@ function openModal(item) {
  */
 function closeModal() {
     document.getElementById("modal").style.display = "none";
-}
-
-/**
- * Handles the "View" action click by retrieving the data item and opening its details in a modal.
- */
-function handleViewClick(el) {
-    const index = el.getAttribute("data-index");
-    const item = fullData[index];
-    openModal(item);
 }
 
 /**
@@ -426,11 +474,11 @@ function generateFilename(item) {
  * Downloads the JSON file for a given index from jsonDataMap.
  * Performs cleanup before generating and downloading the file.
  */
-function downloadJSON(index) {
-    const jsonEntry = jsonDataMap[index];
-    if (!jsonEntry) return;
+function downloadJSON(item) {
+    if (!item) return;
 
-    const originalData = jsonEntry.Data || jsonEntry.data || {};
+    // Use the row’s Data or data property
+    const originalData = item.Data || item.data || {};
     const data = JSON.parse(JSON.stringify(originalData));
 
     // Cleanup fields
@@ -449,32 +497,30 @@ function downloadJSON(index) {
     link.href = URL.createObjectURL(blob);
 
     // Use pre-defined filename or generate one
-    link.download = jsonEntry.filename || generateFilename(jsonEntry);
+    link.download = item.filename || generateFilename(item);
 
     link.click();
     URL.revokeObjectURL(link.href);
 }
+
 
 // Filter data
 filterBtn.addEventListener("click", () => {
     fetchData();
 });
 
-/**
- * Handle logout:
- * - Clear cookies
- * - Redirect to login page
- */
-document.querySelector(".btn-logout")?.addEventListener("click", () => {
-    const deleteCookie = name => {
-        document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax;`;
-    };
+// View modal
+logTable.on("click", ".view-link", function () {
+    const row = $(this).closest("tr");
+    const data = logTable.DataTable().row(row).data();
+    openModal(data);
+});
 
-    deleteCookie("isAdmin");
-    deleteCookie("adminUsername");
-    deleteCookie("adminPassword");
-
-    window.location.href = `${apiPrefix}/admin/login`;
+// Download JSON
+logTable.on("click", ".download-json", function () {
+    const row = $(this).closest("tr");
+    const data = logTable.DataTable().row(row).data();
+    downloadJSON(data);
 });
 
 // Initial fetch when page loads

@@ -5,9 +5,10 @@ const basicAuth = btoa(`${username}:${password}`);
 const baseUrl = window.location.origin;
 const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 const url = `${baseUrl}${apiPrefix}/list-sarmis-interface`;
-const filterBtn = document.querySelector(".filter-button");
+const filterBtn = document.querySelector("#filter-button");
 
 let fullData = [];
+let logTable = $("#logTable");
 let modalContent = $(".modal-content");
 
 $(() => {
@@ -55,67 +56,36 @@ function hideLoading() {
 }
 
 /**
+ * Show error when fetching data
+ *
+ * @param message - The data to display.
+ */
+function showError(message) {
+    const tbody = document.querySelector("#logTable tbody");
+    tbody.innerHTML = "";
+
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 8;
+    cell.style.textAlign = "center";
+    cell.style.color = "red";
+    cell.style.fontWeight = "bold";
+    cell.style.padding = "0.75rem";
+    cell.innerText = message || "Error fetching data.";
+    row.appendChild(cell);
+    tbody.appendChild(row);
+}
+
+/**
  * Fetches paginated data based on filter inputs and updates the table display.
  */
 async function fetchData() {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
     showLoading();
 
-    const categorySelect = document.getElementById("categorySelect").value;
-    const interfaceCode = document.getElementById("interfaceCode").value;
-    const purchaseOrderId = document.getElementById("purchaseOrderId").value;
-    const actionDate = document.getElementById("actionDate").value;
-    const status = document.getElementById("statusSelect").value;
-
-    const params = new URLSearchParams();
-    params.append("size", 100);
-    if (categorySelect) params.append("endpoint", categorySelect);
-    if (interfaceCode) params.append("interfaceCode", interfaceCode);
-    if (purchaseOrderId) params.append("purchaseOrderId", purchaseOrderId);
-    if (actionDate) params.append("actionDate", formatDate(actionDate));
-    if (status) params.append("status", status);
-
-    try {
-        let allData = [];
-        let currentPage = 0;
-        let totalPages = 1;
-
-        while (currentPage < totalPages) {
-            params.set("page", currentPage);
-
-            const response = await fetch(`${url}?${params.toString()}`, {
-                headers: {
-                    "Authorization": `Basic ${basicAuth}`,
-                    "X-Partner-Token": partnerToken
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data?.data?.content) {
-                throw new Error("Invalid data structure received.");
-            }
-
-            const responseList = data.data.content;
-            allData = allData.concat(responseList);
-
-            totalPages = data.data.totalPages || 1;
-            currentPage++;
-        }
-
-        fullData = allData;
+    if ($.fn.DataTable.isDataTable("#logTable")) {
+        logTable.DataTable().ajax.reload();
+    } else {
         renderTable();
-
-    } catch (err) {
-        console.error("Fetch failed:", err);
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: red;">Error fetching data: ${err.message}</td></tr>`;
-    } finally {
-        hideLoading();
     }
 }
 
@@ -125,7 +95,9 @@ async function fetchData() {
  * @returns {string} Formatted date as 'DD-MM-YYYY'.
  */
 function formatDate(input) {
+    if (!input) return null;
     const [day, month, year] = input.split('/');
+    if (!day || !month || !year) return null;
     return `${day}-${month}-${year}`;
 }
 
@@ -161,23 +133,65 @@ function formatDateTime(input) {
  * Renders the DataTable for logs.
  */
 function renderTable() {
-    let bankStatementDataTable = $('#logTable');
 
     if ($.fn.DataTable.isDataTable("#logTable")) {
-        bankStatementDataTable.DataTable().destroy();
+        logTable.DataTable().destroy();
     }
 
-    bankStatementDataTable.DataTable({
-        data: fullData.map((item, i) => [
-            i + 1,
-            item.interfaceCode,
-            item.method,
-            item.endpoint,
-            `<span class="${item.status === true ? "success" : "error"}">${item.status === true ? "Processed" : "Failed"}</span>`,
-            item.createdDate ? formatDateTime(item.createdDate) : "N/A",
-            `<span class="view-link" data-index="${i}" data-type="payload" data-status="${item.status}" onclick="handleViewClick(this)">📄 View</span>`,
-            `<span class="view-link" data-index="${i}" data-type="response" data-status="${item.status}" onclick="handleViewClick(this)">📑 Preview</span>`
-        ]),
+    logTable.DataTable({
+        serverSide: true,
+        processing: true,
+        scrollX: true,
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        ajax: {
+            url: url,
+            type: "GET",
+            headers: {
+                "Authorization": `Basic ${basicAuth}`,
+                "X-Partner-Token": partnerToken
+            },
+            data: function(d) {
+                const endpoint = $("#categorySelect").val();
+                if (endpoint) d.endpoint = endpoint;
+
+                const interfaceCode = $("#interfaceCode").val();
+                if (interfaceCode) d.interfaceCode = interfaceCode;
+
+                const purchaseOrderId = $("#purchaseOrderId").val();
+                if (purchaseOrderId) d.purchaseOrderId = purchaseOrderId;
+
+                const actionDate = $("#actionDate").val();
+                if (actionDate) d.actionDate = formatDate(actionDate);
+
+                const status = $("#statusSelect").val();
+                if (status) d.status = status;
+
+                d.size = d.length;
+                d.page = d.start / d.length;
+            },
+            beforeSend: showLoading,
+            complete: hideLoading,
+            dataSrc: function(json) {
+                fullData = json?.data?.content || [];
+                json.recordsTotal = json?.data?.totalElements || 0;
+                json.recordsFiltered = json?.data?.totalElements || 0;
+
+                return fullData.map((item, i) => [
+                    i + 1 + ((json?.data?.pageable?.pageNumber || 0) * (json?.data?.pageable?.pageSize || fullData.length)),
+                    item.interfaceCode,
+                    item.method,
+                    item.endpoint,
+                    `<span class="${item.status === true ? "success" : "error"}">${item.status === true ? "Processed" : "Failed"}</span>`,
+                    item.createdDate ? formatDateTime(item.createdDate) : "N/A",
+                        `<span class="view-link" data-index="${i}" data-type="payload" data-status="${item.status}">📄 View</span>`,
+                        `<span class="view-link" data-index="${i}" data-type="response" data-status="${item.status}">📑 Preview</span>`
+                ]);
+            },
+            error: function(xhr, status, error) {
+                showError("Error fetching data");
+            }
+        },
         columns: [
             { title: "#" },
             { title: "Interface Code" },
@@ -187,11 +201,7 @@ function renderTable() {
             { title: "Action Date" },
             { title: "Payload" },
             { title: "Response" }
-        ],
-        pageLength: 10,
-        lengthMenu: [10, 25, 50, 100],
-        scrollX: true,
-        destroy: true
+        ]
     });
 }
 
@@ -202,16 +212,18 @@ function renderTable() {
  * @param {string} type - The type of content (e.g., 'payload', 'response').
  * @param {string} [status="true"] - The status value; determines background color.
  */
-function openModal(item, type, status = "true") {
+function openModal(item, type, status = true) {
     const modal = document.getElementById("modal");
     const body = document.getElementById("modalBody");
     const title = document.getElementById("modalTitle");
+
+    // Ensure status is boolean
+    const isFailed = (status === false || status === "false");
 
     let content = "";
 
     try {
         if (!item || (typeof item === "object" && Object.keys(item).length === 0)) {
-            // Show fallback for missing or empty data
             content = `
                 <div style="
                     padding: 1rem;
@@ -224,47 +236,37 @@ function openModal(item, type, status = "true") {
                 </div>
             `;
         } else {
-            // Format JSON
-            let jsonStr = JSON.stringify(item, null, 2);
+            let jsonStr;
+            if (typeof item === "string") {
+                // simple string, not JSON
+                jsonStr = item;
+            } else {
+                // JSON object
+                jsonStr = JSON.stringify(item, null, 2);
 
-            // Highlight key values
-            const highlightRegex = /("(purchase_order_id|receipt_id|interface_code)"\s*:\s*)"([^"]+)"/g;
-            jsonStr = jsonStr.replace(
-                highlightRegex,
-                (_, keyPrefix, keyName, value) => {
+                // Optional: highlight some keys
+                const highlightRegex = /("(purchase_order_id|receipt_id|interface_code)"\s*:\s*)"([^"]+)"/g;
+                jsonStr = jsonStr.replace(highlightRegex, (_, keyPrefix, keyName, value) => {
                     let color = "", textColor = "";
-
                     switch (keyName) {
-                        case "purchase_order_id":
-                            color = "yellow";
-                            textColor = "#000";
-                            break;
-                        case "receipt_id":
-                            color = "#CCE5FF";
-                            textColor = "#003366";
-                            break;
-                        case "interface_code":
-                            color = "#D3F9D8";
-                            textColor = "#2C6E49";
-                            break;
+                        case "purchase_order_id": color = "yellow"; textColor = "#000"; break;
+                        case "receipt_id": color = "#CCE5FF"; textColor = "#003366"; break;
+                        case "interface_code": color = "#D3F9D8"; textColor = "#2C6E49"; break;
                     }
-
                     return `${keyPrefix}"<span style="background-color: ${color}; font-weight: bold; color: ${textColor};">${value}</span>"`;
-                }
-            );
+                });
+            }
 
-            // Choose background and border colors based on status
-            const backgroundColor = status === "false" ? "#FFF5F5" : "#F9F9F9";
-            const borderColor = status === "false" ? "#F5C6CB" : "#E4E4E4";
+            const bgColor = isFailed ? "#FFF5F5" : "#F9F9F9";
+            const borderColor = isFailed ? "#F5C6CB" : "#E4E4E4";
 
-            // Final content
             content = `
                 <pre style="
                     white-space: pre-wrap;
                     font-size: 0.85rem;
-                    font-family: 'Courier New', Courier, monospace;
+                    font-family: 'JetBrains Mono', monospace;
                     color: #333;
-                    background-color: ${backgroundColor};
+                    background-color: ${bgColor};
                     border: 1px solid ${borderColor};
                     padding: 1rem;
                     border-radius: 8px;
@@ -277,9 +279,7 @@ function openModal(item, type, status = "true") {
         content = `<pre style="color: red;">Failed to render content.</pre>`;
     }
 
-    // Capitalize first letter of type
     title.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-
     body.innerHTML = content;
     modal.style.display = "flex";
 }
@@ -291,13 +291,16 @@ function closeModal() {
     document.getElementById("modal").style.display = "none";
 }
 
-/**
- * Handles the "View" action click by opening modal with item details.
- */
-function handleViewClick(el) {
-    const index = el.getAttribute("data-index");
-    const type = el.getAttribute("data-type");
-    const status = el.getAttribute("data-status");
+// Filter data on filter button click
+filterBtn.addEventListener("click", () => {
+    fetchData();
+});
+
+// Delegate click for dynamically created .view-link elements
+logTable.on("click", ".view-link", function () {
+    const index = $(this).data("index");
+    const type = $(this).data("type");
+    const status = $(this).data("status");
     const item = fullData[index];
 
     let parsed;
@@ -308,33 +311,17 @@ function handleViewClick(el) {
         if (!raw || raw.trim() === "") {
             parsed = null;
         } else {
-            parsed = JSON.parse(raw);
+            try {
+                parsed = JSON.parse(raw);
+            } catch {
+                parsed = raw; // fallback to string
+            }
         }
     } catch {
         parsed = null;
     }
 
     openModal(parsed, type, status);
-}
-
-// Filter data on filter button click
-filterBtn.addEventListener("click", () => {
-    fetchData();
-});
-
-/**
- * Handle logout by clearing cookies and redirecting to the login page.
- */
-document.querySelector(".btn-logout")?.addEventListener("click", () => {
-    const deleteCookie = name => {
-        document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax;`;
-    };
-
-    deleteCookie("isAdmin");
-    deleteCookie("adminUsername");
-    deleteCookie("adminPassword");
-
-    window.location.href = `${apiPrefix}/admin/login`;
 });
 
 // Initial data fetch on page load
