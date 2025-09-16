@@ -341,7 +341,7 @@ function openModal(item) {
     }
 
     if (item.Data && Array.isArray(item.Data.CMB_BANKSTM_STG)) {
-        const isGlobalError = message && message.includes('Entry: *');
+        const isGlobalError = message && message.includes("Entry: *");
         const showGlobalDetailsBox = isGlobalError;
         const showSpecificDetailsBox = message && Number.isInteger(highlightedIndex);
         const shownDetailBox = new Set();

@@ -1,3 +1,10 @@
+@import "root.css";
+
+/**
+|--------------------------------------------------------------------------
+| LOGIN PAGE
+|--------------------------------------------------------------------------
+*/
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,7 +13,7 @@
 
 body, html {
     height: 100%;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: var(--font-family);
 }
 
 .container {
@@ -16,11 +23,11 @@ body, html {
 
 .left {
     flex: 0.5;
-    background: #2B3F5A url('/img/waving-dark.jpg') center center / cover no-repeat;
+    background: var(--btn-secondary-hover-bg) url('/img/waving-dark.jpg') center center / cover no-repeat;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--color-white);
     text-align: center;
     padding: 2rem;
     user-select: none;
@@ -55,7 +62,7 @@ body, html {
 }
 
 .login-box p {
-    color: #666;
+    color: var(--color-gray-600);
     margin-bottom: 2rem;
     user-select: none;
 }
@@ -74,24 +81,24 @@ body, html {
 .input-group input {
     width: 100%;
     padding: 0.75rem;
-    border: 1.5px solid #CCC;
+    border: 1.5px solid var(--color-gray-300);
     border-radius: 6px;
     font-size: 1rem;
 }
 
 .input-group input.error {
-    border-color: crimson;
+    border-color: var(--error-light-text);
 }
 
 .input-group .error-message {
-    color: crimson;
+    color: var(--error-light-text);
     font-size: 0.85rem;
     margin-top: 0.25rem;
 }
 
 .login-btn {
-    background-color: #4C5F85;
-    color: white;
+    background-color: var(--btn-secondary-bg);
+    color: var(--color-white);
     border: none;
     padding: 0.75rem;
     border-radius: 24px;
@@ -104,15 +111,15 @@ body, html {
     justify-content: center;
     position: relative;
     height: 44px;
+    transition: background-color var(--transition-speed);
 }
 
 .login-btn:hover {
-    background-color: #2B3F5A;
-    transition: 0.5s;
+    background-color: var(--btn-secondary-hover-bg);
 }
 
 .login-btn:disabled {
-    background-color: #6C7B99;
+    background-color: var(--color-gray-400);
 }
 
 .spinner {

@@ -1,0 +1,106 @@
+/**
+|--------------------------------------------------------------------------
+| VARIABLES
+|--------------------------------------------------------------------------
+*/
+:root {
+    /* Layout */
+    --sidebar-width: 300px;
+    --sidebar-width-collapsed: 60px;
+    --header-height: 74px;
+    --content-padding: 16px;
+
+    /* Colors */
+    --color-white: #FFFFFF;
+    --color-black: #111827;
+    --color-gray-50: #F9FAFB;
+    --color-gray-100: #F3F4F6;
+    --color-gray-200: #E5E7EB;
+    --color-gray-300: #D1D5DB;
+    --color-gray-400: #9CA3AF;
+    --color-gray-500: #6B7280;
+    --color-gray-600: #4B5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1F2937;
+    --color-gray-900: #111827;
+    --color-blue: #3B82F6;
+    --color-blue-dark: #1A73E8;
+    --color-badge: #1A63D2;
+    --color-accent: #A45617;
+    --color-success: #2E7D32;
+    --color-error: #C62828;
+    --color-error-light: #DC2626;
+    --color-info: #1A73E8;
+
+    /* Sidebar */
+    --sidebar-bg: var(--color-gray-800);
+    --sidebar-text: var(--color-white);
+    --sidebar-hover-bg: var(--color-blue);
+    --sidebar-footer-border: rgba(255,255,255,0.2);
+    --sidebar-footer-text: var(--color-white);
+
+    /* Scrollbar */
+    --scrollbar-width: 8px;
+    --scrollbar-height: 8px;
+    --scrollbar-track-bg: var(--color-gray-100);
+    --scrollbar-thumb-bg: var(--color-blue);
+    --scrollbar-thumb-hover-bg: var(--color-gray-800);
+    --scrollbar-thumb-border-radius: 10px;
+    --scrollbar-thumb-border: 2px solid var(--scrollbar-track-bg);
+
+    /* Header */
+    --header-bg: var(--color-white);
+    --header-border: var(--color-gray-200);
+    --header-text: var(--color-black);
+    --header-text-secondary: var(--color-gray-700);
+    --header-btn: var(--color-gray-500);
+    --header-btn-hover: var(--color-gray-600);
+
+    /* Main */
+    --main-bg: var(--color-gray-100);
+
+    /* Menu */
+    --menu-text: var(--color-white);
+    --menu-hover-bg: var(--color-blue);
+
+    /* Badge / Version */
+    --badge-bg: var(--color-badge);
+    --badge-text: var(--color-white);
+    --footer-version-text: var(--color-white);
+
+    /* Typography */
+    --font-family: "Inter", sans-serif;
+    --content-title: var(--color-accent);
+
+    /* Card */
+    --card-bg: var(--color-white);
+    --card-divider: var(--color-gray-200);
+
+    /* Buttons */
+    --btn-height: 36px;
+    --btn-padding: 0.5rem 1rem;
+    --btn-font-size: 0.875rem;
+    --btn-primary-bg: var(--color-blue);
+    --btn-primary-text: var(--color-white);
+    --btn-secondary-bg: #4C5F85;
+    --btn-secondary-hover-bg: #2B3F5A;
+
+    /* Table */
+    --table-thead-bg: #F1F3F5;
+    --table-thead-text: var(--color-gray-900);
+    --table-border: var(--color-gray-200);
+    --table-text: var(--color-gray-900);
+    --table-padding: 8px 16px;
+    --table-row-odd: var(--color-white);
+    --table-row-even: #F0F2F5;
+    --table-row-hover: #EEF2F7;
+
+    /* Feedback states */
+    --success-text: var(--color-success);
+    --error-text: var(--color-error);
+    --error-light-text: var(--color-error-light);
+    --info-text: var(--color-info);
+
+    /* Transition */
+    --transition-speed: 0.3s;
+}

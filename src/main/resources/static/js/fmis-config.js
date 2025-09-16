@@ -113,12 +113,19 @@ async function saveConfigChanges() {
     }
 }
 
-// Validation helpers
+/**
+ * Clears all validation error messages and removes error styling from inputs.
+ * Resets the form to a clean state for further user input.
+ */
 function clearValidationErrors() {
     document.querySelectorAll(".validation-error").forEach(el => el.remove());
     document.querySelectorAll(".input-error").forEach(el => el.classList.remove("input-error"));
 }
 
+/**
+ * Displays validation error messages next to the corresponding form inputs.
+ * Adds error styling to inputs and inserts error text for each field.
+ */
 function showValidationErrors(errors) {
     for (const [field, message] of Object.entries(errors)) {
         const inputEl = document.getElementById("edit" + capitalize(field));
@@ -134,6 +141,10 @@ function showValidationErrors(errors) {
     }
 }
 
+/**
+ * Capitalizes the first letter of a given string.
+ * Returns the string with the first character in uppercase.
+ */
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }

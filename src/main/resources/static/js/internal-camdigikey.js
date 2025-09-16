@@ -100,7 +100,7 @@ async function fetchData() {
  * @returns {string} - Reformatted date string
  */
 function formatDate(input) {
-    const [day, month, year] = input.split('/');
+    const [day, month, year] = input.split("/");
     return `${day}-${month}-${year}`;
 }
 
@@ -206,8 +206,8 @@ function openEditModal(item) {
  * Attach edit handler to table
  */
 function attachEditHandler(table) {
-    $('#logTable').off('click', '.edit-link').on('click', '.edit-link', function () {
-        const rowData = table.row($(this).closest('tr')).data(); // ✅ always works
+    logTable.off("click", ".edit-link").on("click", ".edit-link", function () {
+        const rowData = table.row($(this).closest('tr')).data();
         openEditModal(rowData);
     });
 }

@@ -306,10 +306,12 @@ public class SarmisInterfaceController {
                 sarmisInterface.setMethod("POST");
                 sarmisInterface.setEndpoint(endpoint);
                 sarmisInterface.setPayload(jsonBody.toString());
-                sarmisInterface.setResponse(new ApiResponse<>(
-                        ResponseCodeUtil.invalid(),
-                        e.getMessage()
-                ).toString());
+                sarmisInterface.setResponse(objectMapper.writeValueAsString(
+                        new ApiResponse<>(
+                                ResponseCodeUtil.invalid(),
+                                e.getMessage()
+                        )
+                ));
                 sarmisInterface.setStatus(false);
                 sarmisInterfaceService.save(sarmisInterface);
 
@@ -333,11 +335,13 @@ public class SarmisInterfaceController {
             sarmisInterface.setEndpoint(endpoint);
             sarmisInterface.setInterfaceCode(interfaceCode);
             sarmisInterface.setPayload(jsonBody.toString());
-            sarmisInterface.setResponse(new ApiResponse<>(
-                    ResponseCodeUtil.processed(),
-                    ResponseMessageUtil.processed("Purchases Orders Callback"),
-                    jsonBody
-            ).toString());
+            sarmisInterface.setResponse(objectMapper.writeValueAsString(
+                    new ApiResponse<>(
+                            ResponseCodeUtil.processed(),
+                            ResponseMessageUtil.processed("Purchases Orders Callback"),
+                            jsonBody
+                    )
+            ));
             sarmisInterface.setStatus(true);
             sarmisInterfaceService.save(sarmisInterface);
 

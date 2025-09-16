@@ -1,3 +1,7 @@
+/**
+ * Initializes and renders the FullCalendar on the page.
+ * Sets the initial view, header toolbar, and prepares the calendar for events.
+ */
 document.addEventListener("DOMContentLoaded", function() {
     const calendarEl = document.getElementById("calendar");
 

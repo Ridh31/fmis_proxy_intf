@@ -13,20 +13,24 @@ overlay.style.zIndex = "900";
 overlay.style.display = "none";
 document.body.appendChild(overlay);
 
+/**
+ * Toggles the sidebar visibility or collapse state based on screen width.
+ * Shows/hides overlay on mobile and collapses/expands sidebar on desktop.
+ */
 function toggleSidebar() {
     if (window.innerWidth <= 768) {
         // Mobile
-        const isShown = sidebar.classList.contains('show');
+        const isShown = sidebar.classList.contains("show");
         if (isShown) {
-            sidebar.classList.remove('show');
-            overlay.style.display = 'none';
+            sidebar.classList.remove("show");
+            overlay.style.display = "none";
         } else {
-            sidebar.classList.add('show');
-            overlay.style.display = 'block';
+            sidebar.classList.add("show");
+            overlay.style.display = "block";
         }
     } else {
         // Desktop
-        sidebar.classList.toggle('collapsed');
+        sidebar.classList.toggle("collapsed");
     }
 }
 

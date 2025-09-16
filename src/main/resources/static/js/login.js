@@ -12,47 +12,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const popupModal = document.getElementById("popup-modal");
     const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 
-    // Make the modal draggable using jQuery UI
-    $(".modal-box").draggable({
-        cursor: "move"
-    });
+    if (!form) return;
 
-    // Close modal button functionality
-    closeModalBtn.addEventListener("click", () => {
-        popupModal.style.display = "none";
-    });
-
-    // Login form submission handler
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
 
         let isValid = true;
 
         // Reset error styles and messages
-        username.classList.remove("error");
-        password.classList.remove("error");
-        usernameError.style.display = "none";
-        passwordError.style.display = "none";
+        if (username) username.classList.remove("error");
+        if (password) password.classList.remove("error");
+        if (usernameError) usernameError.style.display = "none";
+        if (passwordError) passwordError.style.display = "none";
 
         // Input validation
-        if (username.value.trim() === "") {
-            username.classList.add("error");
-            usernameError.style.display = "block";
+        if (!username?.value.trim()) {
+            if (username) username.classList.add("error");
+            if (usernameError) usernameError.style.display = "block";
             isValid = false;
         }
 
-        if (password.value.trim() === "") {
-            password.classList.add("error");
-            passwordError.style.display = "block";
+        if (!password?.value.trim()) {
+            if (password) password.classList.add("error");
+            if (passwordError) passwordError.style.display = "block";
             isValid = false;
         }
 
         if (!isValid) return;
 
-        // Show spinner
-        loginBtn.disabled = true;
-        spinner.style.display = "inline-block";
-        buttonText.style.display = "none";
+        // Show loading spinner
+        if (loginBtn) loginBtn.disabled = true;
+        if (spinner) spinner.style.display = "inline-block";
+        if (buttonText) buttonText.style.display = "none";
 
         const formData = new FormData();
         formData.append("username", username.value.trim());
@@ -64,36 +55,40 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: formData
             });
 
-            const result = await response.json();
+            const contentType = response.headers.get("content-type");
+            const isJson = contentType && contentType.includes("application/json");
+            const result = isJson ? await response.json() : null;
 
-            if (result.code === 200 && result.data === true) {
-                // Save admin cookies
+            if (response.ok && result?.code === 200 && result.data === true) {
                 document.cookie = "isAdmin=true; path=/; SameSite=Lax; Secure";
                 document.cookie = `adminUsername=${username.value.trim()}; path=/; SameSite=Lax; Secure`;
                 document.cookie = `adminPassword=${password.value.trim()}; path=/; SameSite=Lax; Secure`;
 
-                // Determine where to redirect
                 const urlParams = new URLSearchParams(window.location.search);
                 const redirectTo = urlParams.get("redirect") || `${apiPrefix}/admin/dashboard`;
 
-                // Redirect
                 window.location.href = redirectTo;
+                return;
             } else {
-                username.classList.add("error");
-                password.classList.add("error");
-                usernameError.textContent = "Access denied: Invalid admin credentials.";
-                usernameError.style.display = "block";
+                if (username) username.classList.add("error");
+                if (password) password.classList.add("error");
+                if (usernameError) {
+                    usernameError.textContent = "Access denied: Invalid admin credentials.";
+                    usernameError.style.display = "block";
+                }
             }
         } catch (err) {
-            console.error("Error verifying admin: ", err);
-            username.classList.add("error");
-            password.classList.add("error");
-            usernameError.textContent = "An unexpected error occurred. Please try again.";
-            usernameError.style.display = "block";
+            console.error("Error verifying admin:", err);
+            if (username) username.classList.add("error");
+            if (password) password.classList.add("error");
+            if (usernameError) {
+                usernameError.textContent = "Something went wrong. Please try again later.";
+                usernameError.style.display = "block";
+            }
         } finally {
-            loginBtn.disabled = false;
-            spinner.style.display = "none";
-            buttonText.style.display = "inline";
+            if (loginBtn) loginBtn.disabled = false;
+            if (spinner) spinner.style.display = "none";
+            if (buttonText) buttonText.style.display = "inline";
         }
     });
 });

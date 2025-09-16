@@ -1,3 +1,7 @@
+/**
+ * Deletes a browser cookie by setting its Max-Age to 0.
+ * The cookie is removed from the root path with SameSite set to Lax.
+ */
 function deleteCookie(name) {
     document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax;`;
 }

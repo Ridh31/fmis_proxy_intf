@@ -647,9 +647,9 @@ public class InternalCamDigiKeyController {
             } catch (HttpServerErrorException e) {
                 // Handle server-side HTTP errors (5xx)
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ApiResponse<>(
-                        ResponseCodeUtil.badGatewayNotConnect(),
-                        ResponseMessageUtil.badGatewayNotConnect(url),
-                        e.getStatusCode() + " - " + e.getStatusText()
+                        ResponseCodeUtil.invalid(),
+                        ResponseMessageUtil.invalid("authCode"),
+                        e.getMessage()
                 ));
 
             } catch (ResourceAccessException e) {
@@ -771,9 +771,9 @@ public class InternalCamDigiKeyController {
                 // Handle 5xx errors from external server
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                         .body(new ApiResponse<>(
-                                ResponseCodeUtil.badGatewayNotConnect(),
-                                ResponseMessageUtil.badGatewayNotConnect(url),
-                                e.getStatusCode() + " - " + e.getStatusText()
+                                ResponseCodeUtil.invalid(),
+                                ResponseMessageUtil.invalid("JWT"),
+                                e.getMessage()
                         ));
 
             } catch (ResourceAccessException e) {

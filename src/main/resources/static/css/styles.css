@@ -1,88 +1,11 @@
 @import "./fonts.css";
+@import "root.css";
 
-/*--------------------------------------------------------------------------
-| VARIABLES
-|--------------------------------------------------------------------------*/
-:root {
-    /* Sidebar */
-    --sidebar-width: 300px;
-    --sidebar-collapsed-width: 60px;
-    --sidebar-bg: #1F2937;
-    --sidebar-color: #FFF;
-    --sidebar-hover-bg: #3B82F6;
-    --sidebar-footer-border: rgba(255,255,255,0.2);
-    --sidebar-footer-text: #FFF;
-
-    /* Scrollbar */
-    --scrollbar-width: 8px;
-    --scrollbar-height: 8px;
-    --scrollbar-track-bg: #F1F1F1;
-    --scrollbar-thumb-bg: #3B82F6;
-    --scrollbar-thumb-hover-bg: #1F2937;
-    --scrollbar-thumb-border-radius: 10px;
-    --scrollbar-thumb-border: 2px solid var(--scrollbar-track-bg);
-
-    /* Header */
-    --header-height: 74px;
-    --header-bg: #FFF;
-    --header-border: #E5E7EB;
-    --header-text: #111827;
-    --header-text-secondary: #2B3F5A;
-    --header-button: #6B7280;
-    --header-button-hover: #4B5563;
-
-    /* Main content */
-    --main-bg: #F3F4F6;
-
-    /* Menu item */
-    --menu-item-color: #FFF;
-    --menu-item-hover-bg: #3B82F6;
-
-    /* Footer version */
-    --footer-version-color: #FFF;
-
-    /* Buttons / badges */
-    --badge-bg: #1A63D2;
-    --badge-color: #FFF;
-
-    /* Transition */
-    --transition-speed: 0.3s;
-
-    /* Font */
-    --font-family: "Inter", sans-serif;
-
-    /* Content title */
-    --content-title-color: #A45617;
-
-    /* Card */
-    --card-bg: #FFFFFF;
-    --card-divider-color: #E5E7EB;
-
-    /* Button */
-    --btn-height: 36px;
-    --btn-padding: 0.5rem 1rem;
-    --btn-font-size: 0.875rem;
-
-    /* Table header colors */
-    --thead-bg: #F1F3F5;
-    --thead-text: #1E293B;
-    --table-padding: 8px 16px;
-
-    /* Table row colors */
-    --row-odd-bg: #FFFFFF;
-    --row-even-bg: #F0F2F5;
-    --row-hover-bg: #EEF2F7;
-
-    /* Table border */
-    --table-border-color: #E4E4E4;
-
-    /* Table text */
-    --table-text-color: #1E293B;
-}
-
-/*--------------------------------------------------------------------------
+/**
+|--------------------------------------------------------------------------
 | GLOBAL STYLES
-|--------------------------------------------------------------------------*/
+|--------------------------------------------------------------------------
+*/
 * {
     box-sizing: border-box;
 }
@@ -113,28 +36,32 @@ body, html {
     background-color: var(--scrollbar-thumb-hover-bg);
 }
 
-/*--------------------------------------------------------------------------
+/**
+|--------------------------------------------------------------------------
 | LAYOUT
-|--------------------------------------------------------------------------*/
+|--------------------------------------------------------------------------
+*/
 .layout {
     display: flex;
     height: 100vh;
 }
 
-/*--------------------------------------------------------------------------
+/**
+|--------------------------------------------------------------------------
 | SIDEBAR
-|--------------------------------------------------------------------------*/
+|--------------------------------------------------------------------------
+*/
 .sidebar {
     width: var(--sidebar-width);
     background-color: var(--sidebar-bg);
-    color: var(--sidebar-color);
+    color: var(--sidebar-text);
     display: flex;
     flex-direction: column;
     transition: width var(--transition-speed);
 }
 
 .sidebar.collapsed {
-    width: var(--sidebar-collapsed-width);
+    width: var(--sidebar-width-collapsed);
 }
 
 .sidebar.collapsed .logo {
@@ -192,7 +119,7 @@ body, html {
     align-items: center;
     padding: 12px 16px;
     text-decoration: none;
-    color: var(--menu-item-color);
+    color: var(--menu-text);
     transition: background-color var(--transition-speed);
 }
 
@@ -202,7 +129,7 @@ body, html {
 }
 
 .menu-item:hover {
-    background-color: var(--menu-item-hover-bg);
+    background-color: var(--menu-hover-bg);
 }
 
 .menu-item .icon {
@@ -236,15 +163,17 @@ body, html {
 .sidebar.collapsed .sidebar-footer::after {
     content: "V1.0.0";
     display: block;
-    color: var(--footer-version-color);
+    color: var(--footer-version-text);
     font-size: 0.85em;
     text-align: center;
     padding: 8px 0;
 }
 
-/*--------------------------------------------------------------------------
+/**
+|--------------------------------------------------------------------------
 | MAIN CONTENT
-|--------------------------------------------------------------------------*/
+|--------------------------------------------------------------------------
+*/
 .main {
     flex: 1;
     display: flex;
@@ -282,7 +211,7 @@ body, html {
 .header-left .user-label .user-badge {
     display: inline-block;
     background-color: var(--sidebar-hover-bg);
-    color: var(--badge-color);
+    color: var(--badge-text);
     padding: 2px 8px;
     border-radius: 999px;
     font-size: 0.85rem;
@@ -293,7 +222,7 @@ body, html {
 /* Sidebar toggle button */
 .header-left button {
     font-size: 20px;
-    color: var(--header-button);
+    color: var(--header-btn);
     background: transparent;
     border: none;
     cursor: pointer;
@@ -301,7 +230,7 @@ body, html {
 }
 
 .header-left button:hover {
-    color: var(--header-button-hover);
+    color: var(--header-btn-hover);
 }
 
 /* Right side of header */
@@ -336,7 +265,7 @@ body, html {
     top: 6px;
     right: 6px;
     background-color: var(--badge-bg);
-    color: var(--badge-color);
+    color: var(--badge-text);
     font-size: 0.65rem;
     padding: 1px 4px;
     border-radius: 999px;
@@ -347,9 +276,9 @@ section.content {
     padding: 0 16px;
 }
 
-/*
---------------------------------------------------------------------------
-| RESPONSIVE
+/**
+|--------------------------------------------------------------------------
+| Responsive
 |--------------------------------------------------------------------------
 */
 #sidebarOverlay {
@@ -373,11 +302,13 @@ section.content {
     }
 }
 
-/*--------------------------------------------------------------------------
+/**
+|--------------------------------------------------------------------------
 | Content Card
-|--------------------------------------------------------------------------*/
+|--------------------------------------------------------------------------
+*/
 .content-card {
-    background-color: #FFF;
+    background-color: var(--card-bg);
     margin: 16px 0;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -388,19 +319,19 @@ section.content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--card-divider-color, #E5E7EB);
+    border-bottom: 1px solid var(--card-divider);
     padding: 20px 24px 14px 24px;
 }
 
 .card-header h2 {
     margin: 0 0 0.25rem 0;
     font-size: 1.3rem;
-    color: var(--content-title-color);
+    color: var(--content-title);
 }
 
 .card-header p {
     margin: 0 0 1rem 0;
-    color: #4B5563;
+    color: var(--color-gray-600);
     font-size: 0.95rem;
 }
 
@@ -415,7 +346,7 @@ section.content {
 .label {
     font-size: 0.8rem;
     font-weight: 600;
-    color: #6B7280;
+    color: var(--color-gray-500);
     text-transform: uppercase;
     letter-spacing: 0.03em;
     margin-top: 0;
@@ -424,7 +355,7 @@ section.content {
 .info-block {
     display: flex;
     flex-direction: column;
-    background-color: #F1F3F7;
+    background-color: var(--color-gray-100);
     padding: 0.5rem 0.75rem;
     border-radius: 10px;
     margin-bottom: 1rem;
@@ -433,7 +364,7 @@ section.content {
 
 .info-block .value {
     font-size: 1rem;
-    color: #111827;
+    color: var(--color-black);
     word-break: break-word;
     margin: 0;
 }
@@ -448,7 +379,7 @@ section.content {
     flex: 1 1 200px;
     display: flex;
     flex-direction: column;
-    background-color: #F1F3F7;
+    background-color: var(--color-gray-100);
     padding: 0.75rem 1rem;
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -458,7 +389,7 @@ section.content {
 .info-grid .info-block .label {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #6B7280;
+    color: var(--color-gray-500);
     text-transform: uppercase;
     letter-spacing: 0.03em;
     margin-bottom: 0.25rem;
@@ -466,7 +397,7 @@ section.content {
 
 .info-grid .info-block .value {
     font-size: 1rem;
-    color: #111827;
+    color: var(--color-black);
     word-break: break-word;
     margin: 0;
 }
@@ -475,7 +406,7 @@ section.content {
     border: none;
     background: transparent;
     font-size: 1rem;
-    color: #111827;
+    color: var(--color-black);
     font-family: inherit;
     width: 100%;
     outline: none;
@@ -493,7 +424,7 @@ section.content {
 .eye-icon svg {
     width: 18px;
     height: 18px;
-    stroke: #71717A;
+    stroke: var(--color-gray-500);
     fill: none;
     display: none;
 }
@@ -526,7 +457,7 @@ section.content {
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
     outline: none;
-    border: 1px solid #CCC;
+    border: 1px solid var(--color-gray-300);
     border-radius: 6px;
     height: 36px;
 }
@@ -536,18 +467,18 @@ section.content {
     width: 100%;
     padding: 8px 12px;
     outline: none;
-    border: 1px solid #D1D5DB;
+    border: 1px solid var(--color-gray-300);
     border-radius: 6px;
     font-size: 0.95rem;
-    background-color: #FFF;
-    color: #111;
+    background-color: var(--color-white);
+    color: var(--color-black);
     appearance: none;
 }
 
 .input-group input:focus, .dataTables_filter input:focus,
 .input-group select:focus, .dataTables_length select:focus {
     outline: none;
-    border-color: #1A73E8;
+    border-color: var(--color-blue-dark);
     box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.25);
 }
 
@@ -561,13 +492,13 @@ section.content {
 }
 
 .btn-primary {
-    height: 36px;
-    padding: 0 1rem;
-    font-size: 0.875rem;
+    height: var(--btn-height);
+    padding: var(--btn-padding);
+    font-size: var(--btn-font-size);
     border-radius: 6px;
     border: none;
-    background-color: var(--sidebar-hover-bg);
-    color: #fff;
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
     cursor: pointer;
     transition: background-color var(--transition-speed);
 }
@@ -578,19 +509,19 @@ section.content {
 
 /* Secondary button */
 .btn-secondary {
-    height: 36px;
-    padding: 0 1rem;
-    font-size: 0.875rem;
+    height: var(--btn-height);
+    padding: var(--btn-padding);
+    font-size: var(--btn-font-size);
     border-radius: 6px;
     border: none;
-    background-color: #4C5F85;
-    color: #FFFFFF;
+    background-color: var(--btn-secondary-bg);
+    color: var(--color-white);
     cursor: pointer;
     transition: background-color var(--transition-speed);
 }
 
 .btn-secondary:hover {
-    background-color: #2B3F5A;
+    background-color: var(--btn-secondary-hover-bg);
 }
 
 /* Responsive: 2 columns on medium, 1 on small */
@@ -606,14 +537,14 @@ section.content {
     }
 }
 
-/*
+/**
 |--------------------------------------------------------------------------
 | DATATABLE
 |--------------------------------------------------------------------------
 */
 .card-table {
     padding: 24px;
-    background-color: #FFF;
+    background-color: var(--card-bg);
     margin: 16px 0;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -622,7 +553,7 @@ section.content {
 #logTable {
     width: 100% !important;
     border-collapse: collapse;
-    background-color: #FFFFFF;
+    background-color: var(--color-white);
     border-radius: 2px;
     font-size: 14px;
     table-layout: auto;
@@ -635,8 +566,8 @@ th, td {
 }
 
 th {
-    background-color: var(--thead-bg);
-    color: var(--thead-text);
+    background-color: var(--table-thead-bg);
+    color: var(--table-thead-text);
     font-weight: 600;
 }
 
@@ -656,8 +587,8 @@ th {
 #logTable.dataTable thead th {
     position: sticky;
     top: 0;
-    background-color: var(--thead-bg);
-    color: var(--thead-text);
+    background-color: var(--table-thead-bg);
+    color: var(--table-thead-text);
     z-index: 2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -665,15 +596,15 @@ th {
 
 /* Row colors */
 .dataTable tbody tr.odd {
-    background-color: var(--row-odd-bg);
+    background-color: var(--table-row-odd);
 }
 
 .dataTable tbody tr.even {
-    background-color: var(--row-even-bg);
+    background-color: var(--table-row-even);
 }
 
 tr:hover {
-    background-color: var(--row-hover-bg);
+    background-color: var(--table-row-hover);
 }
 
 /* Header font weight */
@@ -696,7 +627,7 @@ table.dataTable thead th, table.dataTable thead td {
     text-overflow: ellipsis;
 }
 
-/*
+/**
 |--------------------------------------------------------------------------
 | Modal
 |--------------------------------------------------------------------------
@@ -714,7 +645,7 @@ table.dataTable thead th, table.dataTable thead td {
 }
 
 .modal-content {
-    background: white;
+    background: var(--color-white);
     padding: 1rem;
     border-radius: 10px;
     width: 90%;
@@ -733,14 +664,14 @@ table.dataTable thead th, table.dataTable thead td {
     cursor: pointer;
     font-weight: bold;
     font-size: 2rem;
-    color: #8B8B8B;
+    color: var(--color-gray-400);
     z-index: 10;
 }
 
 #modalTitle {
     margin-top: 0;
     font-size: 1.25rem;
-    color: #A45617;
+    color: var(--content-title);
     user-select: none;
 }
 
@@ -759,7 +690,7 @@ table.dataTable thead th, table.dataTable thead td {
 
 .modal-form textarea {
     padding: 0.65rem 0.75rem;
-    border: 1px solid #D1D5DB;
+    border: 1px solid var(--color-gray-300);
     border-radius: 0.5rem;
     font-size: 0.95rem;
     width: 100%;
@@ -774,9 +705,9 @@ table.dataTable thead th, table.dataTable thead td {
 }
 
 .modal-form textarea:focus {
-    border-color: #3B82F6;
+    border-color: var(--color-blue);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    background-color: #FFF;
+    background-color: var(--color-white);
     outline: none;
 }
 
@@ -787,34 +718,33 @@ table.dataTable thead th, table.dataTable thead td {
     padding-right: 0.5rem;
 }
 
-
-/*
+/**
 |--------------------------------------------------------------------------
 | OTHERS
 |--------------------------------------------------------------------------
 */
 .success {
-    color: #2E7D32;
+    color: var(--success-text);
     font-weight: 500;
 }
 
 .error {
-    color: #C62828;
+    color: var(--error-text);
     font-weight: 500;
 }
 
 .info {
-    color: #1A73E8;
+    color: var(--info-text);
     font-weight: 500;
 }
 
 .error-message {
-    color: #DC2626;
+    color: var(--error-light-text);
     font-size: 0.7rem;
 }
 
 .view-link, .edit-link, .copy-key-btn {
-    color: #1A73E8;
+    color: var(--color-blue-dark);
     cursor: pointer;
 }
 
