@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Optional;
 
 /**
  * Controller for serving static HTML pages like login and bank statement log.
@@ -147,7 +146,7 @@ public class PageController {
         User user = userService.findByUsername(adminUsername).orElseThrow();
         String partnerToken = user.getPartner().getPublicKey();
 
-        // Set cookies again (optional)
+        // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
         CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
         CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
@@ -164,6 +163,11 @@ public class PageController {
         return "pages/dashboard";
     }
 
+    /**
+     * Handles GET request to the Bank Statement Log page.
+     *
+     * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
+     */
     @GetMapping("/bank-statement-log")
     public String bankStatementLog(
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
@@ -181,7 +185,7 @@ public class PageController {
         User user = userService.findByUsername(adminUsername).orElseThrow();
         String partnerToken = user.getPartner().getPublicKey();
 
-        // Set cookies again (optional)
+        // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
         CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
         CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
@@ -220,7 +224,7 @@ public class PageController {
         User user = userService.findByUsername(adminUsername).orElseThrow();
         String partnerToken = user.getPartner().getPublicKey();
 
-        // Set cookies again (optional)
+        // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
         CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
         CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
@@ -259,7 +263,7 @@ public class PageController {
         User user = userService.findByUsername(adminUsername).orElseThrow();
         String partnerToken = user.getPartner().getPublicKey();
 
-        // Set cookies again (optional)
+        // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
         CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
         CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
@@ -298,7 +302,7 @@ public class PageController {
         User user = userService.findByUsername(adminUsername).orElseThrow();
         String partnerToken = user.getPartner().getPublicKey();
 
-        // Set cookies again (optional)
+        // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
         CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
         CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
@@ -337,7 +341,7 @@ public class PageController {
         User user = userService.findByUsername(adminUsername).orElseThrow();
         String partnerToken = user.getPartner().getPublicKey();
 
-        // Set cookies again (optional)
+        // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
         CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
         CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
@@ -376,7 +380,7 @@ public class PageController {
         User user = userService.findByUsername(adminUsername).orElseThrow();
         String partnerToken = user.getPartner().getPublicKey();
 
-        // Set cookies again (optional)
+        // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
         CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
         CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);

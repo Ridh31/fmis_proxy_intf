@@ -112,10 +112,10 @@ public class BankStatementController {
                             example = "{{CAMDX-CLIENT-ID}}"
                     ),
                     @Parameter(
-                            name = "X-Partner-Token",
+                            name = HeaderConstants.X_PARTNER_TOKEN,
                             in = ParameterIn.HEADER,
                             required = true,
-                            description = "The identifier of the partner, which is recognized and authorized by the provider.",
+                            description = HeaderConstants.X_PARTNER_TOKEN_DESC,
                             example = "{{PARTNER-TOKEN}}"
                     )
             },

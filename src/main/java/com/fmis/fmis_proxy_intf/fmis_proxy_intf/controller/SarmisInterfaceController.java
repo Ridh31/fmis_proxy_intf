@@ -338,7 +338,7 @@ public class SarmisInterfaceController {
             sarmisInterface.setResponse(objectMapper.writeValueAsString(
                     new ApiResponse<>(
                             ResponseCodeUtil.processed(),
-                            ResponseMessageUtil.processed("Purchases Orders Callback"),
+                            ResponseMessageUtil.processed("Purchases orders callback"),
                             jsonBody
                     )
             ));
@@ -351,7 +351,7 @@ public class SarmisInterfaceController {
 
             return ResponseEntity.ok(new ApiResponse<>(
                     ResponseCodeUtil.processed(),
-                    ResponseMessageUtil.processed("Purchases Orders Callback"),
+                    ResponseMessageUtil.processed("Purchases orders callback"),
                     jsonBody
             ));
 
@@ -362,7 +362,7 @@ public class SarmisInterfaceController {
             sarmisInterface.setPayload(requestBody);
             sarmisInterface.setResponse(new ApiResponse<>(
                     ResponseCodeUtil.internalError(),
-                    ResponseMessageUtil.internalError("Purchase Order Callback")
+                    ResponseMessageUtil.internalError("Purchases orders callback")
             ).toString());
             sarmisInterface.setStatus(false);
             sarmisInterfaceService.save(sarmisInterface);
@@ -373,7 +373,7 @@ public class SarmisInterfaceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
-                            ResponseMessageUtil.internalError("Purchase Order Callback")
+                            ResponseMessageUtil.internalError("Purchases orders callback")
                     ));
         }
     }
@@ -476,7 +476,7 @@ public class SarmisInterfaceController {
             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.ok(new ApiResponse<>(
                         ResponseCodeUtil.processed(),
-                        ResponseMessageUtil.processed("Long Term Asset Report"),
+                        ResponseMessageUtil.processed("Long term asset report"),
                         objectMapper.readTree(sarmisResponse.getBody())
                 ));
             } else {
@@ -496,7 +496,7 @@ public class SarmisInterfaceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
-                            ResponseMessageUtil.internalError("Long Term Asset Report"),
+                            ResponseMessageUtil.internalError("Long term asset report"),
                             sarmisError
                     ));
         }
@@ -555,7 +555,7 @@ public class SarmisInterfaceController {
                         responseMap.put("message", newMessageMap);
 
                     } catch (Exception ex) {
-                        System.err.println(ResponseMessageUtil.internalError("Long Term Asset Report (XML)"));
+                        System.err.println(ResponseMessageUtil.internalError("Long term asset report (XML)"));
                     }
                 } else if (messageStr.startsWith("{") && messageStr.endsWith("}")) {
                     try {
@@ -563,7 +563,7 @@ public class SarmisInterfaceController {
                                 messageStr, new TypeReference<Map<String, Object>>() {});
                         responseMap.put("message", innerMessageMap);
                     } catch (Exception ex) {
-                        System.err.println(ResponseMessageUtil.internalError("Long Term Asset Report (XML)"));
+                        System.err.println(ResponseMessageUtil.internalError("Long term asset report (XML)"));
                     }
                 }
             }
@@ -686,7 +686,7 @@ public class SarmisInterfaceController {
             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.ok(new ApiResponse<>(
                         ResponseCodeUtil.processed(),
-                        ResponseMessageUtil.processed("Depreciation Asset Report"),
+                        ResponseMessageUtil.processed("Depreciation asset report"),
                         objectMapper.readTree(sarmisResponse.getBody())
                 ));
             } else {
@@ -706,7 +706,7 @@ public class SarmisInterfaceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
-                            ResponseMessageUtil.internalError("Depreciation Asset Report"),
+                            ResponseMessageUtil.internalError("Depreciation asset report"),
                             sarmisError
                     ));
         }
@@ -765,7 +765,7 @@ public class SarmisInterfaceController {
                         responseMap.put("message", newMessageMap);
 
                     } catch (Exception ex) {
-                        System.err.println(ResponseMessageUtil.internalError("Depreciation Asset Report (XML)"));
+                        System.err.println(ResponseMessageUtil.internalError("Depreciation asset report (XML)"));
                     }
                 } else if (messageStr.startsWith("{") && messageStr.endsWith("}")) {
                     try {
@@ -773,7 +773,7 @@ public class SarmisInterfaceController {
                                 messageStr, new TypeReference<Map<String, Object>>() {});
                         responseMap.put("message", innerMessageMap);
                     } catch (Exception ex) {
-                        System.err.println(ResponseMessageUtil.internalError("Depreciation Asset Report (XML)"));
+                        System.err.println(ResponseMessageUtil.internalError("Depreciation asset report (XML)"));
                     }
                 }
             }
@@ -913,7 +913,7 @@ public class SarmisInterfaceController {
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
                                         ResponseCodeUtil.processed(),
-                                        ResponseMessageUtil.processed("Institution Closing List"),
+                                        ResponseMessageUtil.processed("Institution closing list"),
                                         sarmisResponseJSON
                                 ));
                             } else {
@@ -970,7 +970,7 @@ public class SarmisInterfaceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
-                            ResponseMessageUtil.internalError("Institution Closing List")
+                            ResponseMessageUtil.internalError("Institution closing list")
                     ));
         }
     }
@@ -1141,7 +1141,7 @@ public class SarmisInterfaceController {
                             if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
                                 return ResponseEntity.ok(new ApiResponse<>(
                                         ResponseCodeUtil.processed(),
-                                        ResponseMessageUtil.processed("Asset Kind List"),
+                                        ResponseMessageUtil.processed("Asset kind list"),
                                         assetKindList
                                 ));
                             } else {
@@ -1198,7 +1198,7 @@ public class SarmisInterfaceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
-                            ResponseMessageUtil.internalError("Asset Kind List")
+                            ResponseMessageUtil.internalError("Asset kind list")
                     ));
         }
     }
@@ -1311,7 +1311,7 @@ public class SarmisInterfaceController {
 
             return ResponseEntity.ok(new ApiResponse<>(
                     ResponseCodeUtil.processed(),
-                    ResponseMessageUtil.processed("SARMIS Interface"),
+                    ResponseMessageUtil.processed("SARMIS interface log"),
                     sarmisInterface
             ));
 
@@ -1319,7 +1319,7 @@ public class SarmisInterfaceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.fetchError(),
-                            ResponseMessageUtil.fetchError("SARMIS Interface")
+                            ResponseMessageUtil.fetchError("SARMIS interface log")
                     ));
         }
     }

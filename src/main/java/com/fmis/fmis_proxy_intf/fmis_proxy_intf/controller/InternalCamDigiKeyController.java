@@ -108,7 +108,7 @@ public class InternalCamDigiKeyController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.taken(),
-                                ResponseMessageUtil.taken("IP Address")
+                                ResponseMessageUtil.taken("IP address")
                         ));
             }
             if (internalCamDigiKeyService.existsByAccessURL(internalCamDigiKey.getAccessURL())) {

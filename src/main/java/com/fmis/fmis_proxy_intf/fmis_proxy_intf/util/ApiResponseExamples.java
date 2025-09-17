@@ -1,6 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.FmisResponseCodes;
 
 public class ApiResponseExamples {
 
@@ -15,6 +16,7 @@ public class ApiResponseExamples {
      */
     public static final String BASIC_TEST = "{\n" +
             "  \"code\": " + ApiResponseConstants.SUCCESS_CODE + ",\n" +
+            "  \"response_code\": " + FmisResponseCodes.FMIS_SUCCESS_PROCESSED + ",\n" +
             "  \"message\": \"FMIS Interface Web Service.\"\n" +
             "}";
 
@@ -34,6 +36,7 @@ public class ApiResponseExamples {
      */
     public static final String FMIS_TEST_SUCCESS = "{\n" +
             "  \"code\": " + ApiResponseConstants.SUCCESS_CODE + ",\n" +
+            "  \"response_code\": " + FmisResponseCodes.FMIS_SUCCESS_PROCESSED + ",\n" +
             "  \"message\": \"" + ApiResponseConstants.SUCCESS + "\",\n" +
             "  \"data\": \"<?xml version=\\\"1.0\\\"?>\\r\\n<response><data><item1>Hello FMIS Internface API Webservice</item1><item2>Your payload is: test</item2></data></response>\"\n" +
             "}";
@@ -44,6 +47,7 @@ public class ApiResponseExamples {
      */
     public static final String FMIS_TEST_NO_CONFIG_FOUND = "{\n" +
             "  \"code\": " + ApiResponseConstants.NOT_FOUND_CODE + ",\n" +
+            "  \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_CONFIGURATION_NOT_FOUND + ",\n" +
             "  \"message\": \"" + ApiResponseConstants.NOT_FOUND_FMIS_CONFIG + "\"\n" +
             "}";
 
@@ -53,6 +57,7 @@ public class ApiResponseExamples {
      */
     public static final String FMIS_TEST_BAD_GATEWAY = "{\n" +
             "  \"code\": " + ApiResponseConstants.BAD_GATEWAY_CODE + ",\n" +
+            "  \"response_code\": " + FmisResponseCodes.FMIS_BAD_GATEWAY_NOT_CONNECT + ",\n" +
             "  \"message\": \"" + ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + "\"\n" +
             "}";
 
@@ -74,6 +79,7 @@ public class ApiResponseExamples {
      */
     public static final String CREATE_PARTNER_SUCCESS = "{\n" +
             "    \"code\": " + ApiResponseConstants.CREATED_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_SUCCESS_CREATED + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.CREATED + "\",\n" +
             "    \"data\": " + ApiResponseExamples.CREATE_PARTNER_DATA + "\n" +
             "}";
@@ -84,6 +90,7 @@ public class ApiResponseExamples {
      */
     public static final String CREATE_PARTNER_BAD_REQUEST_NAME_TAKEN = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_TAKEN + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_PARTNER_NAME_TAKEN + "\"\n" +
             "}";
 
@@ -93,6 +100,7 @@ public class ApiResponseExamples {
      */
     public static final String CREATE_PARTNER_BAD_REQUEST_IDENTIFIER_TAKEN = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_TAKEN + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_PARTNER_IDENTIFIER_TAKEN + "\"\n" +
             "}";
 
@@ -102,6 +110,7 @@ public class ApiResponseExamples {
      */
     public static final String CREATE_PARTNER_BAD_REQUEST_CODE_TAKEN = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_TAKEN + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_PARTNER_CODE_TAKEN + "\"\n" +
             "}";
 
@@ -111,6 +120,7 @@ public class ApiResponseExamples {
      */
     public static final String CREATE_PARTNER_UNAUTHORIZED = "{\n" +
             "    \"code\": " + ApiResponseConstants.UNAUTHORIZED_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_UNAUTHORIZED + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.UNAUTHORIZED_LOGIN_REQUIRED + "\"\n" +
             "}";
 
@@ -120,6 +130,7 @@ public class ApiResponseExamples {
      */
     public static final String CREATE_PARTNER_NOT_FOUND = "{\n" +
             "    \"code\": " + ApiResponseConstants.NOT_FOUND_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_NOT_FOUND + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.NOT_FOUND_USER + "\"\n" +
             "}";
 
@@ -129,6 +140,7 @@ public class ApiResponseExamples {
      */
     public static final String CREATE_PARTNER_SERVER_ERROR = "{\n" +
             "    \"code\": " + ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_INTERNAL_ERROR + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.INTERNAL_SERVER_ERROR + "\"\n" +
             "}";
 
@@ -143,6 +155,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_SUCCESS = "{\n" +
             "    \"code\": " + ApiResponseConstants.CREATED_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_SUCCESS_CREATED + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BANK_STATEMENT_IMPORTED + "\"\n" +
             "}";
 
@@ -152,6 +165,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_MISSING_PARTNER_TOKEN = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_INVALID_ENTITY + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_MISSING_PARTNER_TOKEN + "\"\n" +
             "}";
 
@@ -161,6 +175,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_VALIDATION_ERROR = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_INVALID_ENTITY + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_NO_VALID_BANK_STATEMENT + "\"\n" +
             "}";
 
@@ -170,6 +185,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_UNAUTHORIZED = "{\n" +
             "    \"code\": " + ApiResponseConstants.UNAUTHORIZED_CODE_STRING + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_UNAUTHORIZED + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.UNAUTHORIZED_INVALID_PARTNER_TOKEN + "\"\n" +
             "}";
 
@@ -179,6 +195,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_FORBIDDEN = "{\n" +
             "    \"code\": " + ApiResponseConstants.FORBIDDEN_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_FORBIDDEN + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.FORBIDDEN_PARTNER_TOKEN + "\"\n" +
             "}";
 
@@ -188,6 +205,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_NOT_FOUND = "{\n" +
             "    \"code\": " + ApiResponseConstants.NOT_FOUND_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_NOT_FOUND + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.NOT_FOUND_FMIS_CONFIG + "\"\n" +
             "}";
 
@@ -197,6 +215,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_FMIS_FAILURE = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_GATEWAY_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_GATEWAY_NOT_CONNECT + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_GATEWAY_NOT_CONNECT + "\"\n" +
             "}";
 
@@ -206,6 +225,7 @@ public class ApiResponseExamples {
      */
     public static final String IMPORT_BANK_STATEMENT_SERVER_ERROR = "{\n" +
             "    \"code\": " + ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_INTERNAL_ERROR + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.INTERNAL_SERVER_ERROR + "\"\n" +
             "}";
 
@@ -215,6 +235,7 @@ public class ApiResponseExamples {
      */
     public static final String UPLOAD_BANK_STATEMENT_FILE_MISSING_OR_EMPTY_ERROR = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_INVALID_ENTITY + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_FILE_MISSING_OR_EMPTY + "\"\n" +
             "}";
 
@@ -224,6 +245,7 @@ public class ApiResponseExamples {
      */
     public static final String UPLOAD_BANK_STATEMENT_INVALID_FILE_TYPE_ERROR = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_INVALID_FIELD + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_INVALID_FILE_TYPE + "\"\n" +
             "}";
 
@@ -233,6 +255,7 @@ public class ApiResponseExamples {
      */
     public static final String UPLOAD_BANK_STATEMENT_FAILED_TO_PARSE_JSON_ERROR = "{\n" +
             "    \"code\": " + ApiResponseConstants.BAD_REQUEST_CODE + ",\n" +
+            "    \"response_code\": " + FmisResponseCodes.FMIS_BAD_REQUEST_FAILED_PROCESS + ",\n" +
             "    \"message\": \"" + ApiResponseConstants.BAD_REQUEST_FAILED_PROCESS_FILE + "\"\n" +
             "}";
 }
