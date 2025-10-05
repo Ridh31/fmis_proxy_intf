@@ -540,6 +540,91 @@ section.content {
 
 /**
 |--------------------------------------------------------------------------
+| DASHBOARD
+|--------------------------------------------------------------------------
+*/
+.dashboard-container {
+    display: flex;
+    gap: 24px;
+    padding: var(--content-padding);
+    background-color: var(--main-bg);
+    font-family: var(--font-family);
+}
+
+.dashboard-cards {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dashboard-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--card-divider);
+    transition: box-shadow var(--transition-speed);
+}
+
+.dashboard-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-card-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--content-title);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dashboard-card-icon {
+    flex-shrink: 0;
+    stroke: var(--color-blue-dark);
+    width: 20px;
+    height: 20px;
+}
+
+.dashboard-card-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-blue-dark);
+}
+
+.dashboard-chart-container {
+    flex: 1;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--card-divider);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        flex-direction: column;
+        padding: 12px;
+    }
+
+    .dashboard-cards,
+    .dashboard-chart-container {
+        flex: none;
+        width: 100%;
+    }
+
+    .dashboard-cards {
+        margin-bottom: 20px;
+    }
+}
+
+/**
+|--------------------------------------------------------------------------
 | DATATABLE
 |--------------------------------------------------------------------------
 */

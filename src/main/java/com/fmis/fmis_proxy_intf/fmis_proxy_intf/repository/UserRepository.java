@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -58,6 +59,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Retrieves all enabled users in descending order of ID.
      *
+     * @param username optional filter by username
      * @param pageable pagination and sorting information
      * @return a {@link Page} of enabled users
      */
@@ -68,7 +70,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             user u
         WHERE
             u.enabled = TRUE
+            AND (:username IS NULL OR LOWER(u.username) LIKE CONCAT('%', LOWER(:username), '%'))
         ORDER BY u.id DESC
         """, nativeQuery = true)
-    Page<User> getAllUsers(Pageable pageable);
+    Page<User> getAllUsers(@Param("username") String username, Pageable pageable);
 }

@@ -148,12 +148,14 @@ public class PageController {
     public void addMenuUrls(Model model) {
         model.addAttribute("loginUrl", apiPrefix + "/admin/login");
         model.addAttribute("logoutUrl", apiPrefix + "/admin/logout");
+        model.addAttribute("homeUrl", apiPrefix + "/admin/home");
         model.addAttribute("dashboardUrl", apiPrefix + "/admin/dashboard");
         model.addAttribute("bankStatementUrl", apiPrefix + "/admin/bank-statement-log");
         model.addAttribute("sarmisInterfaceUrl", apiPrefix + "/admin/sarmis-interface-log");
         model.addAttribute("internalCamDigiKeyUrl", apiPrefix + "/admin/internal-camdigikey");
         model.addAttribute("securityServerUrl", apiPrefix + "/admin/security-server");
         model.addAttribute("partnerManagementUrl", apiPrefix + "/admin/partner-management");
+        model.addAttribute("userProfilesUrl", apiPrefix + "/admin/user-profiles");
         model.addAttribute("fmisConfigUrl", apiPrefix + "/admin/fmis-config");
     }
 
@@ -167,6 +169,36 @@ public class PageController {
             return "redirect:" + apiPrefix + "/admin/login";
         }
         return null;
+    }
+
+    /**
+     * Handles GET requests to the home page.
+     *
+     * @return ResponseEntity containing the home HTML page or an error message if the file is not found.
+     */
+    @GetMapping("/home")
+    public String home(
+            @CookieValue(name = "isAdmin", required = false) String isAdmin,
+            @CookieValue(name = "adminUsername", required = false) String adminUsername,
+            @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            HttpServletResponse response,
+            Model model
+    ) {
+        // Check authentication
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
+
+        // Re-set cookies to extend session
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+
+        // Add only page-specific attributes
+        model.addAttribute("title", "Home | FMIS Proxy Interface");
+        model.addAttribute("heading", "Home");
+        model.addAttribute("currentPage", "home");
+
+        return "pages/home";
     }
 
     /**
@@ -347,6 +379,36 @@ public class PageController {
         model.addAttribute("currentPage", "partner-management");
 
         return "pages/partner-management";
+    }
+
+    /**
+     * Handles GET request to the Partner Management page.
+     *
+     * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
+     */
+    @GetMapping("/user-profiles")
+    public Object userProfiles(
+            @CookieValue(name = "isAdmin", required = false) String isAdmin,
+            @CookieValue(name = "adminUsername", required = false) String adminUsername,
+            @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
+            HttpServletResponse response
+    ) {
+        // Check authentication
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
+
+        // Set cookies
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "User | FMIS Proxy Interface");
+        model.addAttribute("heading", "User");
+        model.addAttribute("currentPage", "user");
+
+        return "pages/user";
     }
 
     /**

@@ -314,15 +314,16 @@ public class AuthController {
     public ResponseEntity<ApiResponse<?>> getAllUsers(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)
             @Parameter(required = true, description = HeaderConstants.X_PARTNER_TOKEN_DESC) String partnerCode,
+            @RequestParam(required = false) String username,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         // Retrieve the username of the authenticated user for partner validation
-        String username = userService.getAuthenticatedUsername();
+        String authUsername = userService.getAuthenticatedUsername();
 
         // Validate the provided X-Partner-Token header
         ResponseEntity<ApiResponse<?>> partnerValidationResponse =
-                HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
+                HeaderValidationUtil.validatePartnerCode(partnerCode, authUsername, partnerService, userService);
         if (partnerValidationResponse != null) {
             return partnerValidationResponse;
         }
@@ -335,7 +336,7 @@ public class AuthController {
 
         try {
             // Fetch paginated list of users
-            Page<User> users = userService.getAllUsers(page, size);
+            Page<User> users = userService.getAllUsers(username, page, size);
 
             // Return successful response with user list
             return ResponseEntity.ok(new ApiResponse<>(

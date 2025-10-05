@@ -80,9 +80,10 @@ public interface UserService {
     /**
      * Retrieves a paginated list of all enabled users.
      *
+     *  @param username optional filter by username
      * @param page the page number (0-based index)
      * @param size the number of items per page
      * @return a {@link Page} of {@link User} entities
      */
-    Page<User> getAllUsers(int page, int size);
+    Page<User> getAllUsers(String username, int page, int size);
 }

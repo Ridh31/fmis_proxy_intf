@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.cookie = `adminPassword=${password.value.trim()}; path=/; SameSite=Lax; Secure`;
 
                 const urlParams = new URLSearchParams(window.location.search);
-                const redirectTo = urlParams.get("redirect") || `${apiPrefix}/admin/dashboard`;
+                const redirectTo = urlParams.get("redirect") || `${apiPrefix}/admin/home`;
 
                 window.location.href = redirectTo;
                 return;

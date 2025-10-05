@@ -154,13 +154,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     /**
      * Retrieves a paginated list of users.
      *
+     * @param username optional filter by username
      * @param page the page number (0-based)
      * @param size the number of records per page
      * @return a {@link Page} of users
      */
     @Override
-    public Page<User> getAllUsers(int page, int size) {
+    public Page<User> getAllUsers(String username, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return userRepository.getAllUsers(pageable);
+        return userRepository.getAllUsers(username, pageable);
     }
 }
