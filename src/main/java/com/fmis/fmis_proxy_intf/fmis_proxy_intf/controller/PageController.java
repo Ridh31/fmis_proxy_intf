@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Optional;
 
 /**
  * Controller for serving static HTML pages like login and bank statement log.
@@ -30,6 +31,9 @@ import java.nio.file.Files;
 @Controller
 @RequestMapping("/admin")
 public class PageController {
+
+    @Value("${application.version}")
+    private String appVersion;
 
     @Value("${application.api.prefix}")
     private String apiPrefix;
@@ -108,6 +112,35 @@ public class PageController {
     }
 
     /**
+     * Adds admin session-related attributes globally if admin is authenticated.
+     */
+    @ModelAttribute
+    public void addAdminAttributesToModel(
+            @CookieValue(name = "isAdmin", required = false) String isAdmin,
+            @CookieValue(name = "adminUsername", required = false) String adminUsername,
+            @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model
+    ) {
+        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
+            return;
+        }
+
+        Optional<User> optionalUser = userService.findByUsername(adminUsername);
+        if (optionalUser.isEmpty()) return;
+
+        User user = optionalUser.get();
+        String partnerToken = user.getPartner().getPublicKey();
+        int adminLevel = user.getRole().getLevel();
+
+        model.addAttribute("username", adminUsername);
+        model.addAttribute("password", adminPassword);
+        model.addAttribute("partnerToken", partnerToken);
+        model.addAttribute("adminLevel", adminLevel);
+        model.addAttribute("appVersion", appVersion);
+        model.addAttribute("apiPrefix", apiPrefix);
+    }
+
+    /**
      * Adds commonly used admin page URLs to the model for use in views.
      * Each attribute corresponds to a specific menu or page link in the admin interface.
      */
@@ -125,39 +158,42 @@ public class PageController {
     }
 
     /**
-     * Handles GET requests to the bank statement log page.
+     * Validates admin authentication using cookie values.
      *
-     * @return ResponseEntity containing the bank statement log HTML page or an error message if the file is not found.
+     * @return Redirect to log in if not authenticated; otherwise, null.
+     */
+    private String checkAdminAuth(String isAdmin, String adminUsername, String adminPassword) {
+        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
+            return "redirect:" + apiPrefix + "/admin/login";
+        }
+        return null;
+    }
+
+    /**
+     * Handles GET requests to the dashboard log page.
+     *
+     * @return ResponseEntity containing the dashboard HTML page or an error message if the file is not found.
      */
     @GetMapping("/dashboard")
     public String dashboard(
             @CookieValue(name = "isAdmin", required = false) String isAdmin,
             @CookieValue(name = "adminUsername", required = false) String adminUsername,
             @CookieValue(name = "adminPassword", required = false) String adminPassword,
-            Model model,
-            HttpServletResponse response
+            HttpServletResponse response,
+            Model model
     ) {
         // Check authentication
-        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return "redirect:" + apiPrefix + "/admin/login";
-        }
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
 
-        // Load user and partner info
-        User user = userService.findByUsername(adminUsername).orElseThrow();
-        String partnerToken = user.getPartner().getPublicKey();
-
-        // Set cookies
+        // Re-set cookies to extend session
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
         CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
         CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
 
-        // Add attributes to model for Thymeleaf
+        // Add only page-specific attributes
         model.addAttribute("title", "Dashboard | FMIS Proxy Interface");
         model.addAttribute("heading", "Dashboard");
-        model.addAttribute("username", adminUsername);
-        model.addAttribute("password", adminPassword);
-        model.addAttribute("partnerToken", partnerToken);
-        model.addAttribute("apiPrefix", apiPrefix);
         model.addAttribute("currentPage", "dashboard");
 
         return "pages/dashboard";
@@ -177,13 +213,8 @@ public class PageController {
             HttpServletResponse response
     ) {
         // Check authentication
-        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return "redirect:" + apiPrefix + "/admin/login";
-        }
-
-        // Load user and partner info
-        User user = userService.findByUsername(adminUsername).orElseThrow();
-        String partnerToken = user.getPartner().getPublicKey();
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
 
         // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -193,10 +224,6 @@ public class PageController {
         // Add attributes to model for Thymeleaf
         model.addAttribute("title", "Bank Statement | FMIS Proxy Interface");
         model.addAttribute("heading", "Bank Statement");
-        model.addAttribute("username", adminUsername);
-        model.addAttribute("password", adminPassword);
-        model.addAttribute("partnerToken", partnerToken);
-        model.addAttribute("apiPrefix", apiPrefix);
         model.addAttribute("currentPage", "bank-statement-log");
 
         return "pages/bank-statement-log";
@@ -216,13 +243,8 @@ public class PageController {
             HttpServletResponse response
     ) {
         // Check authentication
-        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return "redirect:" + apiPrefix + "/admin/login";
-        }
-
-        // Load user and partner info
-        User user = userService.findByUsername(adminUsername).orElseThrow();
-        String partnerToken = user.getPartner().getPublicKey();
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
 
         // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -232,10 +254,6 @@ public class PageController {
         // Add attributes to model for Thymeleaf
         model.addAttribute("title", "SARMIS Interface | FMIS Proxy Interface");
         model.addAttribute("heading", "SARMIS Interface");
-        model.addAttribute("username", adminUsername);
-        model.addAttribute("password", adminPassword);
-        model.addAttribute("partnerToken", partnerToken);
-        model.addAttribute("apiPrefix", apiPrefix);
         model.addAttribute("currentPage", "sarmis-interface-log");
 
         return "pages/sarmis-interface-log";
@@ -255,13 +273,8 @@ public class PageController {
             HttpServletResponse response
     ) {
         // Check authentication
-        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return "redirect:" + apiPrefix + "/admin/login";
-        }
-
-        // Load user and partner info
-        User user = userService.findByUsername(adminUsername).orElseThrow();
-        String partnerToken = user.getPartner().getPublicKey();
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
 
         // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -271,10 +284,6 @@ public class PageController {
         // Add attributes to model for Thymeleaf
         model.addAttribute("title", "Internal CamDigiKey | FMIS Proxy Interface");
         model.addAttribute("heading", "Internal CamDigiKey");
-        model.addAttribute("username", adminUsername);
-        model.addAttribute("password", adminPassword);
-        model.addAttribute("partnerToken", partnerToken);
-        model.addAttribute("apiPrefix", apiPrefix);
         model.addAttribute("currentPage", "internal-camdigikey");
 
         return "pages/internal-camdigikey";
@@ -294,13 +303,8 @@ public class PageController {
             HttpServletResponse response
     ) {
         // Check authentication
-        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return "redirect:" + apiPrefix + "/admin/login";
-        }
-
-        // Load user and partner info
-        User user = userService.findByUsername(adminUsername).orElseThrow();
-        String partnerToken = user.getPartner().getPublicKey();
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
 
         // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -310,10 +314,6 @@ public class PageController {
         // Add attributes to model for Thymeleaf
         model.addAttribute("title", "Security Server | FMIS Proxy Interface");
         model.addAttribute("heading", "Security Server");
-        model.addAttribute("username", adminUsername);
-        model.addAttribute("password", adminPassword);
-        model.addAttribute("partnerToken", partnerToken);
-        model.addAttribute("apiPrefix", apiPrefix);
         model.addAttribute("currentPage", "security-server");
 
         return "pages/security-server";
@@ -333,13 +333,8 @@ public class PageController {
             HttpServletResponse response
     ) {
         // Check authentication
-        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return "redirect:" + apiPrefix + "/admin/login";
-        }
-
-        // Load user and partner info
-        User user = userService.findByUsername(adminUsername).orElseThrow();
-        String partnerToken = user.getPartner().getPublicKey();
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
 
         // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -349,10 +344,6 @@ public class PageController {
         // Add attributes to model for Thymeleaf
         model.addAttribute("title", "Partner | FMIS Proxy Interface");
         model.addAttribute("heading", "Partner");
-        model.addAttribute("username", adminUsername);
-        model.addAttribute("password", adminPassword);
-        model.addAttribute("partnerToken", partnerToken);
-        model.addAttribute("apiPrefix", apiPrefix);
         model.addAttribute("currentPage", "partner-management");
 
         return "pages/partner-management";
@@ -372,13 +363,8 @@ public class PageController {
             HttpServletResponse response
     ) {
         // Check authentication
-        if (!"true".equals(isAdmin) || !StringUtils.hasText(adminUsername) || !StringUtils.hasText(adminPassword)) {
-            return "redirect:" + apiPrefix + "/admin/login";
-        }
-
-        // Load user and partner info
-        User user = userService.findByUsername(adminUsername).orElseThrow();
-        String partnerToken = user.getPartner().getPublicKey();
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
 
         // Set cookies
         CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
@@ -388,10 +374,6 @@ public class PageController {
         // Add attributes to model for Thymeleaf
         model.addAttribute("title", "Integration Gateway | FMIS Proxy Interface");
         model.addAttribute("heading", "Integration Gateway");
-        model.addAttribute("username", adminUsername);
-        model.addAttribute("password", adminPassword);
-        model.addAttribute("partnerToken", partnerToken);
-        model.addAttribute("apiPrefix", apiPrefix);
         model.addAttribute("currentPage", "fmis-config");
 
         return "pages/fmis-config";

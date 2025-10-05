@@ -161,7 +161,7 @@ body, html {
 }
 
 .sidebar.collapsed .sidebar-footer::after {
-    content: "V1.0.0";
+    content: attr(data-version);
     display: block;
     color: var(--footer-version-text);
     font-size: 0.85em;
@@ -256,6 +256,7 @@ body, html {
 }
 
 .icon-button svg {
+    pointer-events: auto;
     width: 24px;
     height: 24px;
 }
@@ -718,6 +719,63 @@ table.dataTable thead th, table.dataTable thead td {
     padding-right: 0.5rem;
 }
 
+/* Notification Modal */
+.notification-modal {
+    display: none;
+    position: absolute;
+    top: 40px;
+    right: 0;
+    width: 300px;
+    max-width: 90vw;
+    background: var(--color-white);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    outline: none;
+    border-radius: 8px;
+    padding: 1rem;
+    z-index: 10000;
+    box-sizing: border-box;
+    color: var(--color-gray-900);
+}
+
+.notification-modal.active {
+    display: block;
+}
+
+.notification-modal .modal-content {
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.notification-modal .modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 1.25rem;
+    color: var(--color-gray-700, #666);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.notification {
+    position: relative;
+    display: inline-block;
+}
+
+#notification-title {
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.notification-modal p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-gray-700, #555);
+}
+
 /**
 |--------------------------------------------------------------------------
 | OTHERS
@@ -736,6 +794,14 @@ table.dataTable thead th, table.dataTable thead td {
 .info {
     color: var(--info-text);
     font-weight: 500;
+}
+
+.blur-text {
+    color: transparent;
+    user-select: none;
+    text-shadow: 0 0 5px var(--color-blue-dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .error-message {

@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const popupModal = document.getElementById("popup-modal");
     const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 
+    const MESSAGES = {
+        LOGIN_SUCCESS: "Login successful.",
+        LOGIN_ERROR_INVALID: "Access denied: Invalid admin credentials.",
+        LOGIN_ERROR_SERVER: "Something went wrong. Please try again later."
+    };
+
     if (!form) return;
 
     form.addEventListener("submit", async function (e) {
@@ -59,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const isJson = contentType && contentType.includes("application/json");
             const result = isJson ? await response.json() : null;
 
-            if (response.ok && result?.code === 200 && result.data === true) {
+            if (response.ok && result?.code === 200 && result.data?.status === true) {
                 document.cookie = "isAdmin=true; path=/; SameSite=Lax; Secure";
                 document.cookie = `adminUsername=${username.value.trim()}; path=/; SameSite=Lax; Secure`;
                 document.cookie = `adminPassword=${password.value.trim()}; path=/; SameSite=Lax; Secure`;
@@ -73,8 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (username) username.classList.add("error");
                 if (password) password.classList.add("error");
                 if (usernameError) {
-                    usernameError.textContent = "Access denied: Invalid admin credentials.";
+                    usernameError.textContent = MESSAGES.LOGIN_ERROR_INVALID;
                     usernameError.style.display = "block";
+                    showToast("error", MESSAGES.LOGIN_ERROR_INVALID);
                 }
             }
         } catch (err) {
@@ -82,8 +89,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (username) username.classList.add("error");
             if (password) password.classList.add("error");
             if (usernameError) {
-                usernameError.textContent = "Something went wrong. Please try again later.";
+                usernameError.textContent = MESSAGES.LOGIN_ERROR_SERVER;
                 usernameError.style.display = "block";
+                showToast("error", MESSAGES.LOGIN_ERROR_SERVER);
             }
         } finally {
             if (loginBtn) loginBtn.disabled = false;

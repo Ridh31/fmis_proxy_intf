@@ -49,7 +49,7 @@ public class UserDataSeeder {
                 // Create and populate the new user
                 User newUser = new User();
                 newUser.setUsername("FMIS");
-                newUser.setPassword(new BCryptPasswordEncoder().encode("Fmis#2025"));
+                newUser.setPassword(new BCryptPasswordEncoder().encode("Fmis#Proxy$"));
                 newUser.setRole(superAdminRole);
                 newUser.setPartner(fmisPartner);
                 newUser.setEnabled(true);

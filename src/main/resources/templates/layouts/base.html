@@ -13,6 +13,7 @@
     <script src="/libs/jquery-ui/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="/libs/flatpickr/flatpickr.min.css">
     <script src="/libs/flatpickr/flatpickr.js"></script>
+    <script src="/libs/sweetalert2/sweetalert2@11.js"></script>
     <link rel="stylesheet" href="/css/styles.css">
     <script defer src="/js/sidebar.js"></script>
     <title th:text="${title}">Base Layout</title>
@@ -58,7 +59,8 @@
                 <span class="text">SARMIS Interface</span>
             </a>
 
-            <a th:href="${internalCamDigiKeyUrl}"
+            <a th:if="${adminLevel == 1}"
+               th:href="${internalCamDigiKeyUrl}"
                th:classappend="${currentPage == 'internal-camdigikey'} ? ' active' : ''"
                class="menu-item">
                 <span class="icon">
@@ -69,7 +71,8 @@
                 <span class="text">Internal CamDigiKey</span>
             </a>
 
-            <a th:href="${securityServerUrl}"
+            <a th:if="${adminLevel == 1}"
+               th:href="${securityServerUrl}"
                th:classappend="${currentPage == 'security-server'} ? ' active' : ''"
                class="menu-item">
                 <span class="icon">
@@ -80,7 +83,8 @@
                 <span class="text">Security Server</span>
             </a>
 
-            <a th:href="${partnerManagementUrl}"
+            <a th:if="${adminLevel == 1}"
+               th:href="${partnerManagementUrl}"
                th:classappend="${currentPage == 'partner-management'} ? ' active' : ''"
                class="menu-item">
                 <span class="icon">
@@ -91,7 +95,8 @@
                 <span class="text">Partner</span>
             </a>
 
-            <a th:href="${fmisConfigUrl}"
+            <a th:if="${adminLevel == 1}"
+               th:href="${fmisConfigUrl}"
                th:classappend="${currentPage == 'fmis-config'} ? ' active' : ''"
                class="menu-item">
                 <span class="icon">
@@ -102,8 +107,8 @@
                 <span class="text">Integration Gateway</span>
             </a>
         </nav>
-        <div class="sidebar-footer">
-            <span>Version 1.0.0</span>
+        <div class="sidebar-footer" th:attr="data-version='V' + ${appVersion}">
+            <span th:text="'Version ' + ${appVersion}"></span>
         </div>
     </aside>
 
@@ -117,11 +122,24 @@
             </div>
             <div class="header-right">
                 <!-- Notification -->
-                <div class="icon-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                    </svg>
-                    <span class="badge">0</span>
+                <div class="notification">
+
+                    <!-- Notification Icon -->
+                    <div id="notification-icon" class="icon-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                        </svg>
+                        <span class="badge">0</span>
+                    </div>
+
+                    <!-- Notification Modal -->
+                    <div id="notification-modal" class="notification-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+                        <div class="notification-content" role="document">
+                            <button id="close-notification-modal" class="modal-close" aria-label="Close modal">&times;</button>
+                            <h2 id="notification-title">Notifications</h2>
+                            <p>No new notifications.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Logout -->
@@ -145,6 +163,7 @@
         </section>
     </div>
 </div>
+<script th:src="@{/js/toast.js}"></script>
 <script th:src="@{/js/main.js}"></script>
 </body>
 </html>

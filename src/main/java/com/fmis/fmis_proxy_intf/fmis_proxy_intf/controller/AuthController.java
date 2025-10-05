@@ -25,6 +25,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -359,10 +360,7 @@ public class AuthController {
      *
      * @param username The username of the user to authenticate.
      * @param password The password associated with the given username.
-     * @return A ResponseEntity containing an ApiResponse<Boolean> indicating admin status.
-     *         - 200 OK if valid credentials, with a message indicating access level.
-     *         - 401 Unauthorized if credentials are invalid.
-     *         - 500 Internal Server Error if an unexpected error occurs.
+     * @return A ResponseEntity containing an ApiResponse<Map<String, Object>>
      */
     @Operation(
             summary = "Admin Verification",
@@ -370,7 +368,7 @@ public class AuthController {
     )
     @Hidden
     @PostMapping("/verify-admin")
-    public ResponseEntity<ApiResponse<Boolean>> verifyAdmin(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> verifyAdmin(
             @RequestParam String username,
             @RequestParam String password) {
         try {
@@ -378,11 +376,15 @@ public class AuthController {
 
             // Return 401 if user not found
             if (optionalUser.isEmpty()) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("status", false);
+                data.put("level", null);
+
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.unauthorized(),
                                 ApiResponseConstants.UNAUTHORIZED_INVALID_CREDENTIALS,
-                                false
+                                data
                         ));
             }
 
@@ -390,30 +392,44 @@ public class AuthController {
 
             // Return 401 if password does not match
             if (!passwordEncoder.matches(password, user.getPassword())) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("status", false);
+                data.put("level", null);
+
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.unauthorized(),
                                 ApiResponseConstants.UNAUTHORIZED_INVALID_CREDENTIALS,
-                                false
+                                data
                         ));
             }
 
             // Check if user has admin role
             boolean isAdmin = userService.isAdmin(user);
+            int level = user.getRole().getLevel();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("status", isAdmin);
+            data.put("level", level);
+
             return ResponseEntity.ok(
                     new ApiResponse<>(
                             ResponseCodeUtil.processed(),
                             isAdmin ? ApiResponseConstants.ACCESS_GRANTED : ApiResponseConstants.ACCESS_DENIED,
-                            isAdmin
+                            data
                     )
             );
 
         } catch (Exception e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("status", false);
+            data.put("level", null);
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
                             ResponseMessageUtil.internalError("User"),
-                            false
+                            data
                     ));
         }
     }

@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Logout
     logoutBtn.addEventListener("click", function () {
-        console.log(this.dataset.redirectUrl);
         window.location.href = this.dataset.redirectUrl;
     });
 
@@ -45,4 +44,57 @@ document.addEventListener("DOMContentLoaded", () => {
     modalContent.draggable({
         cursor: "move"
     });
+});
+
+const notificationIconContainer = document.getElementById("notification-icon");
+const notificationIconSVG = notificationIconContainer.querySelector("svg");
+const notificationModal = document.getElementById("notification-modal");
+const closeNotificationModalBtn = document.getElementById("close-notification-modal");
+
+/**
+ * Toggles the visibility of the notification modal.
+ * When active, the modal is shown and accessibility attributes are updated accordingly.
+ * When inactive, the modal is hidden and accessibility attributes reflect the hidden state.
+ * Focus is moved to the modal when it is opened for better keyboard navigation.
+ */
+function toggleNotificationModal() {
+    const isActive = notificationModal.classList.toggle("active");
+
+    notificationModal.setAttribute("aria-hidden", isActive ? "false" : "true");
+    notificationIconContainer.setAttribute("aria-expanded", isActive ? "true" : "false");
+
+    if (isActive) {
+        notificationModal.inert = false;
+        notificationModal.focus();
+    } else {
+        notificationModal.inert = true;
+        notificationIconContainer.focus();
+    }
+}
+
+// Toggle modal when clicking on notification icon container
+notificationIconContainer.addEventListener("click", toggleNotificationModal);
+
+// Toggle modal when clicking directly on the SVG, and stop event bubbling
+notificationIconSVG.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleNotificationModal();
+});
+
+// Close modal when clicking the close button and reset accessibility states
+closeNotificationModalBtn.addEventListener("click", () => {
+    closeNotificationModalBtn.blur();
+    notificationIconContainer.focus();
+    notificationModal.classList.remove("active");
+    notificationModal.setAttribute("aria-hidden", "true");
+    notificationIconContainer.setAttribute("aria-expanded", "false");
+});
+
+// Close modal when clicking outside the modal and icon container
+document.addEventListener("click", (e) => {
+    if (!notificationModal.contains(e.target) && !notificationIconContainer.contains(e.target)) {
+        notificationModal.classList.remove("active");
+        notificationModal.setAttribute("aria-hidden", "true");
+        notificationIconContainer.setAttribute("aria-expanded", "false");
+    }
 });

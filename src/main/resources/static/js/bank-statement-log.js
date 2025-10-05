@@ -119,6 +119,7 @@ async function loadPartners() {
         });
     } catch (error) {
         console.error("Error loading partners: ", error);
+        showToast("error", "Error loading partners.");
     }
 }
 
@@ -222,7 +223,7 @@ function renderTable() {
             { data: "endpoint", title: "Endpoint" },
             { data: "importedBy", title: "Imported By", defaultContent: "N/A" },
             { data: "createdDate", title: "Imported Date", defaultContent: "N/A" },
-            { data: null, title: "Action", render: (data, type, row, meta) => `<span class="view-link">View</span>` },
+            { data: null, title: "Record", render: (data, type, row, meta) => `<span class="view-link">View</span>` },
             { data: null, title: "Export", render: (data, type, row, meta) => `<span class="download-json">📄</span>` }
         ]
     });

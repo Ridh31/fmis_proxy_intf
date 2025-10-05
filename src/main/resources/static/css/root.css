@@ -31,6 +31,7 @@
     --color-error: #C62828;
     --color-error-light: #DC2626;
     --color-info: #1A73E8;
+    --color-warning: #C27803;
 
     /* Sidebar */
     --sidebar-bg: var(--color-gray-800);

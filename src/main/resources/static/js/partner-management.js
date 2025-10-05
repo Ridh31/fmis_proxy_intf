@@ -118,12 +118,16 @@ function renderTable() {
         },
         columns: [
             { data: null, title: "#", render: (data, type, row, meta) => meta.row + 1 },
-            { data: "name", title: "Name" },
-            { data: "identifier", title: "Identifier" },
-            { data: "systemCode", title: "System Code" },
-            { data: "isBank", title: "Bank", render: (data) => data ? "✔️" : "❌" },
-            { data: "description", title: "Description" },
-            { data: "code", title: "Secret" },
+            {
+                data: null,
+                title: "Action",
+                render: () => `
+                    <span class="edit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#1A73E8" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/>
+                        </svg>
+                    </span>`
+            },
             {
                 data: "public_key",
                 title: "Key",
@@ -134,16 +138,12 @@ function renderTable() {
                         </svg>
                     </span>`
             },
-            {
-                data: null,
-                title: "Action",
-                render: () => `
-                    <span class="edit-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#1A73E8" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/>
-                        </svg>
-                    </span>`
-            }
+            { data: "name", title: "Name" },
+            { data: "code", title: "Secret", render: (data) => `<span class="blur-text">${data}</span>` },
+            { data: "identifier", title: "Identifier" },
+            { data: "systemCode", title: "System Code" },
+            { data: "isBank", title: "Bank", render: (data) => data ? "✔️" : "❌" },
+            { data: "description", title: "Description" },
         ]
     });
 
@@ -151,8 +151,8 @@ function renderTable() {
     logTable.off("click", ".copy-key-btn").on("click", ".copy-key-btn", function () {
         const key = $(this).data("key");
         navigator.clipboard.writeText(key)
-            .then(() => alert("Copied to clipboard!"))
-            .catch(err => console.error("Copy failed", err));
+            .then(() => showToast("success", "Copied to clipboard."))
+            .catch(err => showToast("error", "Copy failed."));
     });
 
     // Attach click event for view/edit
@@ -272,7 +272,7 @@ document.getElementById("editPartnerForm").addEventListener("submit", async (e) 
     e.preventDefault();
 
     if (!currentEditId) {
-        alert("No partner selected for editing.");
+        showToast("error", "No partner selected for editing.");
         return;
     }
 
@@ -314,17 +314,18 @@ document.getElementById("editPartnerForm").addEventListener("submit", async (e) 
             if (result.errors) {
                 validateModalFields(result.errors);
             } else {
-                alert(result.message || "Failed to update partner.");
+                showToast("error", result.message || "Failed to update partner.");
             }
             return;
         }
 
+        showToast("success", "Update successful.");
         closeModal();
         fetchData();
 
     } catch (err) {
         console.error("Update failed:", err);
-        alert("Failed to update partner. See console for details.");
+        showToast("error", "Failed to update partner. See console for details.");
     }
 });
 

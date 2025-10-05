@@ -27,6 +27,7 @@ async function fetchConfig() {
         }
     } catch (error) {
         console.error("❌ Error fetching config:", error);
+        showToast("error", "Error fetching config.");
     }
 }
 
@@ -91,7 +92,7 @@ async function saveConfigChanges() {
             if (response.status === 400) {
                 const errorResponse = await response.json();
                 if (errorResponse.error) showValidationErrors(errorResponse.error);
-                else alert(errorResponse.message || "Validation failed.");
+                else showToast("error", errorResponse.message || "Validation failed.");
                 return;
             }
             throw new Error("Failed to update config");
@@ -105,11 +106,12 @@ async function saveConfigChanges() {
         document.getElementById("contentTypeField").textContent = payload.contentType;
         document.getElementById("descriptionField").textContent = payload.description;
 
+        showToast("success", "Update successful.");
         closeModal();
         await fetchConfig();
     } catch (error) {
         console.error("❌ Error updating config:", error);
-        alert("Failed to update configuration. Please try again.");
+        showToast("error", "Failed to update configuration. Please try again.");
     }
 }
 
