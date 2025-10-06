@@ -148,7 +148,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public boolean isAdmin(User user) {
         Role role = user.getRole();
-        return role != null && (role.getLevel() == 1 || role.getLevel() == 2);
+        return role != null && (role.getLevel() == 1 || role.getLevel() == 2 || role.getLevel() == 3);
     }
 
     /**

@@ -62,6 +62,7 @@ public class BankStatementController {
     private final UserService userService;
     private final FmisService fmisService;
     private final BankStatementService bankStatementService;
+    private final AuthorizationHelper authorizationHelper;
     private final TelegramNotificationService telegramNotificationService;
 
     /**
@@ -73,6 +74,7 @@ public class BankStatementController {
      * @param userService                 service for managing user operations
      * @param fmisService                 service for FMIS integration
      * @param bankStatementService        service for bank statement processing
+     * @param authorizationHelper         helper for authorization and authentication checks
      * @param telegramNotificationService service for sending Telegram notifications
      */
     @Autowired
@@ -81,12 +83,14 @@ public class BankStatementController {
             UserService userService,
             FmisService fmisService,
             BankStatementService bankStatementService,
+            AuthorizationHelper authorizationHelper,
             TelegramNotificationService telegramNotificationService
     ) {
         this.partnerService = partnerService;
         this.userService = userService;
         this.fmisService = fmisService;
         this.bankStatementService = bankStatementService;
+        this.authorizationHelper = authorizationHelper;
         this.telegramNotificationService = telegramNotificationService;
     }
 
@@ -853,6 +857,12 @@ public class BankStatementController {
                 HeaderValidationUtil.validatePartnerCode(partnerCode, username, partnerService, userService);
         if (partnerValidationResponse != null) {
             return partnerValidationResponse;
+        }
+
+        // Authenticate user and verify required role permissions
+        Object authorization = authorizationHelper.authenticateAndAuthorizeModerator();
+        if (authorization instanceof ResponseEntity) {
+            return AuthorizationHelper.castToApiResponse(authorization);
         }
 
         // Check partner id if exist

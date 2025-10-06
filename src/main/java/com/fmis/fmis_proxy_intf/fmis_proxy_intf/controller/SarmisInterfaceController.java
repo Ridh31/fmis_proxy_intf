@@ -1283,7 +1283,7 @@ public class SarmisInterfaceController {
             @RequestParam(defaultValue = "10") int size) {
 
         // Authenticate user and verify required role permissions
-        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        Object authorization = authorizationHelper.authenticateAndAuthorizeModerator();
         if (authorization instanceof ResponseEntity) {
             return AuthorizationHelper.castToApiResponse(authorization);
         }

@@ -101,6 +101,29 @@ public class AuthorizationHelper {
     }
 
     /**
+     * Validates that the user has Admin, Super Admin, or Moderator access (level 1, 2, or 3).
+     *
+     * @param user the authenticated user
+     * @return ResponseEntity with error response if unauthorized; null if user is authorized
+     */
+    public ResponseEntity<ApiResponse<Object>> validateModerator(User user) {
+        if (user == null || user.getRole() == null) {
+            return forbiddenResponse(ResponseMessageUtil.forbidden("access the resource"));
+        }
+
+        if (!roleService.existsById(user.getRole().getId())) {
+            return notFoundResponse(ResponseMessageUtil.notFound("Role"));
+        }
+
+        int level = user.getRole().getLevel();
+        if (level != 1 && level != 2 && level != 3) {
+            return forbiddenResponse(ResponseMessageUtil.forbidden("access the resource"));
+        }
+
+        return null;
+    }
+
+    /**
      * Authenticate user and authorize as Super Admin only.
      *
      * @return the authenticated User if successful,
@@ -135,6 +158,26 @@ public class AuthorizationHelper {
         User user = (User) result;
 
         ResponseEntity<ApiResponse<Object>> adminValidation = validateAdmin(user);
+        if (adminValidation != null) {
+            return adminValidation;
+        }
+
+        return user;
+    }
+
+    /**
+     * Authenticates user and authorizes as Moderator or higher (Admin, Super Admin).
+     *
+     * @return authenticated User if authorized, or ResponseEntity with error if not
+     */
+    public Object authenticateAndAuthorizeModerator() {
+        Object result = getAuthenticatedUserOrResponse();
+        if (result instanceof ResponseEntity) {
+            return result;
+        }
+        User user = (User) result;
+
+        ResponseEntity<ApiResponse<Object>> adminValidation = validateModerator(user);
         if (adminValidation != null) {
             return adminValidation;
         }

@@ -295,7 +295,7 @@ public class PartnerController {
         }
 
         // Authenticate and check admin role
-        Object authResult = authorizationHelper.authenticateAndAuthorizeAdmin();
+        Object authResult = authorizationHelper.authenticateAndAuthorizeModerator();
         if (authResult instanceof ResponseEntity) {
             return AuthorizationHelper.castToApiResponse(authResult);
         }
@@ -339,7 +339,7 @@ public class PartnerController {
             @RequestParam(defaultValue = "10") int size) {
 
         // Authenticate user and verify required role permissions
-        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
+        Object authorization = authorizationHelper.authenticateAndAuthorizeModerator();
         if (authorization instanceof ResponseEntity) {
             return AuthorizationHelper.castToApiResponse(authorization);
         }

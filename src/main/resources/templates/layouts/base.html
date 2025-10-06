@@ -71,7 +71,7 @@
                 <span class="text">SARMIS Interface</span>
             </a>
 
-            <a th:if="${adminLevel == 1}"
+            <a th:if="${adminLevel == 1 || adminLevel == 2}"
                th:href="${internalCamDigiKeyUrl}"
                th:classappend="${currentPage == 'internal-camdigikey'} ? ' active' : ''"
                class="menu-item">
@@ -83,7 +83,7 @@
                 <span class="text">Internal CamDigiKey</span>
             </a>
 
-            <a th:if="${adminLevel == 1}"
+            <a th:if="${adminLevel == 1 || adminLevel == 2}"
                th:href="${securityServerUrl}"
                th:classappend="${currentPage == 'security-server'} ? ' active' : ''"
                class="menu-item">
@@ -95,7 +95,7 @@
                 <span class="text">Security Server</span>
             </a>
 
-            <a th:if="${adminLevel == 1}"
+            <a th:if="${adminLevel == 1 || adminLevel == 2}"
                th:href="${partnerManagementUrl}"
                th:classappend="${currentPage == 'partner-management'} ? ' active' : ''"
                class="menu-item">
@@ -107,7 +107,7 @@
                 <span class="text">Partner</span>
             </a>
 
-            <a th:if="${adminLevel == 1}"
+            <a th:if="${adminLevel == 1 || adminLevel == 2}"
                th:href="${userProfilesUrl}"
                th:classappend="${currentPage == 'user'} ? ' active' : ''"
                class="menu-item">
@@ -119,7 +119,7 @@
                 <span class="text">User Profiles</span>
             </a>
 
-            <a th:if="${adminLevel == 1}"
+            <a th:if="${adminLevel == 1 || adminLevel == 2}"
                th:href="${fmisConfigUrl}"
                th:classappend="${currentPage == 'fmis-config'} ? ' active' : ''"
                class="menu-item">

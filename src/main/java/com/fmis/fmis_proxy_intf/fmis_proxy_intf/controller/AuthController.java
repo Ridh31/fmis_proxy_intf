@@ -329,7 +329,7 @@ public class AuthController {
         }
 
         // Authenticate user and verify required role permissions
-        Object authorization = authorizationHelper.authenticateAndAuthorizeSuperAdmin();
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
         if (authorization instanceof ResponseEntity) {
             return AuthorizationHelper.castToApiResponse(authorization);
         }
