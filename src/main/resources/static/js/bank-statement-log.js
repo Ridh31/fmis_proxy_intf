@@ -210,7 +210,8 @@ function renderTable() {
                 return json?.data?.content || [];
             },
             error: function(xhr, status, error) {
-                showError("Error fetching data");
+                showError("Error fetching data.");
+                showToast("error", "Error fetching data.");
             }
         },
         columns: [

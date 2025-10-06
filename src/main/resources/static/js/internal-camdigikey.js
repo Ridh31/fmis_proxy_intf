@@ -68,7 +68,7 @@ function showError(message) {
 
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 11;
+    cell.colSpan = 7;
     cell.style.textAlign = "center";
     cell.style.color = "red";
     cell.style.fontWeight = "bold";
@@ -152,7 +152,8 @@ function renderTable() {
                 return json?.data?.content || [];
             },
             error: function () {
-                showError("Error fetching data");
+                showError("Error fetching data.");
+                showToast("error", "Error fetching data.");
             }
         },
         columns: [
@@ -245,7 +246,7 @@ function clearErrors() {
  * @param {HTMLElement} input - The input element to show the error for.
  * @param {string} message - The error message to display.
  */
-function showError(input, message) {
+function showErrorField(input, message) {
     input.classList.add("error");
     let errorElem = input.nextElementSibling;
     if (!errorElem || !errorElem.classList.contains("error-message")) {
@@ -267,22 +268,22 @@ function validateModalFields(data) {
 
     if (!data.name.trim()) {
         const input = document.getElementById("modalName");
-        showError(input, "Name is required. Please provide a valid name.");
+        showErrorField(input, "Name is required. Please provide a valid name.");
         valid = false;
     }
     if (!data.appKey.trim()) {
         const input = document.getElementById("modalAppKey");
-        showError(input, "App key is required. Please provide a valid app key.");
+        showErrorField(input, "App key is required. Please provide a valid app key.");
         valid = false;
     }
     if (!data.ipAddress.trim()) {
         const input = document.getElementById("modalIP");
-        showError(input, "IP address is required. Please provide a valid IP address.");
+        showErrorField(input, "IP address is required. Please provide a valid IP address.");
         valid = false;
     }
     if (!validateURL(data.accessURL.trim())) {
         const input = document.getElementById("modalURL");
-        showError(input, "Access URL is required. Please provide a valid access URL.");
+        showErrorField(input, "Access URL is required. Please provide a valid access URL.");
         valid = false;
     }
 
@@ -352,16 +353,16 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
 
                     if (message.includes("name") && !errData.error) {
                         const input = document.getElementById("modalName");
-                        showError(input, errData.message);
+                        showErrorField(input, errData.message);
                     } else if (message.includes("app key")) {
                         const input = document.getElementById("modalAppKey");
-                        showError(input, errData.message);
+                        showErrorField(input, errData.message);
                     } else if (message.includes("ip address")) {
                         const input = document.getElementById("modalIP");
-                        showError(input, errData.message);
+                        showErrorField(input, errData.message);
                     } else if (message.includes("access url")) {
                         const input = document.getElementById("modalURL");
-                        showError(input, errData.message);
+                        showErrorField(input, errData.message);
                     } else {
                         showToast("error", errData.message);
                     }
@@ -371,7 +372,7 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
                     Object.entries(errData.error).forEach(([field, msg]) => {
                         const input = document.getElementById(`modal${capitalize(field)}`);
                         if (input) {
-                            showError(input, msg);
+                            showErrorField(input, msg);
                         }
                     });
                 }

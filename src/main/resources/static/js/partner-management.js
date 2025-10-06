@@ -50,6 +50,27 @@ function hideLoading() {
 }
 
 /**
+ * Show error when fetching data
+ *
+ * @param message - The data to display.
+ */
+function showError(message) {
+    const tbody = document.querySelector("#logTable tbody");
+    tbody.innerHTML = "";
+
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 8;
+    cell.style.textAlign = "center";
+    cell.style.color = "red";
+    cell.style.fontWeight = "bold";
+    cell.style.padding = "0.75rem";
+    cell.innerText = message || "Error fetching data.";
+    row.appendChild(cell);
+    tbody.appendChild(row);
+}
+
+/**
  * Fetch or reload Partner Management DataTable
  */
 async function fetchData() {
@@ -113,7 +134,8 @@ function renderTable() {
                 return json?.data?.content || [];
             },
             error: function () {
-                showToast("error", "Error fetching data");
+                showError("Error fetching data.")
+                showToast("error", "Error fetching data.");
             }
         },
         columns: [
@@ -218,7 +240,7 @@ function clearErrors() {
  * @param {HTMLElement} input - The input element to show the error for.
  * @param {string} message - The error message to display.
  */
-function showError(input, message) {
+function showErrorField(input, message) {
     input.classList.add("error");
     let errorElem = input.nextElementSibling;
     if (!errorElem || !errorElem.classList.contains("error-message")) {
@@ -290,7 +312,7 @@ document.getElementById("editPartnerForm").addEventListener("submit", async (e) 
     Object.keys(modalData).forEach(field => {
         const inputEl = document.getElementById(`modal${capitalize(field)}`);
         if (!modalData[field]) {
-            showError(inputEl, `${capitalize(field)} is required`);
+            showErrorField(inputEl, `${capitalize(field)} is required`);
             hasError = true;
         }
     });
