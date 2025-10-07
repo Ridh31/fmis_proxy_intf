@@ -63,18 +63,29 @@ public class ProxyInterfaceNotificationBot extends TelegramLongPollingBot {
             String chatId = update.getMessage().getChatId().toString();
             String messageText = update.getMessage().getText().trim();
 
-            if ("/start".equalsIgnoreCase(messageText)) {
-                SendMessage startMessage = SendMessage.builder()
-                        .chatId(chatId)
-                        .text("✅ You’re now set to receive interface updates.")
-                        .build();
-                try {
-                    execute(startMessage);
-                    chatIds.add(chatId);
-                } catch (TelegramApiException e) {
-                    System.err.printf("⚠️ Unable to send start message to chat ID %s. Error: %s%n",
-                            chatId, e.getMessage());
-                }
+            switch (messageText.toLowerCase()) {
+                case "/start":
+                    if (chatIds.contains(chatId)) {
+                        sendMessage(chatId, "ℹ️ You’re already set to receive interface updates.");
+                    } else {
+                        chatIds.add(chatId);
+                        sendMessage(chatId, "✅ You’re now set to receive interface updates.");
+                        System.out.printf("[%s] Subscribed: %s%n", getBotUsername(), chatId);
+                    }
+                    break;
+
+                case "/stop":
+                    if (chatIds.remove(chatId)) {
+                        sendMessage(chatId, "🔕 You’ve stopped receiving interface updates.");
+                        System.out.printf("[%s] Unsubscribed: %s%n", getBotUsername(), chatId);
+                    } else {
+                        sendMessage(chatId, "ℹ️ You’re not currently subscribed.");
+                    }
+                    break;
+
+                default:
+                    sendMessage(chatId, "🤖 Unknown command. Use /start or /stop.");
+                    break;
             }
         }
     }
