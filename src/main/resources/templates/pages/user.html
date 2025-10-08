@@ -49,6 +49,86 @@
         </table>
     </div>
 
+    <!-- Modal Create -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span id="modalClose" class="modal-close">&times;</span>
+            <h2 id="userModalTitle">Create User</h2>
+            <div id="userModalBody">
+                <form id="userForm" class="modal-form">
+                    <div class="input-group">
+                        <label for="modalUsername">Username</label>
+                        <input type="text" id="modalUsername" name="username"/>
+                        <div class="error-message" id="errorUsername"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalEmail">Email</label>
+                        <input type="email" id="modalEmail" name="email"/>
+                        <div class="error-message" id="errorEmail"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalPassword">Password</label>
+                        <input type="password" id="modalPassword" name="password"/>
+                        <div class="error-message" id="errorPassword"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalConfirmPassword">Confirm Password</label>
+                        <input type="password" id="modalConfirmPassword" name="confirmPassword"/>
+                        <div class="error-message" id="errorConfirmPassword"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalRole">Role</label>
+                        <select class="select" id="modalRole" name="role" title="Select a role">
+                            <option value="2">Admin</option>
+                            <option value="3" selected>Moderator</option>
+                            <option value="4">User</option>
+                            <option value="5">Guest</option>
+                        </select>
+                        <div class="error-message" id="errorRole"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalPartner">Branch</label>
+                        <select class="select" id="modalPartner" name="partner" title="Select a branch"></select>
+                        <div class="error-message" id="errorPartner"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                <button type="submit" form="userForm" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <span id="resetModalClose" class="modal-close">&times;</span>
+            <h2 id="resetModalTitle">Reset Password</h2>
+            <div id="resetModalBody">
+                <form id="resetPasswordForm" class="modal-form">
+                    <div class="input-group">
+                        <label for="resetUsername">Username</label>
+                        <input type="text" id="resetUsername" name="username" readonly />
+                    </div>
+                    <div class="input-group">
+                        <label for="resetPassword">New Password</label>
+                        <input type="password" id="resetPassword" name="password" />
+                        <div class="error-message" id="errorResetPassword"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="resetConfirmPassword">Confirm Password</label>
+                        <input type="password" id="resetConfirmPassword" name="confirmPassword" />
+                        <div class="error-message" id="errorResetConfirmPassword"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" id="cancelResetModal">Cancel</button>
+                <button type="submit" form="resetPasswordForm" class="btn btn-primary">Reset</button>
+            </div>
+        </div>
+    </div>
     <script th:src="@{/js/user.js}"></script>
 </div>
 </body>

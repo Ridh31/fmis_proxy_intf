@@ -213,7 +213,7 @@ public class PartnerServiceImpl implements PartnerService {
             LocalDate createdDate) {
 
         Pageable pageable = PageRequest.of(page, size);
-        return partnerRepository.findFilteredInternalCamDigiKeys(
+        return partnerRepository.findFilteredPartners(
                 name, identifier, systemCode, description, createdDate, pageable);
     }
 }

@@ -492,6 +492,12 @@ section.content {
     cursor: pointer;
 }
 
+.input-group input[readonly] {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-600);
+    cursor: not-allowed;
+}
+
 .btn-primary {
     height: var(--btn-height);
     padding: var(--btn-padding);
@@ -754,14 +760,14 @@ table.dataTable thead th, table.dataTable thead td {
     z-index: 10;
 }
 
-#modalTitle {
+#modalTitle, #userModalTitle, #resetModalTitle {
     margin-top: 0;
     font-size: 1.25rem;
     color: var(--content-title);
     user-select: none;
 }
 
-#modalBody {
+#modalBody, #userModalBody, #resetModalBody {
     overflow-y: auto;
     flex: 1;
     padding-right: 0.5rem;
@@ -802,6 +808,20 @@ table.dataTable thead th, table.dataTable thead td {
     justify-content: flex-end;
     gap: 0.4rem;
     padding-right: 0.5rem;
+}
+
+/* Reset password modal */
+#resetModal .modal-content {
+    max-width: 400px;
+}
+
+#resetModal #modalTitle {
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+#resetModal .modal-form {
+    gap: 0.6rem;
 }
 
 /* Notification Modal */
@@ -894,7 +914,7 @@ table.dataTable thead th, table.dataTable thead td {
     font-size: 0.7rem;
 }
 
-.view-link, .edit-link, .copy-key-btn {
+.view-link, .edit-link, .copy-key-btn, .reset-password, .not-allowed {
     color: var(--color-blue-dark);
     cursor: pointer;
 }
@@ -907,6 +927,6 @@ table.dataTable thead th, table.dataTable thead td {
     cursor: pointer;
 }
 
-.credential, .api-prefix {
+.credential, .api-prefix, .admin-level {
     display: none;
 }

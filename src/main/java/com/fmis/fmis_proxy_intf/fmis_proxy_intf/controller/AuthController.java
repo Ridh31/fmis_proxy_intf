@@ -265,15 +265,24 @@ public class AuthController {
     public ResponseEntity<ApiResponse<?>> resetPassword(@RequestParam String username, @RequestParam String password) {
 
         // Authenticate user and verify required role permissions
-        Object authorization = authorizationHelper.authenticateAndAuthorizeSuperAdmin();
+        Object authorization = authorizationHelper.authenticateAndAuthorizeAdmin();
         if (authorization instanceof ResponseEntity) {
             return AuthorizationHelper.castToApiResponse(authorization);
         }
 
         try {
             // Fetch the target user by username
-            User targetUser = userService.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException(ResponseMessageUtil.notFound("User")));
+            Optional<User> optionalUser = userService.findByUsername(username);
+
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ResponseCodeUtil.notFound(),
+                                ResponseMessageUtil.notFound("User")
+                        ));
+            }
+
+            User targetUser = optionalUser.get();
 
             // Hash the new password before saving
             String encodedPassword = passwordEncoder.encode(password);

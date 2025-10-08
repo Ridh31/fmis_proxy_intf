@@ -138,7 +138,6 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
         WHERE
             pi.status = TRUE
             AND pi.is_deleted = FALSE
-            AND pi.is_own = FALSE
             AND (:name IS NULL OR LOWER(pi.name) LIKE CONCAT('%', LOWER(:name), '%'))
             AND (:identifier IS NULL OR LOWER(pi.identifier) LIKE CONCAT('%', LOWER(:identifier), '%'))
             AND (:systemCode IS NULL OR LOWER(pi.system_code) LIKE CONCAT('%', LOWER(:systemCode), '%'))
@@ -147,7 +146,7 @@ public interface PartnerRepository extends JpaRepository<Partner, Integer> {
                 AND pi.created_date < DATE_ADD(:createdDate, INTERVAL 1 DAY))
         ORDER BY pi.id DESC
     """, nativeQuery = true)
-    Page<Partner> findFilteredInternalCamDigiKeys(
+    Page<Partner> findFilteredPartners(
             @Param("name") String name,
             @Param("identifier") String identifier,
             @Param("systemCode") String systemCode,
