@@ -82,6 +82,10 @@ public class BankStatementDTO {
 
     @Schema(hidden = true)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String branch;
+
+    @Schema(hidden = true)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String importedBy;
 
     // Constructors
@@ -279,6 +283,14 @@ public class BankStatementDTO {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 
     public String getImportedBy() {

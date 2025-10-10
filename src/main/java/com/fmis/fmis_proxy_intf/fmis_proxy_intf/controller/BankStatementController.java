@@ -42,10 +42,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Tag(
         name = "Bank Statement",
@@ -907,6 +905,22 @@ public class BankStatementController {
             // ObjectMapper for JSON conversion
             ObjectMapper objectMapper = new ObjectMapper();
 
+            // Collect all user IDs from the page
+            Set<Long> userIds = bankStatements.getContent().stream()
+                    .map(BankStatement::getCreatedBy)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            // Fetch all users once
+            final Map<Long, String> usernameMap;
+            if (!userIds.isEmpty()) {
+                List<User> users = userService.findAllByIds(userIds);
+                usernameMap = users.stream()
+                        .collect(Collectors.toMap(User::getId, User::getUsername));
+            } else {
+                usernameMap = Collections.emptyMap();
+            }
+
             // Map each BankStatement entity to a BankStatementDTO
             Page<BankStatementDTO> bankStatementDTOPage = bankStatements.map(bankStatement -> {
                 // Initialize a new BankStatementDTO to hold the mapped data
@@ -929,7 +943,8 @@ public class BankStatementController {
                 dto.setCreatedDate(bankStatement.getCreatedDate());
                 dto.setStatus(bankStatement.getStatus());
                 dto.setIsDeleted(bankStatement.getIsDeleted());
-                dto.setImportedBy(bankStatement.getPartner().getName());
+                dto.setImportedBy(usernameMap.getOrDefault(bankStatement.getCreatedBy(), "Unknown"));
+                dto.setBranch(bankStatement.getPartner().getName());
 
                 // Convert payload string to JsonNode for API response
                 JsonNode payloadJson = null;

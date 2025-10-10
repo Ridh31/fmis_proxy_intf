@@ -4,7 +4,9 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Role;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.User;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Service interface for handling operations related to {@link User} entities.
@@ -86,4 +88,16 @@ public interface UserService {
      * @return a {@link Page} of {@link User} entities
      */
     Page<User> getAllUsers(String username, int page, int size);
+
+    /**
+     * Retrieves a list of users by their IDs in a single query.
+     *
+     * This method is used for batch-fetching users to avoid multiple
+     * database queries when mapping entities to DTOs (e.g., importedBy usernames).
+     *
+     * @param ids a set of user IDs to fetch
+     * @return a list of {@link User} entities matching the provided IDs;
+     *         returns an empty list if no users are found
+     */
+    List<User> findAllByIds(Set<Long> ids);
 }

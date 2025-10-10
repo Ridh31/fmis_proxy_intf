@@ -55,11 +55,13 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
     @Query(value = """
         SELECT
             bs.*,
-            pi2.name AS imported_by,
-            pi2.name AS partner_identifier
+            pi2.name AS branch,
+            pi2.name AS partner_identifier,
+            u.username AS imported_by
         FROM
             bank_statement bs
             LEFT JOIN partner_intf pi2 ON pi2.id = bs.partner_intf_id
+            LEFT JOIN user u ON u.id = bs.created_by
         WHERE bs.is_deleted = FALSE
             AND (:bankAccountNumber IS NULL OR bs.bank_account_number = :bankAccountNumber)
             AND (:statementId IS NULL OR bs.statement_id LIKE CONCAT('%', :statementId, '%'))

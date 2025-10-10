@@ -38,7 +38,7 @@ function showLoading() {
 
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 11;
+    cell.colSpan = 12;
     cell.style.textAlign = "center";
     cell.style.margin = "0.75rem";
     cell.style.fontWeight = "bold";
@@ -72,7 +72,7 @@ function showError(message) {
 
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 11;
+    cell.colSpan = 12;
     cell.style.textAlign = "center";
     cell.style.color = "red";
     cell.style.fontWeight = "bold";
@@ -222,6 +222,7 @@ function renderTable() {
             { data: "status", title: "Status", render: (data) => `<span class="${data === "Processed" ? "success" : "error"}">${data}</span>` },
             { data: "method", title: "Method" },
             { data: "endpoint", title: "Endpoint" },
+            { data: "branch", title: "Branch", defaultContent: "N/A" },
             { data: "importedBy", title: "Imported By", defaultContent: "N/A" },
             { data: "createdDate", title: "Imported Date", defaultContent: "N/A" },
             { data: null, title: "Record", render: (data, type, row, meta) => `<span class="view-link">View</span>` },

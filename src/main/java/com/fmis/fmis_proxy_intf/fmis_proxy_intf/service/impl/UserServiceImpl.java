@@ -16,7 +16,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Service implementation for user-related operations and authentication.
@@ -163,5 +165,20 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public Page<User> getAllUsers(String username, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return userRepository.getAllUsers(username, pageable);
+    }
+
+    /**
+     * Retrieves a list of users by their IDs in a single query.
+     *
+     * This method is used for batch-fetching users to avoid multiple
+     * database queries when mapping entities to DTOs (e.g., importedBy usernames).
+     *
+     * @param ids a set of user IDs to fetch
+     * @return a list of {@link User} entities matching the provided IDs;
+     *         returns an empty list if no users are found
+     */
+    @Override
+    public List<User> findAllByIds(Set<Long> ids) {
+        return userRepository.findAllById(ids);
     }
 }
