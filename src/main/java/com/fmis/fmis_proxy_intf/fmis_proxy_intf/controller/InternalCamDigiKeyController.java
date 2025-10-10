@@ -33,8 +33,8 @@ import java.util.Optional;
 @RequestMapping("/internal/camdigikey")
 public class InternalCamDigiKeyController {
 
-    @Value("${application.api.prefix}")
-    private String apiPrefix;
+    @Value("${application.camdigikey.api.prefix}")
+    private String camDigiKeyApiPrefix;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -337,7 +337,7 @@ public class InternalCamDigiKeyController {
             }
 
             // Prepare URL for external service
-            String endpoint = apiPrefix + "/portal/camdigikey/organization-token";
+            String endpoint = camDigiKeyApiPrefix + "/portal/camdigikey/organization-token";
             String url = host.get().getAccessURL() + endpoint;
 
             try {
@@ -452,7 +452,7 @@ public class InternalCamDigiKeyController {
             }
 
             // Prepare URL for external service
-            String endpoint = apiPrefix + "/portal/camdigikey/login-token";
+            String endpoint = camDigiKeyApiPrefix + "/portal/camdigikey/login-token";
             String url = host.get().getAccessURL() + endpoint;
 
             try {
@@ -575,7 +575,7 @@ public class InternalCamDigiKeyController {
             }
 
             // Build external request URL
-            String endpoint = apiPrefix + "/portal/camdigikey/get-user-access-token";
+            String endpoint = camDigiKeyApiPrefix + "/portal/camdigikey/get-user-access-token";
             String params = "?authCode=" + authCode;
             String url = host.get().getAccessURL() + endpoint + params;
 
@@ -724,7 +724,7 @@ public class InternalCamDigiKeyController {
             }
 
             // Prepare URL for external service
-            String endpoint = apiPrefix + "/portal/camdigikey/validate-jwt";
+            String endpoint = camDigiKeyApiPrefix + "/portal/camdigikey/validate-jwt";
             String params = "?jwt=" + jwt;
             String url = host.get().getAccessURL() + endpoint + params;
 
