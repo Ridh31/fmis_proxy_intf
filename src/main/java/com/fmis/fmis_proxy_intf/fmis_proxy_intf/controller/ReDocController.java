@@ -49,7 +49,7 @@ public class ReDocController {
     @GetMapping("/docs")
     public ResponseEntity<byte[]> serveReDoc() {
         try {
-            Resource resource = new ClassPathResource("templates/redoc.html");
+            Resource resource = new ClassPathResource("templates/redoc/redoc.html");
             String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
             content = content.replace("{{appTitle}}", applicationTitle)
                     .replace("{{appDescription}}", applicationDescription)

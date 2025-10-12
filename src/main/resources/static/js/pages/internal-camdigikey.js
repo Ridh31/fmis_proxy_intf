@@ -1,20 +1,4 @@
-// Retrieve credentials and tokens from DOM dataset attributes or default to empty string
-const username = document.querySelector('[data-username]')?.dataset.username || "";
-const password = document.querySelector('[data-password]')?.dataset.password || "";
-const partnerToken = document.querySelector('[data-partner-token]')?.dataset.partnerToken || "";
-const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
-
-// Encode Basic Auth credentials in base64
-const basicAuth = btoa(`${username}:${password}`);
-
-// Base URL for API calls
-const baseUrl = window.location.origin;
 const url = `${baseUrl}${apiPrefix}/internal/camdigikey/list-host`;
-
-// Elements references
-const filterBtn = document.querySelector("#filter-button");
-let fullData = [];
-let logTable = $("#logTable");
 
 // Initialize jQuery UI draggable for modal and flatpickr datepicker
 $(() => {
@@ -25,66 +9,12 @@ $(() => {
 });
 
 /**
- * Display a loading indicator in the table while fetching data.
- * Clears existing table body and shows a single row with "Loading..." message.
- */
-function showLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 7;
-    cell.style.textAlign = "center";
-    cell.style.margin = "0.75rem";
-    cell.style.fontWeight = "bold";
-    cell.innerText = "Loading...";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
- * Remove the "Loading..." row from the table body after data has loaded.
- */
-function hideLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    const rows = tbody.querySelectorAll("tr");
-
-    rows.forEach(row => {
-        if (row.textContent.trim() === "Loading...") {
-            tbody.removeChild(row);
-        }
-    });
-}
-
-/**
- * Show error when fetching data
- *
- * @param message - The data to display.
- */
-function showError(message) {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 7;
-    cell.style.textAlign = "center";
-    cell.style.color = "red";
-    cell.style.fontWeight = "bold";
-    cell.style.padding = "0.75rem";
-    cell.innerText = message || "Error fetching data.";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
  * Loads or refreshes the DataTable.
  * - Calls renderTable() on first load.
  * - Uses ajax.reload() for filter changes.
  */
 async function fetchData() {
-    showLoading();
+    showLoading(7);
 
     if ($.fn.DataTable.isDataTable("#logTable")) {
         logTable.DataTable().ajax.reload();
@@ -92,16 +22,6 @@ async function fetchData() {
     }
 
     renderTable();
-}
-
-/**
- * Convert date from "dd/mm/yyyy" format to "dd-mm-yyyy" for API parameter.
- * @param {string} input - Date string in dd/mm/yyyy format
- * @returns {string} - Reformatted date string
- */
-function formatDate(input) {
-    const [day, month, year] = input.split("/");
-    return `${day}-${month}-${year}`;
 }
 
 /**
@@ -140,7 +60,7 @@ function renderTable() {
                         : undefined
                 };
             },
-            beforeSend: showLoading,
+            beforeSend: showLoading(7),
             complete: hideLoading,
             headers: {
                 "Authorization": `Basic ${basicAuth}`,
@@ -152,7 +72,7 @@ function renderTable() {
                 return json?.data?.content || [];
             },
             error: function () {
-                showError("Error fetching data.");
+                showError(7);
                 showToast("error", "Error fetching data.");
             }
         },
@@ -179,6 +99,136 @@ function renderTable() {
     // attach handler once per render
     attachEditHandler(table);
 }
+
+// Open the Create Modal
+document.getElementById("openModalBtn").addEventListener("click", () => {
+    document.getElementById("createModal").style.display = "flex";
+});
+
+/**
+ * Closes the create modal, clears error messages, and resets the form fields.
+ */
+function closeCreateModal() {
+    document.getElementById("createModal").style.display = "none";
+    clearErrors();
+    document.getElementById("createHostForm").reset();
+}
+
+// Close buttons
+document.getElementById("createModalClose").addEventListener("click", closeCreateModal);
+document.getElementById("cancelCreateModal").addEventListener("click", closeCreateModal);
+
+/**
+ * Clears all validation error styles and messages from inputs
+ * inside the modal forms (#modal and #createModal).
+ */
+function clearErrors() {
+    const inputs = document.querySelectorAll("#modal input, #createModal input");
+    inputs.forEach(input => {
+        input.classList.remove("error");
+        const nextElem = input.nextElementSibling;
+        if (nextElem && nextElem.classList.contains("error-message")) {
+            nextElem.remove();
+        }
+    });
+}
+
+/**
+ * Validates modal input fields and displays error messages if invalid.
+ * @param {object} data - Form data to validate, expected to have properties: name, appKey, ipAddress, accessURL
+ * @returns {boolean} - True if all fields are valid, otherwise false
+ */
+function validateCreateFields(data) {
+    let valid = true;
+    clearErrors();
+
+    if (!data.name.trim()) {
+        showErrorField(document.getElementById("createName"), "Name cannot be empty. Please provide a valid name.");
+        valid = false;
+    }
+    if (!data.appKey.trim()) {
+        showErrorField(document.getElementById("createAppKey"), "App key cannot be empty. Please provide a valid app key.");
+        valid = false;
+    }
+    if (!data.ipAddress.trim()) {
+        showErrorField(document.getElementById("createIP"), "IP address cannot be empty. Please provide a valid IP address.");
+        valid = false;
+    }
+    if (!validateURL(data.accessURL.trim())) {
+        showErrorField(document.getElementById("createURL"), "Access URL is invalid or missing.");
+        valid = false;
+    }
+
+    return valid;
+}
+
+/**
+ * Handles create host form submission:
+ * - Prevents default submit
+ * - Validates fields and sends data to backend
+ * - Shows errors or success messages
+ */
+document.getElementById("createHostForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const formData = {
+        name: document.getElementById("createName").value.trim(),
+        appKey: document.getElementById("createAppKey").value.trim(),
+        ipAddress: document.getElementById("createIP").value.trim(),
+        accessURL: document.getElementById("createURL").value.trim()
+    };
+
+    if (!validateCreateFields(formData)) return;
+
+    try {
+        const res = await fetch(`${apiPrefix}/internal/camdigikey/import-host`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Basic ${basicAuth}`
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const resData = await res.json().catch(() => null);
+
+        if (!res.ok) {
+            // Handle backend validation (field errors)
+            if (resData?.error) {
+                Object.entries(resData.error).forEach(([field, msg]) => {
+                    const input = document.getElementById(`create${capitalize(field)}`);
+                    if (input) showErrorField(input, msg);
+                });
+            } else if (resData?.message) {
+                const msgLower = resData.message.toLowerCase();
+                if (msgLower.includes("app key")) {
+                    showErrorField(document.getElementById("createAppKey"), resData.message);
+                } else if (msgLower.includes("name")) {
+                    showErrorField(document.getElementById("createName"), resData.message);
+                } else if (msgLower.includes("ip address")) {
+                    showErrorField(document.getElementById("createIP"), resData.message);
+                } else if (msgLower.includes("access url")) {
+                    showErrorField(document.getElementById("createURL"), resData.message);
+                } else {
+                    showToast("error", resData.message);
+                }
+            }
+            else {
+                showToast("error", "An unknown error occurred.");
+            }
+            return;
+        }
+
+        showToast("success", "Created successfully.");
+        closeCreateModal();
+        fetchData();
+
+    } catch (err) {
+        console.error("Error creating host:", err);
+        showToast("error", "Something went wrong while creating host.");
+    }
+});
+
 
 // Variable to track the currently edited item ID
 let currentEditId = null;
@@ -227,37 +277,6 @@ document.getElementById("modalClose").addEventListener("click", closeModal);
 document.getElementById("cancelModal").addEventListener("click", closeModal);
 
 /**
- * Clears all error messages and removes error styles from modal input fields.
- */
-function clearErrors() {
-    const inputs = document.querySelectorAll("#modal input");
-    inputs.forEach(input => {
-        input.classList.remove("error");
-        const nextElem = input.nextElementSibling;
-        if (nextElem && nextElem.classList.contains("error-message")) {
-            nextElem.remove();
-        }
-    });
-}
-
-/**
- * Displays an error message below the input and applies error styling.
- * Creates the error element if it doesn’t exist yet.
- * @param {HTMLElement} input - The input element to show the error for.
- * @param {string} message - The error message to display.
- */
-function showErrorField(input, message) {
-    input.classList.add("error");
-    let errorElem = input.nextElementSibling;
-    if (!errorElem || !errorElem.classList.contains("error-message")) {
-        errorElem = document.createElement("div");
-        errorElem.className = "error-message";
-        input.parentNode.insertBefore(errorElem, input.nextSibling);
-    }
-    errorElem.textContent = message;
-}
-
-/**
  * Validates modal input fields and displays error messages if invalid.
  * @param {object} data - Form data to validate
  * @returns {boolean} - True if all fields are valid, otherwise false
@@ -293,25 +312,11 @@ function validateModalFields(data) {
 /**
  * Validates a URL by attempting to create a URL object.
  * @param {string} url - URL string to validate
- * @returns {boolean} - True if valid URL, otherwise false
  */
 function validateURL(url) {
-    try {
-        new URL(url);
-        return true;
-    } catch {
-        return false;
-    }
+    return url && url.trim().length > 0;
 }
 
-/**
- * Capitalizes the first letter of a string.
- * @param {string} str - The string to capitalize.
- * @returns {string} - Capitalized string.
- */
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
 
 /**
  * Handles the server edit form submission.

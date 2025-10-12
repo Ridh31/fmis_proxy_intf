@@ -5,25 +5,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="/img/logo-fmis-v2-300x190-1.png" rel="shortcut icon">
-    <script src="/libs/fullcalendar/index.global.min.js"></script>
-    <script src="/libs/datatables/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="/libs/datatables/jquery.dataTables.min.css">
-    <script src="/libs/datatables/jquery.dataTables.min.js"></script>
-    <script src="/libs/jquery-ui/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="/libs/flatpickr/flatpickr.min.css">
-    <script src="/libs/flatpickr/flatpickr.js"></script>
-    <script src="/libs/sweetalert2/sweetalert2@11.js"></script>
-    <script src="/libs/chartjs/chart.js"></script>
-    <link rel="stylesheet" href="/css/styles.css">
-    <script defer src="/js/sidebar.js"></script>
+    <link th:href="@{/img/logo-fmis-v2-300x190-1.png}" rel="shortcut icon">
+    <script th:src="@{/libs/fullcalendar/index.global.min.js}"></script>
+    <script th:src="@{/libs/datatables/jquery-3.6.0.min.js}"></script>
+    <link th:href="@{/libs/datatables/jquery.dataTables.min.css}" rel="stylesheet">
+    <script th:src="@{/libs/datatables/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/libs/jquery-ui/jquery-ui.min.js}"></script>
+    <link th:href="@{/libs/flatpickr/flatpickr.min.css}" rel="stylesheet">
+    <script th:src="@{/libs/flatpickr/flatpickr.js}"></script>
+    <script th:src="@{/libs/sweetalert2/sweetalert2-2.11.js}"></script>
+    <script th:src="@{/libs/chartjs/chart.js}"></script>
+    <link th:href="@{/css/styles.css}" rel="stylesheet">
+    <script th:src="@{/js/common/sidebar.js}" defer></script>
     <title th:text="${title}">Base Layout</title>
 </head>
 <body>
 <div class="layout">
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <img src="/img/logo-fmis-v2-300x190-1.png" alt="Logo">
+            <img th:src="@{/img/logo-fmis-v2-300x190-1.png}" alt="Logo">
             <span class="logo-text">Proxy Interface</span>
         </div>
         <nav class="menu">
@@ -188,7 +188,7 @@
         </section>
     </div>
 </div>
-<script th:src="@{/js/toast.js}"></script>
-<script th:src="@{/js/main.js}"></script>
+<script th:src="@{/js/utils/toast.js}"></script>
+<script th:src="@{/js/common/main.js}"></script>
 </body>
 </html>

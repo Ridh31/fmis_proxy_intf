@@ -1,16 +1,4 @@
-const username = document.querySelector("[data-username]")?.dataset.username;
-const password = document.querySelector("[data-password]")?.dataset.password;
-const partnerToken = document.querySelector("[data-partner-token]").dataset.partnerToken;
-const basicAuth = btoa(`${username}:${password}`);
-const baseUrl = window.location.origin;
-const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 const url = `${baseUrl}${apiPrefix}/list-bank-statement`;
-const filterBtn = document.querySelector("#filter-button");
-
-let fullData = [];
-const jsonDataMap = {};
-const logTable = $("#logTable");
-let modalContent = $(".modal-content");
 
 $(() => {
     modalContent.draggable({
@@ -28,59 +16,6 @@ $(() => {
         allowInput: true
     });
 });
-
-/**
- * Displays a loading message in the table body while data is being fetched.
- */
-function showLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 12;
-    cell.style.textAlign = "center";
-    cell.style.margin = "0.75rem";
-    cell.style.fontWeight = "bold";
-    cell.innerText = "Loading...";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
- * Removes the loading message row from the table body if present.
- */
-function hideLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    const rows = tbody.querySelectorAll("tr");
-
-    rows.forEach(row => {
-        if (row.textContent.trim() === "Loading...") {
-            tbody.removeChild(row);
-        }
-    });
-}
-
-/**
- * Show error when fetching data
- *
- * @param message - The data to display.
- */
-function showError(message) {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 12;
-    cell.style.textAlign = "center";
-    cell.style.color = "red";
-    cell.style.fontWeight = "bold";
-    cell.style.padding = "0.75rem";
-    cell.innerText = message || "Error fetching data.";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
 
 /**
  * Asynchronously loads partner options into the select input.
@@ -127,10 +62,10 @@ async function loadPartners() {
  * Loads or refreshes the DataTable.
  * - Calls renderTable() on first load.
  * - Uses ajax.reload() for filter changes.
- * - Maintains custom loading state with showLoading() / hideLoading().
+ * - Maintains custom loading state with showLoading(colSpan) / hideLoading().
  */
 async function fetchData() {
-    showLoading();
+    showLoading(12);
 
     if ($.fn.DataTable.isDataTable("#logTable")) {
         logTable.DataTable().ajax.reload();
@@ -138,16 +73,6 @@ async function fetchData() {
     }
 
     renderTable();
-}
-
-/**
- * Formats a date string into DD-MM-YYYY format.
- * @param {string} input - The input date string.
- * @returns {string} Formatted date as 'DD-MM-YYYY'.
- */
-function formatDate(input) {
-    const [day, month, year] = input.split('/');
-    return `${day}-${month}-${year}`;
 }
 
 /**
@@ -194,7 +119,7 @@ function renderTable() {
                 return params;
             },
             beforeSend: function () {
-                showLoading();
+                showLoading(12);
             },
             complete: function () {
                 hideLoading();
@@ -210,7 +135,7 @@ function renderTable() {
                 return json?.data?.content || [];
             },
             error: function(xhr, status, error) {
-                showError("Error fetching data.");
+                showError(12);
                 showToast("error", "Error fetching data.");
             }
         },

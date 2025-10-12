@@ -9,6 +9,12 @@
         <!-- Card Title -->
         <div class="card-header">
             <h2 th:text="${heading}"></h2>
+
+            <button id="openModalBtn" class="icon-btn" title="Add">
+                <svg xmlns="http://www.w3.org/2000/svg" width="27px" height="27px" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-blue-dark)" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+            </button>
         </div>
 
         <!-- Input Parameters -->
@@ -60,7 +66,68 @@
         </table>
     </div>
 
-    <!-- Modal -->
+    <!-- Create Modal -->
+        <div id="createModal" class="modal">
+        <div class="modal-content">
+            <span id="createModalClose" class="modal-close">&times;</span>
+            <h2 id="createModalTitle">Create Security Server</h2>
+            <div id="createModalBody">
+                <form id="createServerForm" class="modal-form">
+                    <div class="input-group">
+                        <label for="createName">Name</label>
+                        <input type="text" id="createName" name="name"/>
+                        <div class="error-message" id="errorCreateName"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createConfigKey">Config Key</label>
+                        <input type="text" id="createConfigKey" name="configKey"/>
+                        <div class="error-message" id="errorCreateConfigKey"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createBaseURL">Base URL</label>
+                        <input type="text" id="createBaseURL" name="baseURL"/>
+                        <div class="error-message" id="errorCreateBaseURL"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createEndpoint">Endpoint</label>
+                        <input type="text" id="createEndpoint" name="endpoint"/>
+                        <div class="error-message" id="errorCreateEndpoint"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createSubsystem">Subsystem</label>
+                        <input type="text" id="createSubsystem" name="subsystem"/>
+                        <div class="error-message" id="errorCreateSubsystem"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createUsername">Username</label>
+                        <input type="text" id="createUsername" name="username"/>
+                        <div class="error-message" id="errorCreateUsername"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createPassword">Password</label>
+                        <input type="text" id="createPassword" name="password"/>
+                        <div class="error-message" id="errorCreatePassword"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createContentType">Content Type</label>
+                        <input type="text" id="createContentType" name="contentType"/>
+                        <div class="error-message" id="errorCreateContentType"></div>
+                    </div>
+                    <div class="input-group description-group">
+                        <label for="createDescription">Description</label>
+                        <textarea id="createDescription" name="description"></textarea>
+                        <div class="error-message" id="errorCreateDescription"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" id="cancelCreateModal">Cancel</button>
+                <button type="submit" form="createServerForm" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <span id="modalClose" class="modal-close">&times;</span>
@@ -120,7 +187,8 @@
             </div>
         </div>
     </div>
-    <script th:src="@{/js/security-server.js}"></script>
+    <script th:src="@{/js/utils/function.js}"></script>
+    <script th:src="@{/js/pages/security-server.js}"></script>
 </div>
 </body>
 </html>

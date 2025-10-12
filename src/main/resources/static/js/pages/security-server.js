@@ -1,20 +1,4 @@
-// Retrieve credentials and tokens from DOM dataset attributes or default to empty string
-const username = document.querySelector("[data-username]")?.dataset.username || "";
-const password = document.querySelector("[data-password]")?.dataset.password || "";
-const partnerToken = document.querySelector("[data-partner-token]")?.dataset.partnerToken || "";
-const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
-
-// Encode Basic Auth credentials in base64
-const basicAuth = btoa(`${username}:${password}`);
-
-// Base URL for API calls
-const baseUrl = window.location.origin;
 const url = `${baseUrl}${apiPrefix}/security-server/list-server`;
-
-// Elements references
-const filterBtn = document.querySelector("#filter-button");
-let fullData = [];
-let logTable = $("#logTable")
 
 // Initialize jQuery UI draggable for modal and flatpickr datepicker
 $(() => {
@@ -25,65 +9,11 @@ $(() => {
 });
 
 /**
- * Display a loading indicator in the table while fetching data.
- * Clears existing table body and shows a single row with "Loading..." message.
- */
-function showLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 11;
-    cell.style.textAlign = "center";
-    cell.style.margin = "0.75rem";
-    cell.style.fontWeight = "bold";
-    cell.innerText = "Loading...";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
- * Remove the "Loading..." row from the table body after data has loaded.
- */
-function hideLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    const rows = tbody.querySelectorAll("tr");
-
-    rows.forEach(row => {
-        if (row.textContent.trim() === "Loading...") {
-            tbody.removeChild(row);
-        }
-    });
-}
-
-/**
- * Show error when fetching data
- *
- * @param message - The data to display.
- */
-function showError(message) {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 11;
-    cell.style.textAlign = "center";
-    cell.style.color = "red";
-    cell.style.fontWeight = "bold";
-    cell.style.padding = "0.75rem";
-    cell.innerText = message || "Error fetching data.";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
  * Load or refresh the Security Server DataTable.
  * Uses server-side processing for faster rendering on large datasets.
  */
 async function fetchData() {
-    showLoading();
+    showLoading(11);
 
     if ($.fn.DataTable.isDataTable("#logTable")) {
         logTable.DataTable().ajax.reload();
@@ -91,14 +21,6 @@ async function fetchData() {
     }
 
     renderTable();
-}
-
-/**
- * Convert date from dd/mm/yyyy → dd-mm-yyyy
- */
-function formatDate(input) {
-    const [day, month, year] = input.split('/');
-    return `${day}-${month}-${year}`;
 }
 
 /**
@@ -137,7 +59,7 @@ function renderTable() {
                 "Authorization": `Basic ${basicAuth}`,
                 "X-Partner-Token": partnerToken
             },
-            beforeSend: showLoading,
+            beforeSend: showLoading(11),
             complete: hideLoading,
             dataSrc: function (json) {
                 json.recordsTotal = json?.data?.totalElements || 0;
@@ -145,7 +67,7 @@ function renderTable() {
                 return json?.data?.content || [];
             },
             error: function () {
-                showError("Error fetching data.");
+                showError(11);
                 showToast("error", "Error fetching data.");
             }
         },
@@ -184,6 +106,112 @@ function renderTable() {
     });
 }
 
+// Open the Create Modal
+document.getElementById("openModalBtn").addEventListener("click", () => {
+    document.getElementById("createModal").style.display = "flex";
+});
+
+/**
+ * Closes the create server modal, clears any validation errors,
+ * and resets all form fields to their default values.
+ */
+function closeCreateModal() {
+    document.getElementById("createModal").style.display = "none";
+    clearCreateErrors();
+    document.getElementById("createServerForm").reset();
+}
+
+// Close buttons
+document.getElementById("createModalClose").addEventListener("click", closeCreateModal);
+document.getElementById("cancelCreateModal").addEventListener("click", closeCreateModal);
+
+/**
+ * Clears all validation error styles and messages from inputs
+ * inside the modal forms (#modal and #createModal).
+ */
+function clearCreateErrors() {
+    const inputs = document.querySelectorAll("#createModal input, #createModal textarea");
+    inputs.forEach(input => {
+        input.classList.remove("error");
+        const nextElem = input.nextElementSibling;
+        if (nextElem && nextElem.classList.contains("error-message")) {
+            nextElem.remove();
+        }
+    });
+}
+
+/**
+ * Handles create server form submission:
+ * - Prevents default submit
+ * - Clears previous errors
+ * - Sends form data to backend
+ * - Handles validation and backend errors
+ */
+document.getElementById("createServerForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const formData = {
+        name: document.getElementById("createName").value.trim(),
+        configKey: document.getElementById("createConfigKey").value.trim(),
+        baseURL: document.getElementById("createBaseURL").value.trim(),
+        endpoint: document.getElementById("createEndpoint").value.trim(),
+        subsystem: document.getElementById("createSubsystem").value.trim(),
+        username: document.getElementById("createUsername").value.trim(),
+        password: document.getElementById("createPassword").value.trim(),
+        contentType: document.getElementById("createContentType").value.trim(),
+        description: document.getElementById("createDescription").value.trim()
+    };
+
+    clearCreateErrors();
+
+    try {
+        const res = await fetch(`${apiPrefix}/security-server/create-server`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Basic ${basicAuth}`
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const resData = await res.json().catch(() => null);
+
+        if (!res.ok) {
+            if (resData?.error) {
+                Object.entries(resData.error).forEach(([field, msg]) => {
+                    const input = document.getElementById(`create${capitalize(field)}`);
+                    if (input) showErrorField(input, msg);
+                });
+            } else if (resData?.message) {
+                const msg = resData.message;
+                // Try to detect the field from the message
+                if (msg.toLowerCase().includes("config_key") || msg.toLowerCase().includes("already taken")) {
+                    const input = document.getElementById("createConfigKey");
+                    if (input) showErrorField(input, msg);
+                } else if (msg.toLowerCase().includes("name")) {
+                    const input = document.getElementById("createName");
+                    if (input) showErrorField(input, msg);
+                } else {
+                    // Fallback: show toast
+                    showToast("error", msg);
+                }
+            }
+            else {
+                showToast("error", "An unknown error occurred.");
+            }
+            return;
+        }
+
+        showToast("success", "Created successfully.");
+        closeCreateModal();
+        fetchData();
+
+    } catch (err) {
+        console.error("Error creating server:", err);
+        showToast("error", "Something went wrong while creating server.");
+    }
+});
+
 // Variable to track the currently edited item ID
 let currentEditId = null;
 
@@ -219,20 +247,6 @@ function closeModal() {
 // Attach event listeners to close buttons of modal
 document.getElementById("modalClose").addEventListener("click", closeModal);
 document.getElementById("cancelModal").addEventListener("click", closeModal);
-
-/**
- * Clears all error messages and removes error styles from modal input fields.
- */
-function clearErrors() {
-    const inputs = document.querySelectorAll("#modal input");
-    inputs.forEach(input => {
-        input.classList.remove("error");
-        const nextElem = input.nextElementSibling;
-        if (nextElem && nextElem.classList.contains("error-message")) {
-            nextElem.remove();
-        }
-    });
-}
 
 /**
  * Displays an error message below the input and applies error styling.
@@ -275,15 +289,6 @@ function validateModalFields(data) {
     }
 
     return valid;
-}
-
-/**
- * Capitalizes the first letter of a string.
- * @param {string} str - The string to capitalize.
- * @returns {string} - Capitalized string.
- */
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**

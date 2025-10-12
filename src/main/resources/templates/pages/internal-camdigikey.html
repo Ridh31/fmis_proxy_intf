@@ -9,6 +9,12 @@
         <!-- Card Title -->
         <div class="card-header">
             <h2 th:text="${heading}"></h2>
+
+            <button id="openModalBtn" class="icon-btn" title="Add">
+                <svg xmlns="http://www.w3.org/2000/svg" width="27px" height="27px" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-blue-dark)" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+            </button>
         </div>
 
         <!-- Input Parameters -->
@@ -60,7 +66,43 @@
         </table>
     </div>
 
-    <!-- Modal -->
+    <!-- Create Host Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <span id="createModalClose" class="modal-close">&times;</span>
+            <h2 id="createModalTitle">Add New Host</h2>
+            <div id="createModalBody">
+                <form id="createHostForm" class="modal-form">
+                    <div class="input-group">
+                        <label for="createName">Name</label>
+                        <input type="text" id="createName" name="name" />
+                        <div class="error-message" id="errorCreateName"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createAppKey">App Key</label>
+                        <input type="text" id="createAppKey" name="appKey" />
+                        <div class="error-message" id="errorCreateAppKey"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createIP">IP Address</label>
+                        <input type="text" id="createIP" name="ipAddress" />
+                        <div class="error-message" id="errorCreateIP"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createURL">Access URL</label>
+                        <input type="text" id="createURL" name="accessURL" />
+                        <div class="error-message" id="errorCreateURL"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" id="cancelCreateModal">Cancel</button>
+                <button type="submit" form="createHostForm" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <span id="modalClose" class="modal-close">&times;</span>
@@ -95,7 +137,8 @@
             </div>
         </div>
     </div>
-    <script th:src="@{/js/internal-camdigikey.js}"></script>
+    <script th:src="@{/js/utils/function.js}"></script>
+    <script th:src="@{/js/pages/internal-camdigikey.js}"></script>
 </div>
 </body>
 </html>

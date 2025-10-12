@@ -58,7 +58,7 @@ public class PageController {
     @GetMapping("/login")
     public ResponseEntity<byte[]> login() {
         try {
-            Resource resource = new ClassPathResource("templates/login.html");
+            Resource resource = new ClassPathResource("templates/pages/login.html");
             String title = "Login | FMIS Proxy Interface";
             String heading = "Login";
             String content = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);

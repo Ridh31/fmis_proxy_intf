@@ -760,14 +760,14 @@ table.dataTable thead th, table.dataTable thead td {
     z-index: 10;
 }
 
-#modalTitle, #userModalTitle, #resetModalTitle {
+#modalTitle, #createModalTitle, #userModalTitle, #resetModalTitle {
     margin-top: 0;
     font-size: 1.25rem;
     color: var(--content-title);
     user-select: none;
 }
 
-#modalBody, #userModalBody, #resetModalBody {
+#modalBody, #createModalBody, #userModalBody, #resetModalBody {
     overflow-y: auto;
     flex: 1;
     padding-right: 0.5rem;
@@ -815,11 +815,15 @@ table.dataTable thead th, table.dataTable thead td {
     max-width: 400px;
 }
 
+#createModal #modalTitle,
+#updateModal #modalTitle,
 #resetModal #modalTitle {
     font-size: 1.1rem;
     text-align: center;
 }
 
+#createModal .modal-form,
+#updateModal .modal-form,
 #resetModal .modal-form {
     gap: 0.6rem;
 }

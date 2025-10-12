@@ -9,6 +9,12 @@
         <!-- Card Title -->
         <div class="card-header">
             <h2 th:text="${heading}"></h2>
+
+            <button id="openCreateModalBtn" class="icon-btn" title="Add">
+                <svg xmlns="http://www.w3.org/2000/svg" width="27px" height="27px" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-blue-dark)" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+            </button>
         </div>
 
         <!-- Input Parameters -->
@@ -58,7 +64,55 @@
         </table>
     </div>
 
-    <!-- Modal -->
+    <!-- Create Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <span id="createModalClose" class="modal-close">&times;</span>
+            <h2 id="createModalTitle">Create Partner</h2>
+            <div id="createModalBody">
+                <form id="createPartnerForm" class="modal-form">
+                    <div class="input-group">
+                        <label for="createName">Name</label>
+                        <input type="text" id="createName" name="name"/>
+                        <div class="error-message" id="errorCreateName"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createIdentifier">Identifier</label>
+                        <input type="text" id="createIdentifier" name="identifier"/>
+                        <div class="error-message" id="errorCreateIdentifier"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createSystemCode">System Code</label>
+                        <input type="text" id="createSystemCode" name="systemCode"/>
+                        <div class="error-message" id="errorCreateSystemCode"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createCode">Secret</label>
+                        <input type="text" id="createCode" name="code"/>
+                        <div class="error-message" id="errorCreateCode"></div>
+                    </div>
+                    <div class="input-group description-group">
+                        <label for="createDescription">Description</label>
+                        <textarea id="createDescription" name="description"></textarea>
+                        <div class="error-message" id="errorCreateDescription"></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="createIsBank">Bank</label>
+                        <select id="createIsBank" name="isBank">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" id="cancelCreateModal">Cancel</button>
+                <button type="submit" form="createPartnerForm" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
     <div id="modal" class="modal">
         <div class="modal-content">
             <span id="modalClose" class="modal-close">&times;</span>
@@ -98,7 +152,8 @@
             </div>
         </div>
     </div>
-    <script th:src="@{/js/partner-management.js}"></script>
+    <script th:src="@{/js/utils/function.js}"></script>
+    <script th:src="@{/js/pages/partner-management.js}"></script>
 </div>
 </body>
 </html>

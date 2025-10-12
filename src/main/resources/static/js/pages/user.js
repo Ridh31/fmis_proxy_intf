@@ -1,60 +1,10 @@
-// Retrieve credentials and tokens from DOM dataset attributes or default to empty string
-const username = document.querySelector("[data-username]")?.dataset.username || "";
-const password = document.querySelector("[data-password]")?.dataset.password || "";
-const partnerToken = document.querySelector("[data-partner-token]")?.dataset.partnerToken || "";
-const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
-const adminLevel = document.querySelector(".admin-level")?.dataset.adminLevel;
-
-// Encode Basic Auth credentials in base64
-const basicAuth = btoa(`${username}:${password}`);
-
-// Base URL for API calls
-const baseUrl = window.location.origin;
 const url = `${baseUrl}${apiPrefix}/auth/list-user`;
-
-// Elements references
-const filterBtn = document.querySelector("#filter-button");
-let fullData = [];
-let logTable = $("#logTable");
-
-/**
- * Display a loading indicator in the table while fetching data.
- * Clears existing table body and shows a single row with "Loading..." message.
- */
-function showLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 8;
-    cell.style.textAlign = "center";
-    cell.style.margin = "0.75rem";
-    cell.style.fontWeight = "bold";
-    cell.innerText = "Loading...";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
- * Remove the "Loading..." row from the table body after data has loaded.
- */
-function hideLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    const rows = tbody.querySelectorAll("tr");
-
-    rows.forEach(row => {
-        if (row.textContent.trim() === "Loading...") {
-            tbody.removeChild(row);
-        }
-    });
-}
 
 /**
  * Fetch or reload Partner Management DataTable
  */
 async function fetchData() {
-    showLoading();
+    showLoading(6);
 
     if ($.fn.DataTable.isDataTable("#logTable")) {
         logTable.DataTable().ajax.reload();
@@ -95,7 +45,7 @@ function renderTable() {
                 "Authorization": `Basic ${basicAuth}`,
                 "X-Partner-Token": partnerToken
             },
-            beforeSend: showLoading,
+            beforeSend: showLoading(6),
             complete: hideLoading,
             dataSrc: function (json) {
                 json.recordsTotal = json?.data?.totalElements || 0;
@@ -103,7 +53,8 @@ function renderTable() {
                 return json?.data?.content || [];
             },
             error: function () {
-                showToast("error", "Error fetching data.")
+                showError(6);
+                showToast("error", "Error fetching data.");
             }
         },
         columns: [
@@ -172,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
      * @param {string} fieldId - The ID of the error message element.
      * @param {string} message - The message to display.
      */
-    function showErrorField(fieldId, message) {
+    function showErrorFields(fieldId, message) {
         const el = document.getElementById(fieldId);
         if (el) el.textContent = message;
     }
@@ -278,11 +229,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let hasError = false;
 
-        if (!username) { showErrorField("errorUsername", "Username is required."); hasError = true; }
-        if (!isUpdateMode && !password) { showErrorField("errorPassword", "Password is required."); hasError = true; }
-        if (!isUpdateMode && password !== confirmPassword) { showErrorField("errorConfirmPassword", "Passwords do not match."); hasError = true; }
-        if (!roleId) { showErrorField("errorRole", "Role is required."); hasError = true; }
-        if (!partnerId) { showErrorField("errorPartner", "Branch is required."); hasError = true; }
+        if (!username) { showErrorFields("errorUsername", "Username is required."); hasError = true; }
+        if (!isUpdateMode && !password) { showErrorFields("errorPassword", "Password is required."); hasError = true; }
+        if (!isUpdateMode && password !== confirmPassword) { showErrorFields("errorConfirmPassword", "Passwords do not match."); hasError = true; }
+        if (!roleId) { showErrorFields("errorRole", "Role is required."); hasError = true; }
+        if (!partnerId) { showErrorFields("errorPartner", "Branch is required."); hasError = true; }
 
         if (hasError) return;
 
@@ -315,14 +266,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (json.error) {
                     for (const [field, message] of Object.entries(json.error)) {
                         const errorFieldId = `error${field.charAt(0).toUpperCase() + field.slice(1)}`;
-                        showErrorField(errorFieldId, message);
+                        showErrorFields(errorFieldId, message);
                     }
                 } else if (json.message) {
                     const msg = json.message.toLowerCase();
-                    if (msg.includes("username")) showErrorField("errorUsername", json.message);
-                    else if (msg.includes("password")) showErrorField("errorPassword", json.message);
-                    else if (msg.includes("role")) showErrorField("errorRole", json.message);
-                    else if (msg.includes("partner") || msg.includes("branch")) showErrorField("errorPartner", json.message);
+                    if (msg.includes("username")) showErrorFields("errorUsername", json.message);
+                    else if (msg.includes("password")) showErrorFields("errorPassword", json.message);
+                    else if (msg.includes("role")) showErrorFields("errorRole", json.message);
+                    else if (msg.includes("partner") || msg.includes("branch")) showErrorFields("errorPartner", json.message);
                     else showToast("error", json.message);
                 } else {
                     showToast("error", "Failed to save user.");
@@ -374,7 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const json = await res.json();
             if (!res.ok) {
-                showErrorField("errorResetPassword", json.message || "Failed to reset password.");
+                showErrorFields("errorResetPassword", json.message || "Failed to reset password.");
                 return;
             }
 

@@ -1,15 +1,5 @@
-const username = document.querySelector("[data-username]")?.dataset.username;
-const password = document.querySelector("[data-password]")?.dataset.password;
-const partnerToken = document.querySelector("[data-partner-token]").dataset.partnerToken;
-const basicAuth = btoa(`${username}:${password}`);
-const baseUrl = window.location.origin;
-const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 const url = `${baseUrl}${apiPrefix}/list-sarmis-interface`;
-const filterBtn = document.querySelector("#filter-button");
-
 let fullData = [];
-let logTable = $("#logTable");
-let modalContent = $(".modal-content");
 
 $(() => {
     modalContent.draggable({
@@ -24,109 +14,16 @@ $(() => {
 });
 
 /**
- * Displays a loading message in the table body while data is being fetched.
- */
-function showLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 8;
-    cell.style.textAlign = "center";
-    cell.style.margin = "0.75rem";
-    cell.style.fontWeight = "bold";
-    cell.innerText = "Loading...";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
- * Removes the loading message row from the table body if present.
- */
-function hideLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    const rows = tbody.querySelectorAll("tr");
-
-    rows.forEach(row => {
-        if (row.textContent.trim() === "Loading...") {
-            tbody.removeChild(row);
-        }
-    });
-}
-
-/**
- * Show error when fetching data
- *
- * @param message - The data to display.
- */
-function showError(message) {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 8;
-    cell.style.textAlign = "center";
-    cell.style.color = "red";
-    cell.style.fontWeight = "bold";
-    cell.style.padding = "0.75rem";
-    cell.innerText = message || "Error fetching data.";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
  * Fetches paginated data based on filter inputs and updates the table display.
  */
 async function fetchData() {
-    showLoading();
+    showLoading(8);
 
     if ($.fn.DataTable.isDataTable("#logTable")) {
         logTable.DataTable().ajax.reload();
     } else {
         renderTable();
     }
-}
-
-/**
- * Formats a date string into DD-MM-YYYY format.
- * @param {string} input - The input date string.
- * @returns {string} Formatted date as 'DD-MM-YYYY'.
- */
-function formatDate(input) {
-    if (!input) return null;
-    const [day, month, year] = input.split('/');
-    if (!day || !month || !year) return null;
-    return `${day}-${month}-${year}`;
-}
-
-/**
- * Converts an ISO date string
- * into a human-readable format: "DD-MM-YYYY hh:mm AM/PM".
- *
- * @param {string} input - The ISO date string to format.
- * @returns {string} Formatted date string or "N/A"/"Invalid date" if input is null/invalid.
- */
-function formatDateTime(input) {
-    if (!input) return "N/A";
-
-    const date = new Date(input);
-
-    if (isNaN(date)) return "Invalid date";
-
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-
-    return `${day}-${month}-${year} ${String(hours).padStart(2, "0")}:${minutes} ${ampm}`;
 }
 
 /**
@@ -170,7 +67,7 @@ function renderTable() {
                 d.size = d.length;
                 d.page = d.start / d.length;
             },
-            beforeSend: showLoading,
+            beforeSend: showLoading(8),
             complete: hideLoading,
             dataSrc: function(json) {
                 fullData = json?.data?.content || [];
@@ -189,7 +86,7 @@ function renderTable() {
                 ]);
             },
             error: function(xhr, status, error) {
-                showError("Error fetching data.");
+                showError(8);
                 showToast("error", "Error fetching data.");
             }
         },

@@ -1,9 +1,3 @@
-// Get credentials from data attributes
-const username = document.querySelector("[data-username]")?.dataset.username;
-const password = document.querySelector("[data-password]")?.dataset.password;
-const basicAuth = btoa(`${username}:${password}`);
-const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
-
 // Fetch configuration data
 async function fetchConfig() {
     try {
@@ -20,7 +14,7 @@ async function fetchConfig() {
 
             document.getElementById("baseURLField").textContent = config.baseURL;
             document.getElementById("usernameField").textContent = config.username;
-            document.getElementById("passwordField").value = "•••••••••";
+            document.getElementById("passwordField").value = config.password;
             document.getElementById("editPasswordHidden").textContent = config.password;
             document.getElementById("contentTypeField").textContent = config.contentType;
             document.getElementById("descriptionField").textContent = config.description;
@@ -101,7 +95,7 @@ async function saveConfigChanges() {
         // Update display fields
         document.getElementById("baseURLField").textContent = payload.baseURL;
         document.getElementById("usernameField").textContent = payload.username;
-        document.getElementById("passwordField").value = "•••••••••";
+        document.getElementById("passwordField").value = payload.password;
         document.getElementById("editPasswordHidden").textContent = payload.password;
         document.getElementById("contentTypeField").textContent = payload.contentType;
         document.getElementById("descriptionField").textContent = payload.description;
@@ -141,14 +135,6 @@ function showValidationErrors(errors) {
             inputEl.parentNode.appendChild(errorEl);
         }
     }
-}
-
-/**
- * Capitalizes the first letter of a given string.
- * Returns the string with the first character in uppercase.
- */
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 // DOM Event Listeners

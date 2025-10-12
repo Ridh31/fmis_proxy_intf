@@ -1,80 +1,10 @@
-// Retrieve credentials and tokens from DOM dataset attributes or default to empty string
-const username = document.querySelector("[data-username]")?.dataset.username || "";
-const password = document.querySelector("[data-password]")?.dataset.password || "";
-const partnerToken = document.querySelector("[data-partner-token]")?.dataset.partnerToken || "";
-const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
-
-// Encode Basic Auth credentials in base64
-const basicAuth = btoa(`${username}:${password}`);
-
-// Base URL for API calls
-const baseUrl = window.location.origin;
 const url = `${baseUrl}${apiPrefix}/list-partner`;
-
-// Elements references
-const filterBtn = document.querySelector("#filter-button");
-let fullData = [];
-let logTable = $("#logTable");
-
-/**
- * Display a loading indicator in the table while fetching data.
- * Clears existing table body and shows a single row with "Loading..." message.
- */
-function showLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 8;
-    cell.style.textAlign = "center";
-    cell.style.margin = "0.75rem";
-    cell.style.fontWeight = "bold";
-    cell.innerText = "Loading...";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
-
-/**
- * Remove the "Loading..." row from the table body after data has loaded.
- */
-function hideLoading() {
-    const tbody = document.querySelector("#logTable tbody");
-    const rows = tbody.querySelectorAll("tr");
-
-    rows.forEach(row => {
-        if (row.textContent.trim() === "Loading...") {
-            tbody.removeChild(row);
-        }
-    });
-}
-
-/**
- * Show error when fetching data
- *
- * @param message - The data to display.
- */
-function showError(message) {
-    const tbody = document.querySelector("#logTable tbody");
-    tbody.innerHTML = "";
-
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 8;
-    cell.style.textAlign = "center";
-    cell.style.color = "red";
-    cell.style.fontWeight = "bold";
-    cell.style.padding = "0.75rem";
-    cell.innerText = message || "Error fetching data.";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-}
 
 /**
  * Fetch or reload Partner Management DataTable
  */
 async function fetchData() {
-    showLoading();
+    showLoading(8);
 
     if ($.fn.DataTable.isDataTable("#logTable")) {
         logTable.DataTable().ajax.reload();
@@ -82,14 +12,6 @@ async function fetchData() {
     }
 
     renderTable();
-}
-
-/**
- * Convert date from dd/mm/yyyy → dd-mm-yyyy
- */
-function formatDate(input) {
-    const [day, month, year] = input.split('/');
-    return `${day}-${month}-${year}`;
 }
 
 /**
@@ -126,7 +48,7 @@ function renderTable() {
                 "Authorization": `Basic ${basicAuth}`,
                 "X-Partner-Token": partnerToken
             },
-            beforeSend: showLoading,
+            beforeSend: showLoading(8),
             complete: hideLoading,
             dataSrc: function (json) {
                 json.recordsTotal = json?.data?.totalElements || 0;
@@ -134,7 +56,7 @@ function renderTable() {
                 return json?.data?.content || [];
             },
             error: function () {
-                showError("Error fetching data.")
+                showError(8)
                 showToast("error", "Error fetching data.");
             }
         },
@@ -188,6 +110,148 @@ function renderTable() {
     });
 }
 
+// Elements
+const openCreateModalBtn = document.getElementById("openCreateModalBtn");
+const createModal = document.getElementById("createModal");
+const createModalClose = document.getElementById("createModalClose");
+const cancelCreateModal = document.getElementById("cancelCreateModal");
+const createPartnerForm = document.getElementById("createPartnerForm");
+
+// Open Modal
+openCreateModalBtn.addEventListener("click", () => {
+    clearErrors(createModal);
+    createPartnerForm.reset();
+    createModal.style.display = "flex";
+});
+
+// Close Modal
+[createModalClose, cancelCreateModal].forEach(el => {
+    el.addEventListener("click", () => {
+        closeCreateModal();
+    });
+});
+
+/**
+ * Closes the create partner modal, resets the form, and clears validation errors.
+ */
+function closeCreateModal() {
+    createModal.style.display = "none";
+    createPartnerForm.reset();
+    clearErrors(createModal);
+}
+
+/**
+ * Clears all validation errors and styles within the given modal.
+ * @param {HTMLElement} modal - The modal element containing inputs and error messages
+ */
+function clearErrors(modal) {
+    modal.querySelectorAll(".error-message").forEach(el => el.textContent = "");
+    modal.querySelectorAll("input, textarea").forEach(input => input.classList.remove("error"));
+}
+
+/**
+ * Handles API error responses by displaying field-specific errors
+ * or showing a toast message if no field matches.
+ * @param {object} result - API response containing error or message
+ */
+function handleApiErrorMessage(result) {
+    if (!result) return;
+
+    clearErrors(createModal);
+
+    // Field-level errors
+    if (result.error && typeof result.error === "object") {
+        Object.keys(result.error).forEach(key => {
+            const inputId = "create" + capitalize(key); // e.g. createName
+            const inputEl = document.getElementById(inputId);
+            const errorEl = document.getElementById(`error${capitalize(inputId)}`);
+            if (inputEl && errorEl) {
+                inputEl.classList.add("error");
+                errorEl.textContent = result.error[key];
+            }
+        });
+    }
+    // If only message exists, try mapping to field by keyword
+    else if (result.message) {
+        const msg = result.message.toLowerCase();
+        const fieldMap = [
+            { keyword: "name", id: "createName" },
+            { keyword: "identifier", id: "createIdentifier" },
+            { keyword: "code", id: "createCode" },
+            { keyword: "system code", id: "createSystemCode" },
+            { keyword: "description", id: "createDescription" },
+        ];
+
+        let matched = false;
+        fieldMap.forEach(f => {
+            if (msg.includes(f.keyword)) {
+                const inputEl = document.getElementById(f.id);
+                const errorEl = document.getElementById(`error${capitalize(f.id)}`);
+                if (inputEl && errorEl) {
+                    inputEl.classList.add("error");
+                    errorEl.textContent = result.message;
+                    matched = true;
+                }
+            }
+        });
+
+        if (!matched) {
+            // fallback: show toast if no keyword matches
+            showToast("error", result.message);
+        }
+    }
+}
+
+/**
+ * Handles create partner form submission:
+ * - Prevents default submit
+ * - Clears previous errors
+ * - Sends form data to backend
+ * - Shows field errors or success messages
+ */
+createPartnerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearErrors(createModal);
+
+    const payload = {
+        name: document.getElementById("createName").value.trim(),
+        identifier: document.getElementById("createIdentifier").value.trim(),
+        systemCode: document.getElementById("createSystemCode").value.trim(),
+        code: document.getElementById("createCode").value.trim(),
+        description: document.getElementById("createDescription").value.trim(),
+        isBank: document.getElementById("createIsBank").value === "true"
+    };
+
+    try {
+        const response = await fetch(`${apiPrefix}/create-partner`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Basic ${basicAuth}`,
+                "X-Partner-Token": partnerToken
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        // Treat 201 code or HTTP OK as success
+        if (response.ok || result.code === 201) {
+            showToast("success", "Created successfully.");
+            closeCreateModal();
+            fetchData();
+            return;
+        }
+
+        // Otherwise handle errors
+        handleApiErrorMessage(result);
+
+    } catch (err) {
+        console.error("Create partner failed:", err);
+        showToast("error", "Failed to create partner.");
+    }
+});
+
 // Variable to track the currently edited item ID
 let currentEditId = null;
 
@@ -221,37 +285,6 @@ document.getElementById("modalClose").addEventListener("click", closeModal);
 document.getElementById("cancelModal").addEventListener("click", closeModal);
 
 /**
- * Clears all error messages and removes error styles from modal input fields.
- */
-function clearErrors() {
-    const inputs = document.querySelectorAll("#modal input");
-    inputs.forEach(input => {
-        input.classList.remove("error");
-        const nextElem = input.nextElementSibling;
-        if (nextElem && nextElem.classList.contains("error-message")) {
-            nextElem.remove();
-        }
-    });
-}
-
-/**
- * Displays an error message below the input and applies error styling.
- * Creates the error element if it doesn’t exist yet.
- * @param {HTMLElement} input - The input element to show the error for.
- * @param {string} message - The error message to display.
- */
-function showErrorField(input, message) {
-    input.classList.add("error");
-    let errorElem = input.nextElementSibling;
-    if (!errorElem || !errorElem.classList.contains("error-message")) {
-        errorElem = document.createElement("div");
-        errorElem.className = "error-message";
-        input.parentNode.insertBefore(errorElem, input.nextSibling);
-    }
-    errorElem.textContent = message;
-}
-
-/**
  * Validates required fields in the modal form.
  * Clears previous errors, then validates 'name', 'identifier', 'systemCode', 'code', and 'description'.
  * Shows errors if fields are empty or API returns errors.
@@ -273,15 +306,6 @@ function validateModalFields(apiErrors = {}) {
     });
 
     return isValid;
-}
-
-/**
- * Capitalizes the first letter of a string.
- * @param {string} str - The string to capitalize.
- * @returns {string} - Capitalized string.
- */
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**
@@ -347,7 +371,7 @@ document.getElementById("editPartnerForm").addEventListener("submit", async (e) 
 
     } catch (err) {
         console.error("Update failed:", err);
-        showToast("error", "Failed to update partner. See console for details.");
+        showToast("error", "Failed to update partner.");
     }
 });
 
