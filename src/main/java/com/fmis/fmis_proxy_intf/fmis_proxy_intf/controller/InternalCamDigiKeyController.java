@@ -104,20 +104,6 @@ public class InternalCamDigiKeyController {
                                 ResponseMessageUtil.taken("App key")
                         ));
             }
-            if (internalCamDigiKeyService.existsByIpAddress(internalCamDigiKey.getIpAddress())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.taken(),
-                                ResponseMessageUtil.taken("IP address")
-                        ));
-            }
-            if (internalCamDigiKeyService.existsByAccessURL(internalCamDigiKey.getAccessURL())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.taken(),
-                                ResponseMessageUtil.taken("Access URL")
-                        ));
-            }
 
             // Set creator info and save the entry
             internalCamDigiKey.setCreatedBy(currentUser.getId().intValue());
@@ -251,26 +237,6 @@ public class InternalCamDigiKeyController {
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.taken(),
                                 ResponseMessageUtil.taken("App key")
-                        ));
-            }
-
-            // Manual uniqueness check for name
-            if (!existing.getName().equals(updatedData.getName())
-                    && internalCamDigiKeyService.existsByName(updatedData.getName())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.taken(),
-                                ResponseMessageUtil.taken("Name")
-                        ));
-            }
-
-            // Access URL uniqueness
-            if (!existing.getAccessURL().equals(updatedData.getAccessURL())
-                    && internalCamDigiKeyService.existsByAccessURL(updatedData.getAccessURL())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.taken(),
-                                ResponseMessageUtil.taken("Access URL")
                         ));
             }
 
