@@ -32,9 +32,6 @@ function animateCount(el, target, duration = 1000) {
  */
 document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById("dashboard-chart");
-    const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
-
-    const baseUrl = window.location.origin;
     const url = `${baseUrl}${apiPrefix}/dashboard/summary`;
 
     fetch(url)

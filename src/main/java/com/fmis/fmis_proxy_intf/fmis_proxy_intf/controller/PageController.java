@@ -74,18 +74,24 @@ public class PageController {
                     .path("/")
                     .maxAge(0)
                     .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
                     .build();
 
             ResponseCookie adminUsernameCookie = ResponseCookie.from("adminUsername", "")
                     .path("/")
                     .maxAge(0)
                     .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
                     .build();
 
             ResponseCookie adminPasswordCookie = ResponseCookie.from("adminPassword", "")
                     .path("/")
                     .maxAge(0)
                     .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
                     .build();
 
             headers.add(HttpHeaders.SET_COOKIE, isAdminCookie.toString());

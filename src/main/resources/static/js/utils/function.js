@@ -1,10 +1,20 @@
-const username = document.querySelector("[data-username]")?.dataset.username;
-const password = document.querySelector("[data-password]")?.dataset.password;
-const partnerToken = document.querySelector("[data-partner-token]").dataset.partnerToken;
-const adminLevel = document.querySelector(".admin-level")?.dataset.adminLevel;
+const cfg = window.appConfig || {};
+
+// Constant key
+const KEY_USER  = 'KJf7X9qL2mN0b8RvYp3Zs1Ta';
+const KEY_PASS  = 'QW8rT6yF3nV5cZ2uG1bXk4Pm';
+const KEY_TOKEN = 'Zx9Lw2Vb7Pq4S8Jn3FhR1tUy';
+const KEY_API   = 'Bn4M7cR1Yv2Q9pS8kT3xL0zA';
+const KEY_LVL   = 'Vg2Y9Kp6R1sT3nX8qL4mB0hC';
+
+// Read values
+const username     = cfg[KEY_USER] ?? '';
+const password     = cfg[KEY_PASS] ?? '';
+const partnerToken = cfg[KEY_TOKEN] ?? '';
+const apiPrefix    = cfg[KEY_API] ?? (cfg.apiPrefix ?? '');
+const adminLevel    = Number(cfg[KEY_LVL] ?? cfg.adminLevel ?? 0);
 const basicAuth = btoa(`${username}:${password}`);
 const baseUrl = window.location.origin;
-const apiPrefix = document.querySelector(".api-prefix")?.dataset.apiPrefix;
 const filterBtn = document.querySelector("#filter-button");
 const logTable = $("#logTable");
 const modalContent = $(".modal-content");

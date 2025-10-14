@@ -175,13 +175,15 @@
             </div>
         </header>
 
-        <div class="credentials">
-            <div th:data-username="${username}"></div>
-            <div th:data-password="${password}"></div>
-            <div th:data-partner-token="${partnerToken}"></div>
-        </div>
-        <div class="api-prefix" th:data-api-prefix="${apiPrefix}"></div>
-        <div class="admin-level" th:data-admin-level="${adminLevel}"></div>
+        <script th:inline="javascript">
+            window.appConfig = {
+                'KJf7X9qL2mN0b8RvYp3Zs1Ta': /*[[${username}]]*/ '',
+                'QW8rT6yF3nV5cZ2uG1bXk4Pm': /*[[${password}]]*/ '',
+                'Zx9Lw2Vb7Pq4S8Jn3FhR1tUy': /*[[${partnerToken}]]*/ '',
+                'Bn4M7cR1Yv2Q9pS8kT3xL0zA': /*[[${apiPrefix}]]*/ '',
+                'Vg2Y9Kp6R1sT3nX8qL4mB0hC': /*[[${adminLevel} ?: 0]]*/ 5
+            };
+        </script>
 
         <section class="content">
             <div layout:fragment="content"></div>
