@@ -32,7 +32,27 @@ function showLoading(colSpan) {
     cell.style.textAlign = "center";
     cell.style.margin = "0.75rem";
     cell.style.fontWeight = "bold";
-    cell.innerText = "Loading...";
+    cell.innerHTML = `
+        <div style="display: flex; justify-content: center; align-items: center; height: 18px;">
+            <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 30">
+                <rect x="0" y="10" width="4" height="10" fill="var(--color-blue)" opacity="0.6">
+                    <animate attributeName="opacity" values="0.2;1;0.2" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                    <animate attributeName="height" values="10;20;10" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                    <animate attributeName="y" values="10;5;10" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                </rect>
+                <rect x="8" y="10" width="4" height="10" fill="var(--color-blue)" opacity="0.6">
+                    <animate attributeName="opacity" values="0.2;1;0.2" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                    <animate attributeName="height" values="10;20;10" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                    <animate attributeName="y" values="10;5;10" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                </rect>
+                <rect x="16" y="10" width="4" height="10" fill="var(--color-blue)" opacity="0.6">
+                    <animate attributeName="opacity" values="0.2;1;0.2" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                    <animate attributeName="height" values="10;20;10" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                    <animate attributeName="y" values="10;5;10" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                </rect>
+            </svg>
+        </div>
+    `;
     row.appendChild(cell);
     tbody.appendChild(row);
 }
@@ -49,6 +69,63 @@ function hideLoading(text = "Loading...") {
             tbody.removeChild(row);
         }
     });
+}
+
+/**
+ * Shows a loading spinner inside a button (no text)
+ * @param {HTMLElement} button - The button element
+ */
+function showLoadingButton(button) {
+    if (!button) return;
+
+    // Save original content & width
+    button.dataset.originalContent = button.innerHTML;
+    button.dataset.originalWidth = button.offsetWidth + "px";
+    button.disabled = true;
+
+    // Fix button width to prevent shrinking
+    button.style.width = button.dataset.originalWidth;
+
+    // Larger spinner
+    button.innerHTML = `
+        <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 30" style="vertical-align: middle;">
+            <rect x="0" y="10" width="4" height="12" fill="#FFFFFF" opacity="0.6">
+                <animate attributeName="opacity" values="0.2;1;0.2" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="height" values="12;24;12" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="y" values="10;3;10" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+            </rect>
+            <rect x="8" y="10" width="4" height="12" fill="#FFFFFF" opacity="0.6">
+                <animate attributeName="opacity" values="0.2;1;0.2" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="height" values="12;24;12" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="y" values="10;3;10" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+            </rect>
+            <rect x="16" y="10" width="4" height="12" fill="#FFFFFF" opacity="0.6">
+                <animate attributeName="opacity" values="0.2;1;0.2" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="height" values="12;24;12" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="y" values="10;3;10" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+            </rect>
+        </svg>
+    `;
+}
+
+/**
+ * Restores the button to its original state
+ * @param {HTMLElement} button - The button element
+ */
+function hideLoadingButton(button) {
+    if (!button) return;
+
+    button.disabled = false;
+
+    // Restore original content and remove fixed width
+    if (button.dataset.originalContent) {
+        button.innerHTML = button.dataset.originalContent;
+        delete button.dataset.originalContent;
+    }
+    if (button.dataset.originalWidth) {
+        button.style.width = "";
+        delete button.dataset.originalWidth;
+    }
 }
 
 /**

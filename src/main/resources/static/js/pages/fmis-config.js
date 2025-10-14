@@ -139,6 +139,8 @@ function showValidationErrors(errors) {
 
 // DOM Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
+    const updateBtn = document.getElementById("update-btn");
+
     fetchConfig();
 
     $(".modal-content").draggable({ cursor: "move" });
@@ -153,7 +155,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Handle form submission
     document.getElementById("editConfigForm")?.addEventListener("submit", async (e) => {
         e.preventDefault();
+        showLoadingButton(updateBtn);
         await saveConfigChanges();
+        hideLoadingButton(updateBtn);
     });
 
     // Toggle password visibility

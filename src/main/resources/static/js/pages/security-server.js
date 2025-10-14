@@ -150,6 +150,9 @@ function clearCreateErrors() {
 document.getElementById("createServerForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    const createBtn = document.getElementById("create-btn");
+    showLoadingButton(createBtn);
+
     const formData = {
         name: document.getElementById("createName").value.trim(),
         configKey: document.getElementById("createConfigKey").value.trim(),
@@ -209,6 +212,8 @@ document.getElementById("createServerForm").addEventListener("submit", async fun
     } catch (err) {
         console.error("Error creating server:", err);
         showToast("error", "Something went wrong while creating server.");
+    } finally {
+        hideLoadingButton(createBtn);
     }
 });
 
@@ -320,6 +325,9 @@ document.getElementById("editServerForm").addEventListener("submit", async funct
 
     if (!validateModalFields(updatedData)) return;
 
+    const updateBtn = document.getElementById("update-btn");
+    showLoadingButton(updateBtn);
+
     try {
         const res = await fetch(`${apiPrefix}/security-server/update-server/${currentEditId}`, {
             method: "PUT",
@@ -372,6 +380,8 @@ document.getElementById("editServerForm").addEventListener("submit", async funct
     } catch (err) {
         console.error("Update failed:", err);
         showToast("error", "Failed to update server. Please try again.");
+    } finally {
+        hideLoadingButton(updateBtn);
     }
 });
 

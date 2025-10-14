@@ -171,6 +171,9 @@ function validateCreateFields(data) {
 document.getElementById("createHostForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    const createBtn = document.getElementById("create-btn");
+    showLoadingButton(createBtn);
+
     const formData = {
         name: document.getElementById("createName").value.trim(),
         appKey: document.getElementById("createAppKey").value.trim(),
@@ -178,7 +181,10 @@ document.getElementById("createHostForm").addEventListener("submit", async funct
         accessURL: document.getElementById("createURL").value.trim()
     };
 
-    if (!validateCreateFields(formData)) return;
+    if (!validateCreateFields(formData)) {
+        hideLoadingButton(createBtn);
+        return;
+    }
 
     try {
         const res = await fetch(`${apiPrefix}/internal/camdigikey/import-host`, {
@@ -226,6 +232,8 @@ document.getElementById("createHostForm").addEventListener("submit", async funct
     } catch (err) {
         console.error("Error creating host:", err);
         showToast("error", "Something went wrong while creating host.");
+    } finally {
+        hideLoadingButton(createBtn);
     }
 });
 
@@ -337,8 +345,11 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
 
     if (!currentEditId) return showToast("error", "Missing ID for update.");
 
-    // Client-side validation: stop submission if invalid
+    // Client-side validation
     if (!validateModalFields(updatedData)) return;
+
+    const updateBtn = document.getElementById("update-btn");
+    showLoadingButton(updateBtn);
 
     try {
         const res = await fetch(`${apiPrefix}/internal/camdigikey/update-host/${currentEditId}`, {
@@ -395,6 +406,8 @@ document.getElementById("editHostForm").addEventListener("submit", async functio
     } catch (err) {
         showToast("error", "Something went wrong.");
         console.error(err);
+    } finally {
+        hideLoadingButton(updateBtn);
     }
 });
 

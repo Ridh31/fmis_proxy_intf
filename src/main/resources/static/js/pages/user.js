@@ -220,6 +220,9 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         clearErrorFields();
 
+        const createBtn = document.getElementById("create-btn");
+        showLoadingButton(createBtn);
+
         const username = inputUsername.value.trim();
         const email = inputEmail.value.trim();
         const password = inputPassword.value;
@@ -235,7 +238,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!roleId) { showErrorFields("errorRole", "Role is required."); hasError = true; }
         if (!partnerId) { showErrorFields("errorPartner", "Branch is required."); hasError = true; }
 
-        if (hasError) return;
+        if (hasError) {
+            hideLoadingButton(createBtn);
+            return;
+        }
 
         const data = {
             username,
@@ -289,6 +295,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
             console.error(err);
             showToast("error", isUpdateMode ? "Failed to update user." : "Failed to save user.");
+        } finally {
+            hideLoadingButton(createBtn);
         }
     });
 
@@ -297,18 +305,24 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         clearErrorFields(resetModal);
 
+        const resetBtn = document.getElementById("reset-btn");
+        showLoadingButton(resetBtn);
+
         const username = resetUsernameInput.value.trim();
         const password = resetPasswordInput.value;
         const confirmPassword = resetConfirmPasswordInput.value;
 
         if (!password) {
             document.getElementById("errorResetPassword").textContent = "Password is required.";
+            hideLoadingButton(resetBtn);
             return;
         } else if (password.length < 6) {
             document.getElementById("errorResetPassword").textContent = "Password must be at least 6 characters.";
+            hideLoadingButton(resetBtn);
             return;
         } else if (password !== confirmPassword) {
             document.getElementById("errorResetConfirmPassword").textContent = "Passwords do not match.";
+            hideLoadingButton(resetBtn);
             return;
         }
 
@@ -335,6 +349,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
             console.error(err);
             showToast("error", "Failed to reset password.");
+        } finally {
+            hideLoadingButton(resetBtn);
         }
     });
 

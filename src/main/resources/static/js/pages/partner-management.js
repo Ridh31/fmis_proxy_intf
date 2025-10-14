@@ -162,7 +162,7 @@ function handleApiErrorMessage(result) {
     // Field-level errors
     if (result.error && typeof result.error === "object") {
         Object.keys(result.error).forEach(key => {
-            const inputId = "create" + capitalize(key); // e.g. createName
+            const inputId = "create" + capitalize(key);
             const inputEl = document.getElementById(inputId);
             const errorEl = document.getElementById(`error${capitalize(inputId)}`);
             if (inputEl && errorEl) {
@@ -170,9 +170,7 @@ function handleApiErrorMessage(result) {
                 errorEl.textContent = result.error[key];
             }
         });
-    }
-    // If only message exists, try mapping to field by keyword
-    else if (result.message) {
+    } else if (result.message) {
         const msg = result.message.toLowerCase();
         const fieldMap = [
             { keyword: "name", id: "createName" },
@@ -196,7 +194,6 @@ function handleApiErrorMessage(result) {
         });
 
         if (!matched) {
-            // fallback: show toast if no keyword matches
             showToast("error", result.message);
         }
     }
@@ -212,6 +209,9 @@ function handleApiErrorMessage(result) {
 createPartnerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearErrors(createModal);
+
+    const createBtn = document.getElementById("create-btn");
+    showLoadingButton(createBtn);
 
     const payload = {
         name: document.getElementById("createName").value.trim(),
@@ -249,6 +249,8 @@ createPartnerForm.addEventListener("submit", async (e) => {
     } catch (err) {
         console.error("Create partner failed:", err);
         showToast("error", "Failed to create partner.");
+    } finally {
+        hideLoadingButton(createBtn);
     }
 });
 
@@ -314,7 +316,6 @@ function validateModalFields(apiErrors = {}) {
  * Prevents default submit, validates input, sends update request,
  * handles API errors, and refreshes data on success.
  */
-// Handle partner edit form submission
 document.getElementById("editPartnerForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -323,7 +324,9 @@ document.getElementById("editPartnerForm").addEventListener("submit", async (e) 
         return;
     }
 
-    // Collect modal input data
+    const updateBtn = document.getElementById("update-btn");
+    showLoadingButton(updateBtn);
+
     const modalData = {
         name: document.getElementById("modalName").value.trim(),
         identifier: document.getElementById("modalIdentifier").value.trim(),
@@ -332,16 +335,21 @@ document.getElementById("editPartnerForm").addEventListener("submit", async (e) 
         code: document.getElementById("modalCode").value.trim()
     };
 
-    // Simple front-end validation
+    const requiredFields = ["name", "identifier", "systemCode", "code"];
     let hasError = false;
-    Object.keys(modalData).forEach(field => {
+
+    requiredFields.forEach(field => {
         const inputEl = document.getElementById(`modal${capitalize(field)}`);
         if (!modalData[field]) {
             showErrorField(inputEl, `${capitalize(field)} is required`);
             hasError = true;
         }
     });
-    if (hasError) return;
+
+    if (hasError) {
+        hideLoadingButton(updateBtn);
+        return;
+    }
 
     try {
         const response = await fetch(`${apiPrefix}/update-partner/${currentEditId}`, {
@@ -357,11 +365,21 @@ document.getElementById("editPartnerForm").addEventListener("submit", async (e) 
         const result = await response.json();
 
         if (!response.ok) {
-            // Handle API validation errors
             if (result.errors) {
                 validateModalFields(result.errors);
+            } else if (result.message) {
+                const msg = result.message.toLowerCase();
+                if (msg.includes("code")) {
+                    showErrorField(document.getElementById("modalCode"), result.message);
+                } else if (msg.includes("identifier")) {
+                    showErrorField(document.getElementById("modalIdentifier"), result.message);
+                } else if (msg.includes("name")) {
+                    showErrorField(document.getElementById("modalName"), result.message);
+                } else {
+                    showToast("error", result.message);
+                }
             } else {
-                showToast("error", result.message || "Failed to update partner.");
+                showToast("error", "Failed to update partner.");
             }
             return;
         }
@@ -373,6 +391,8 @@ document.getElementById("editPartnerForm").addEventListener("submit", async (e) 
     } catch (err) {
         console.error("Update failed:", err);
         showToast("error", "Failed to update partner.");
+    } finally {
+        hideLoadingButton(updateBtn);
     }
 });
 
