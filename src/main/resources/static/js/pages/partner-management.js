@@ -275,9 +275,10 @@ function openEditModal(item) {
  * Closes the edit modal and resets the current edit ID.
  */
 function closeModal() {
-    document.getElementById("modal").style.display = "none";
+    const modalEl = document.getElementById("modal");
+    modalEl.style.display = "none";
     currentEditId = null;
-    clearErrors();
+    clearErrors(modalEl);
 }
 
 // Attach event listeners to close buttons of modal
