@@ -5,6 +5,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.dto.ResponseCodeDTO;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseCodeUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -62,6 +63,28 @@ public class SecurityConfig {
 
                 // Disable CSRF (enable in production if needed)
                 .csrf(AbstractHttpConfigurer::disable)
+
+                .addFilterAfter((request, response, chain) -> {
+                    HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+                    // Apply X-XSS-Protection
+                    httpResponse.setHeader("X-XSS-Protection", "1; mode=block");
+
+                    // Apply CSP
+                    httpResponse.setHeader("Content-Security-Policy",
+                            "default-src 'self'; " +
+                            "script-src 'self' 'unsafe-inline'; " +
+                            "style-src 'self' 'unsafe-inline'; " +
+                            "img-src 'self' data: https://cdn.redoc.ly; " +
+                            "font-src 'self' data:; " +
+                            "connect-src 'self'; " +
+                            "object-src 'none'; " +
+                            "frame-ancestors 'none'; " +
+                            "worker-src 'self' blob:;"
+                    );
+
+                    chain.doFilter(request, response);
+                }, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
 
                 // Configure HTTP request authorization
                 .authorizeHttpRequests(auth -> auth

@@ -834,6 +834,7 @@ public class BankStatementController {
             summary = "Get Bank Statements",
             description = "Retrieves a paginated list of bank statements from the database."
     )
+    @Hidden
     @GetMapping("/list-bank-statement")
     public ResponseEntity<ApiResponse<?>> getBankStatements(
             @RequestHeader(value = HeaderConstants.X_PARTNER_TOKEN, required = false)

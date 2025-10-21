@@ -5,6 +5,7 @@ import com.fmis.fmis_proxy_intf.fmis_proxy_intf.repository.SarmisInterfaceReposi
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ApiResponse;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseCodeUtil;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.ResponseMessageUtil;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import java.util.Map;
  * Controller that handles dashboard-related endpoints.
  * Provides summary data for displaying on dashboard UI.
  */
+@Hidden
 @RestController
 @RequestMapping("/dashboard")
 public class DashboardController {
