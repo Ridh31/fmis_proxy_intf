@@ -1,5 +1,6 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.ApiResponseConstants;
@@ -610,13 +611,45 @@ public class BankStatementController {
             Long partnerId = partnerService.findIdByPublicKey(partnerCode);
             Optional<Partner> partner = partnerService.findById(partnerId);
 
+            bankStatementDTO.setMethod("POST");
+            bankStatementDTO.setEndpoint(endpoint);
+            bankStatementDTO.setFilename(filename);
+            bankStatementDTO.setStatus(false);
+            bankStatementDTO.setMessage(ResponseMessageUtil.internalError("Bank statement"));
+
+            // Wrap the JSON conversion
+            String payload;
+            try {
+                payload = new ObjectMapper().writeValueAsString(bankStatementDTO.getData());
+            } catch (JsonProcessingException jsonEx) {
+                payload = "{}";
+            }
+            bankStatementDTO.setPayload(payload);
+
+            // Wrap XML conversion
+            String xmlPayload;
+            try {
+                xmlPayload = JsonToXmlUtil.convertBankStatementJsonToXml(payload);
+            } catch (Exception xmlEx) {
+                xmlPayload = "<?xml version=\"1.0\"?><Data></Data>";
+            }
+            bankStatementDTO.setXml(xmlPayload);
+
+            Long userId = userService.findByUsername(username)
+                    .map(User::getId)
+                    .orElse(null);
+            bankStatementDTO.setCreatedBy(userId);
+            bankStatementDTO.setPartnerId(partnerId);
+
+            bankStatementService.importBankStatement(partnerId, bankStatementDTO);
+
             // Construct notification for error
             String telegramMessage = TelegramUtil.buildBankStatementNotification(
                     partner,
                     "N/A",
                     null,
-                    ApiResponseConstants.BAD_REQUEST_CODE,
-                    ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS
+                    ApiResponseConstants.INTERNAL_SERVER_ERROR_CODE,
+                    ResponseMessageUtil.internalError("Bank statement")
             );
 
             // Send notification via Telegram bot
