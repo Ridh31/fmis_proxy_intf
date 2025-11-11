@@ -44,8 +44,9 @@ public interface SarmisInterfaceRepository extends JpaRepository<SarmisInterface
             )
             AND (:interfaceCode IS NULL OR si.interface_code LIKE CONCAT('%', :interfaceCode, '%'))
             AND (:purchaseOrderId IS NULL OR payload LIKE CONCAT('%', :purchaseOrderId, '%'))
-            AND (:actionDate IS NULL OR (
-                 si.created_date >= :actionDate AND si.created_date < DATE_ADD(:actionDate, INTERVAL 1 DAY)))
+            AND (:actionDate IS NULL OR
+                 si.created_date >= DATE_SUB(CONCAT(:actionDate, ' 00:00:00'), INTERVAL 7 HOUR)
+                 AND si.created_date < DATE_SUB(CONCAT(:actionDate, ' 23:59:59'), INTERVAL 7 HOUR))
             AND (:status IS NULL OR si.status = :status)
         ORDER BY si.id DESC
         """, nativeQuery = true)

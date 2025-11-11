@@ -67,8 +67,9 @@ public interface BankStatementRepository extends JpaRepository<BankStatement, Lo
             AND (:statementId IS NULL OR bs.statement_id LIKE CONCAT('%', :statementId, '%'))
             AND (:statementDate IS NULL OR bs.statement_date >= :statementDate 
                 AND bs.statement_date < DATE_ADD(:statementDate, INTERVAL 1 DAY))
-            AND (:importedDate IS NULL OR bs.created_date >= :importedDate 
-                AND bs.created_date < DATE_ADD(:importedDate, INTERVAL 1 DAY))
+            AND (:importedDate IS NULL OR
+                 bs.created_date >= DATE_SUB(CONCAT(:importedDate, ' 00:00:00'), INTERVAL 7 HOUR)
+                 AND bs.created_date < DATE_SUB(CONCAT(:importedDate, ' 23:59:59'), INTERVAL 7 HOUR))
             AND (:partnerId IS NULL OR bs.partner_intf_id = :partnerId)
             AND (:status IS NULL OR bs.status = :status)
         ORDER BY bs.id DESC
