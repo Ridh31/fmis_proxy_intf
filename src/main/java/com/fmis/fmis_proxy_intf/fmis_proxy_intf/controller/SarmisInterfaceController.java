@@ -150,6 +150,10 @@ public class SarmisInterfaceController {
                 sarmisInterface.setPayload(payload);
 
             } else {
+                sarmisInterface.setStatus(false);
+                sarmisInterface.setResponse("Unsupported media type: " + contentType);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.unsupportedMediaType(),
@@ -165,6 +169,10 @@ public class SarmisInterfaceController {
             // Retrieve SecurityServer configuration by config key
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(FMIS_BATCH_PO_SARMIS);
             if (optionalConfig.isEmpty()) {
+                sarmisInterface.setStatus(false);
+                sarmisInterface.setResponse("Configuration not found: " + FMIS_BATCH_PO_SARMIS);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.configurationNotFound(),
@@ -184,6 +192,10 @@ public class SarmisInterfaceController {
             // CamDigiKey Authorization
             Optional<InternalCamDigiKey> camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
             if (camDigiKey.isEmpty()) {
+                sarmisInterface.setStatus(false);
+                sarmisInterface.setResponse("CamDigiKey configuration not found: " + SARMIS_APP_KEY);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.configurationNotFound(),
@@ -245,8 +257,11 @@ public class SarmisInterfaceController {
                                     ));
                         }
                     } else {
-                        // If the error code isn't 0, it indicates something went wrong on CamDigiKey's side.
-                        String message = root.path("message").asText("Unknown error");
+                        String message = root.path("message").asText("Unknown CamDigiKey error");
+                        sarmisInterface.setStatus(false);
+                        sarmisInterface.setResponse(message);
+                        sarmisInterfaceService.save(sarmisInterface);
+
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(new ApiResponse<>(
                                         ResponseCodeUtil.invalid(),
@@ -255,6 +270,10 @@ public class SarmisInterfaceController {
                     }
 
                 } catch (JsonProcessingException e) {
+                    sarmisInterface.setStatus(false);
+                    sarmisInterface.setResponse("JSON processing error: " + e.getMessage());
+                    sarmisInterfaceService.save(sarmisInterface);
+
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(new ApiResponse<>(
                                     ResponseCodeUtil.internalError(),
@@ -262,7 +281,10 @@ public class SarmisInterfaceController {
                             ));
                 }
             } else {
-                // Handle failed CamDigiKey token retrieval
+                sarmisInterface.setStatus(false);
+                sarmisInterface.setResponse("Failed to fetch organization token");
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.fetchError(),
@@ -271,7 +293,10 @@ public class SarmisInterfaceController {
             }
 
         } catch (Exception e) {
-            // Catch any unexpected errors
+            sarmisInterface.setStatus(false);
+            sarmisInterface.setResponse("Unexpected error: " + e.getMessage());
+            sarmisInterfaceService.save(sarmisInterface);
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
