@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (response.ok && result?.code === 200 && result.data?.status === true) {
                 document.cookie = "isAdmin=true; path=/; SameSite=Lax; Secure";
                 document.cookie = `adminUsername=${username.value.trim()}; path=/; SameSite=Lax; Secure`;
-                document.cookie = `adminPassword=${password.value.trim()}; path=/; SameSite=Lax; Secure`;
+                document.cookie = `adminPassword=${encodeURIComponent(password.value.trim())}; path=/; SameSite=Lax; Secure`;
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const redirectTo = urlParams.get("redirect") || `${apiPrefix}/admin/home`;

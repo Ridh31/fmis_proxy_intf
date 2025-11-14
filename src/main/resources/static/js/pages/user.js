@@ -308,19 +308,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const resetBtn = document.getElementById("reset-btn");
         showLoadingButton(resetBtn);
 
-        const username = resetUsernameInput.value.trim();
-        const password = resetPasswordInput.value;
+        const resetUsername = resetUsernameInput.value.trim();
+        const resetPassword = resetPasswordInput.value;
         const confirmPassword = resetConfirmPasswordInput.value;
 
-        if (!password) {
+        if (!resetPassword) {
             document.getElementById("errorResetPassword").textContent = "Password is required.";
             hideLoadingButton(resetBtn);
             return;
-        } else if (password.length < 6) {
+        } else if (resetPassword.length < 6) {
             document.getElementById("errorResetPassword").textContent = "Password must be at least 6 characters.";
             hideLoadingButton(resetBtn);
             return;
-        } else if (password !== confirmPassword) {
+        } else if (resetPassword !== confirmPassword) {
             document.getElementById("errorResetConfirmPassword").textContent = "Passwords do not match.";
             hideLoadingButton(resetBtn);
             return;
@@ -328,8 +328,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const formData = new FormData();
-            formData.append("username", username);
-            formData.append("password", password);
+            formData.append("username", resetUsername);
+            formData.append("password", resetPassword);
 
             const res = await fetch(`${baseUrl}${apiPrefix}/auth/reset-password`, {
                 method: "PUT",
@@ -345,6 +345,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
             showToast("success", "Password reset successfully.");
             resetModal.style.display = "none";
+
+            // Login again if reset current user
+            if (username === resetUsername) {
+                deleteCookie("isAdmin");
+                deleteCookie("adminUsername");
+                deleteCookie("adminPassword");
+
+                setTimeout(() => {
+                    window.location.href = apiPrefix + "/admin/login";
+                }, 3000);
+            }
 
         } catch (err) {
             console.error(err);
