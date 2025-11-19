@@ -151,7 +151,7 @@ public class SarmisInterfaceController {
 
             } else {
                 sarmisInterface.setStatus(false);
-                sarmisInterface.setResponse("Unsupported media type: " + contentType);
+                sarmisInterface.setResponse(ResponseMessageUtil.unsupportedMediaType(contentType));
                 sarmisInterfaceService.save(sarmisInterface);
 
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -170,13 +170,13 @@ public class SarmisInterfaceController {
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(FMIS_BATCH_PO_SARMIS);
             if (optionalConfig.isEmpty()) {
                 sarmisInterface.setStatus(false);
-                sarmisInterface.setResponse("Configuration not found: " + FMIS_BATCH_PO_SARMIS);
+                sarmisInterface.setResponse("Security Server: " + ResponseMessageUtil.configurationNotFound(FMIS_BATCH_PO_SARMIS));
                 sarmisInterfaceService.save(sarmisInterface);
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.configurationNotFound(),
-                                ResponseMessageUtil.configurationNotFound(FMIS_BATCH_PO_SARMIS)
+                                "Security Server: " + ResponseMessageUtil.configurationNotFound(FMIS_BATCH_PO_SARMIS)
                         ));
             }
 
@@ -193,13 +193,13 @@ public class SarmisInterfaceController {
             Optional<InternalCamDigiKey> camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
             if (camDigiKey.isEmpty()) {
                 sarmisInterface.setStatus(false);
-                sarmisInterface.setResponse("CamDigiKey configuration not found: " + SARMIS_APP_KEY);
+                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
                 sarmisInterfaceService.save(sarmisInterface);
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.configurationNotFound(),
-                                ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
+                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
                         ));
             }
 
@@ -237,6 +237,10 @@ public class SarmisInterfaceController {
                                         objectMapper.readTree(sarmisResponse.getBody())
                                 ));
                             } else {
+                                sarmisInterface.setResponse(sarmisResponse.getBody());
+                                sarmisInterface.setStatus(false);
+                                sarmisInterfaceService.save(sarmisInterface);
+
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                                         .body(new ApiResponse<>(
                                                 ResponseCodeUtil.serviceUnavailable(),
@@ -282,25 +286,27 @@ public class SarmisInterfaceController {
                 }
             } else {
                 sarmisInterface.setStatus(false);
-                sarmisInterface.setResponse("Failed to fetch organization token");
+                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token"));
                 sarmisInterfaceService.save(sarmisInterface);
 
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.fetchError(),
-                                ResponseMessageUtil.fetchError("Organization token")
+                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
         } catch (Exception e) {
+            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
+            sarmisInterface.setResponse(sarmisError.toString());
             sarmisInterface.setStatus(false);
-            sarmisInterface.setResponse("Unexpected error: " + e.getMessage());
             sarmisInterfaceService.save(sarmisInterface);
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
-                            ResponseMessageUtil.internalError("Batch purchase order")
+                            ResponseMessageUtil.internalError("Batch purchase order"),
+                            sarmisError
                     ));
         }
     }
@@ -439,9 +445,20 @@ public class SarmisInterfaceController {
             sarmisInterface.setEndpoint(endpoint);
 
             // Retrieve SecurityServer configuration
-            SecurityServer securityServer = securityServerService.getByConfigKey(LONG_TERM_ASSET_REPORT_SARMIS)
-                    .orElseThrow(() -> new RuntimeException(
-                            ResponseMessageUtil.configurationNotFound(LONG_TERM_ASSET_REPORT_SARMIS)));
+            Optional<SecurityServer> securityServerOpt = securityServerService.getByConfigKey(LONG_TERM_ASSET_REPORT_SARMIS);
+            if (securityServerOpt.isEmpty()) {
+                sarmisInterface.setResponse("Security Server: " + ResponseMessageUtil.configurationNotFound(LONG_TERM_ASSET_REPORT_SARMIS));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ResponseCodeUtil.configurationNotFound(),
+                                "Security Server: " + ResponseMessageUtil.configurationNotFound(LONG_TERM_ASSET_REPORT_SARMIS)
+                        ));
+            }
+
+            SecurityServer securityServer = securityServerOpt.get();
 
             // Build URI with query parameters
             UriComponentsBuilder uriBuilder = UriComponentsBuilder
@@ -461,23 +478,42 @@ public class SarmisInterfaceController {
             headers.set(HeaderConstants.X_ROAD_CLIENT, securityServer.getSubsystem());
 
             // CamDigiKey Authorization
-            InternalCamDigiKey camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY)
-                    .orElseThrow(() -> new RuntimeException(
-                            ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)));
+            Optional<InternalCamDigiKey> camDigiKeyOpt = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
+            if (camDigiKeyOpt.isEmpty()) {
+                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ResponseCodeUtil.configurationNotFound(),
+                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
+                        ));
+            }
+
+            InternalCamDigiKey camDigiKey = camDigiKeyOpt.get();
 
             String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
+                sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.fetchError(),
-                                ResponseMessageUtil.fetchError("Organization token")
+                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
             JsonNode camDigiKeyJson = objectMapper.readTree(camDigiKeyResponse.getBody());
             if (camDigiKeyJson.path("error").asInt() != 0) {
+                sarmisInterface.setResponse(camDigiKeyJson.toString());
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.invalid(),
@@ -505,6 +541,10 @@ public class SarmisInterfaceController {
                         objectMapper.readTree(sarmisResponse.getBody())
                 ));
             } else {
+                sarmisInterface.setResponse(sarmisResponse.getBody());
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.serviceUnavailable(),
@@ -580,7 +620,7 @@ public class SarmisInterfaceController {
                         responseMap.put("message", newMessageMap);
 
                     } catch (Exception ex) {
-                        System.err.println(ResponseMessageUtil.internalError("Long term asset report (XML)"));
+                        System.err.println(ResponseMessageUtil.internalError("Long term asset report (XML)") + " Error: " + ex.getMessage());
                     }
                 } else if (messageStr.startsWith("{") && messageStr.endsWith("}")) {
                     try {
@@ -588,7 +628,7 @@ public class SarmisInterfaceController {
                                 messageStr, new TypeReference<Map<String, Object>>() {});
                         responseMap.put("message", innerMessageMap);
                     } catch (Exception ex) {
-                        System.err.println(ResponseMessageUtil.internalError("Long term asset report (XML)"));
+                        System.err.println(ResponseMessageUtil.internalError("Long term asset report (XML)") + " Error: " + ex.getMessage());
                     }
                 }
             }
@@ -649,9 +689,20 @@ public class SarmisInterfaceController {
             sarmisInterface.setEndpoint(endpoint);
 
             // Retrieve SecurityServer configuration
-            SecurityServer securityServer = securityServerService.getByConfigKey(DEPRECIATION_ASSET_REPORT_SARMIS)
-                    .orElseThrow(() -> new RuntimeException(
-                            ResponseMessageUtil.configurationNotFound(DEPRECIATION_ASSET_REPORT_SARMIS)));
+            Optional<SecurityServer> securityServerOpt = securityServerService.getByConfigKey(DEPRECIATION_ASSET_REPORT_SARMIS);
+            if (securityServerOpt.isEmpty()) {
+                sarmisInterface.setResponse("Security Server: " + ResponseMessageUtil.configurationNotFound(DEPRECIATION_ASSET_REPORT_SARMIS));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ResponseCodeUtil.configurationNotFound(),
+                                "Security Server: " + ResponseMessageUtil.configurationNotFound(DEPRECIATION_ASSET_REPORT_SARMIS)
+                        ));
+            }
+
+            SecurityServer securityServer = securityServerOpt.get();
 
             // Build URI with query parameters
             UriComponentsBuilder uriBuilder = UriComponentsBuilder
@@ -671,23 +722,41 @@ public class SarmisInterfaceController {
             headers.set(HeaderConstants.X_ROAD_CLIENT, securityServer.getSubsystem());
 
             // CamDigiKey Authorization
-            InternalCamDigiKey camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY)
-                    .orElseThrow(() -> new RuntimeException(
-                            ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)));
+            Optional<InternalCamDigiKey> camDigiKeyOpt = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
+            if (camDigiKeyOpt.isEmpty()) {
+                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
 
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ResponseCodeUtil.configurationNotFound(),
+                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
+                        ));
+            }
+
+            InternalCamDigiKey camDigiKey = camDigiKeyOpt.get();
             String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
             ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
+                sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.fetchError(),
-                                ResponseMessageUtil.fetchError("Organization token")
+                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
             JsonNode camDigiKeyJson = objectMapper.readTree(camDigiKeyResponse.getBody());
             if (camDigiKeyJson.path("error").asInt() != 0) {
+                sarmisInterface.setResponse(camDigiKeyJson.toString());
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.invalid(),
@@ -715,6 +784,10 @@ public class SarmisInterfaceController {
                         objectMapper.readTree(sarmisResponse.getBody())
                 ));
             } else {
+                sarmisInterface.setResponse(sarmisResponse.getBody());
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.serviceUnavailable(),
@@ -790,7 +863,7 @@ public class SarmisInterfaceController {
                         responseMap.put("message", newMessageMap);
 
                     } catch (Exception ex) {
-                        System.err.println(ResponseMessageUtil.internalError("Depreciation asset report (XML)"));
+                        System.err.println(ResponseMessageUtil.internalError("Depreciation asset report (XML)") + " Error: " + ex.getMessage());
                     }
                 } else if (messageStr.startsWith("{") && messageStr.endsWith("}")) {
                     try {
@@ -798,7 +871,7 @@ public class SarmisInterfaceController {
                                 messageStr, new TypeReference<Map<String, Object>>() {});
                         responseMap.put("message", innerMessageMap);
                     } catch (Exception ex) {
-                        System.err.println(ResponseMessageUtil.internalError("Depreciation asset report (XML)"));
+                        System.err.println(ResponseMessageUtil.internalError("Depreciation asset report (XML)") + " Error: " + ex.getMessage());
                     }
                 }
             }
@@ -841,6 +914,9 @@ public class SarmisInterfaceController {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         String organizationToken = "";
 
+        // Initialize the SARMIS interface log
+        SarmisInterface sarmisInterface = new SarmisInterface();
+
         try {
             Map<String, String> params = Map.of(
                     "page", String.valueOf(page),
@@ -854,18 +930,20 @@ public class SarmisInterfaceController {
                             .map(e -> e.getKey() + "=" + e.getValue())
                             .collect(Collectors.joining("&"));
 
-            // Initialize the SARMIS interface log
-            SarmisInterface sarmisInterface = new SarmisInterface();
             sarmisInterface.setMethod("GET");
             sarmisInterface.setEndpoint(endpoint);
 
             // Retrieve SARMIS configuration from database
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(INSTITUTION_CLOSING_LIST_SARMIS);
             if (optionalConfig.isEmpty()) {
+                sarmisInterface.setResponse("Security Server: " + ResponseMessageUtil.configurationNotFound(INSTITUTION_CLOSING_LIST_SARMIS));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.configurationNotFound(),
-                                ResponseMessageUtil.configurationNotFound(INSTITUTION_CLOSING_LIST_SARMIS)
+                                "Security Server: " + ResponseMessageUtil.configurationNotFound(INSTITUTION_CLOSING_LIST_SARMIS)
                         ));
             }
 
@@ -881,10 +959,14 @@ public class SarmisInterfaceController {
             // Fetch CamDigiKey config by app key
             Optional<InternalCamDigiKey> camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
             if (camDigiKey.isEmpty()) {
+                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.configurationNotFound(),
-                                ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
+                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
                         ));
             }
 
@@ -942,6 +1024,10 @@ public class SarmisInterfaceController {
                                         sarmisResponseJSON
                                 ));
                             } else {
+                                sarmisInterface.setResponse(ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse);
+                                sarmisInterface.setStatus(false);
+                                sarmisInterfaceService.save(sarmisInterface);
+
                                 // SARMIS responded but not with 2xx
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                                         .body(new ApiResponse<>(
@@ -966,6 +1052,10 @@ public class SarmisInterfaceController {
                     } else {
                         // CamDigiKey returned an error code
                         String message = root.path("message").asText("Unknown error");
+                        sarmisInterface.setResponse(camDigiKeyResponse.getBody());
+                        sarmisInterface.setStatus(false);
+                        sarmisInterfaceService.save(sarmisInterface);
+
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(new ApiResponse<>(
                                         ResponseCodeUtil.invalid(),
@@ -974,6 +1064,10 @@ public class SarmisInterfaceController {
                     }
 
                 } catch (JsonProcessingException e) {
+                    sarmisInterface.setResponse("JSON parsing error: " + e.getMessage());
+                    sarmisInterface.setStatus(false);
+                    sarmisInterfaceService.save(sarmisInterface);
+
                     // JSON parsing error
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(new ApiResponse<>(
@@ -982,20 +1076,30 @@ public class SarmisInterfaceController {
                             ));
                 }
             } else {
+                sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 // CamDigiKey failed to provide a token
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.fetchError(),
-                                ResponseMessageUtil.fetchError("Organization token")
+                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
         } catch (Exception e) {
+            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
+            sarmisInterface.setResponse(sarmisError.toString());
+            sarmisInterface.setStatus(false);
+            sarmisInterfaceService.save(sarmisInterface);
+
             // Catch-all for unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
-                            ResponseMessageUtil.internalError("Institution closing list")
+                            ResponseMessageUtil.internalError("Institution closing list"),
+                            sarmisError
                     ));
         }
     }
@@ -1069,6 +1173,9 @@ public class SarmisInterfaceController {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         String organizationToken = "";
 
+        // Initialize the SARMIS interface log
+        SarmisInterface sarmisInterface = new SarmisInterface();
+
         try {
             Map<String, String> params = Map.of(
                     "page", String.valueOf(page),
@@ -1082,18 +1189,20 @@ public class SarmisInterfaceController {
                             .map(e -> e.getKey() + "=" + e.getValue())
                             .collect(Collectors.joining("&"));
 
-            // Initialize the SARMIS interface log
-            SarmisInterface sarmisInterface = new SarmisInterface();
             sarmisInterface.setMethod("GET");
             sarmisInterface.setEndpoint(endpoint);
 
             // Retrieve SARMIS configuration from database
             Optional<SecurityServer> optionalConfig = securityServerService.getByConfigKey(ASSET_KIND_LIST_SARMIS);
             if (optionalConfig.isEmpty()) {
+                sarmisInterface.setResponse("Security Server: " + ResponseMessageUtil.configurationNotFound(ASSET_KIND_LIST_SARMIS));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.configurationNotFound(),
-                                ResponseMessageUtil.configurationNotFound(ASSET_KIND_LIST_SARMIS)
+                                "Security Server: " + ResponseMessageUtil.configurationNotFound(ASSET_KIND_LIST_SARMIS)
                         ));
             }
 
@@ -1109,10 +1218,14 @@ public class SarmisInterfaceController {
             // Fetch CamDigiKey config by app key
             Optional<InternalCamDigiKey> camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
             if (camDigiKey.isEmpty()) {
+                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.configurationNotFound(),
-                                ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
+                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
                         ));
             }
 
@@ -1170,6 +1283,10 @@ public class SarmisInterfaceController {
                                         assetKindList
                                 ));
                             } else {
+                                sarmisInterface.setResponse(ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse);
+                                sarmisInterface.setStatus(false);
+                                sarmisInterfaceService.save(sarmisInterface);
+
                                 // SARMIS responded but not with 2xx
                                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                                         .body(new ApiResponse<>(
@@ -1194,6 +1311,10 @@ public class SarmisInterfaceController {
                     } else {
                         // CamDigiKey returned an error code
                         String message = root.path("message").asText("Unknown error");
+                        sarmisInterface.setResponse(camDigiKeyResponse.getBody());
+                        sarmisInterface.setStatus(false);
+                        sarmisInterfaceService.save(sarmisInterface);
+
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(new ApiResponse<>(
                                         ResponseCodeUtil.invalid(),
@@ -1202,6 +1323,10 @@ public class SarmisInterfaceController {
                     }
 
                 } catch (JsonProcessingException e) {
+                    sarmisInterface.setResponse("JSON parsing error: " + e.getMessage());
+                    sarmisInterface.setStatus(false);
+                    sarmisInterfaceService.save(sarmisInterface);
+
                     // JSON parsing error
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(new ApiResponse<>(
@@ -1210,20 +1335,30 @@ public class SarmisInterfaceController {
                             ));
                 }
             } else {
+                sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
                 // CamDigiKey failed to provide a token
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(new ApiResponse<>(
                                 ResponseCodeUtil.fetchError(),
-                                ResponseMessageUtil.fetchError("Organization token")
+                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
                         ));
             }
 
         } catch (Exception e) {
+            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
+            sarmisInterface.setResponse(sarmisError.toString());
+            sarmisInterface.setStatus(false);
+            sarmisInterfaceService.save(sarmisInterface);
+
             // Catch-all for unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.internalError(),
-                            ResponseMessageUtil.internalError("Asset kind list")
+                            ResponseMessageUtil.internalError("Asset kind list"),
+                            sarmisError
                     ));
         }
     }
