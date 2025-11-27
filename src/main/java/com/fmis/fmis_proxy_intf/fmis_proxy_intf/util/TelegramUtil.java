@@ -1,10 +1,12 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.Partner;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -60,6 +62,44 @@ public final class TelegramUtil {
                 .replace("}", "\\}")
                 .replace(".", "\\.")
                 .replace("!", "\\!");
+    }
+
+    /**
+     * Builds a user-friendly Telegram message for system health check.
+     *
+     * @param jsonResponse the raw JSON response from the health API
+     * @return formatted message for Telegram
+     */
+    public static String buildHealthCheckMessage(String jsonResponse) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(jsonResponse);
+
+            String app = root.path("app").asText("Unknown App");
+            String version = root.path("version").asText("N/A");
+            String status = root.path("status").asText("UNKNOWN");
+            String proxyUrl = root.path("proxyUrl").asText("N/A");
+            String dbConnection = root.path("dbConnection").asText("UNKNOWN");
+            String timestamp = root.path("timestamp").asText(ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+            // Emojis for status
+            String statusEmoji = "UP".equalsIgnoreCase(status) ? "✅" : "❌";
+            String dbEmoji = "UP".equalsIgnoreCase(dbConnection) ? "✅" : "❌";
+
+            // Build formatted message
+            StringBuilder sb = new StringBuilder();
+            sb.append("🏷 <b>System Health Check</b>\n\n")
+                    .append("• Application: <b>").append(app).append("</b>\n")
+                    .append("• Version: <b>").append(version).append("</b>\n")
+                    .append("• Status: <b>").append(status).append("</b> ").append(statusEmoji).append("\n")
+                    .append("• DB Connection: <b>").append(dbConnection).append("</b> ").append(dbEmoji).append("\n")
+                    .append("• Proxy URL: <code>").append(proxyUrl).append("</code>\n")
+                    .append("• Timestamp: <code>").append(timestamp).append("</code>\n");
+
+            return sb.toString();
+        } catch (Exception e) {
+            return "❌ Error formatting health check message: " + e.getMessage();
+        }
     }
 
     /**

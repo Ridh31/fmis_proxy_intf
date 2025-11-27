@@ -2,6 +2,7 @@ package com.fmis.fmis_proxy_intf.fmis_proxy_intf.bot;
 
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.TelegramNotificationService;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -18,6 +19,12 @@ import java.net.http.HttpResponse;
  */
 @Component
 public class BotInitializer {
+
+    @Value("${application.public.base-url}")
+    private String baseURL;
+
+    @Value("${application.api.prefix}")
+    private String apiPrefix;
 
     private final TelegramBotsProperties telegramBotsProperties;
     private final TelegramNotificationService notificationService;
@@ -42,15 +49,26 @@ public class BotInitializer {
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
 
+            int index = 0;
+
             for (TelegramBotsProperties.Bot botConfig : telegramBotsProperties.getBot()) {
                 unregisterWebhook(botConfig.getToken());
 
+                boolean allowHealth = (index == 0);
+
                 ProxyInterfaceNotificationBot bot = new ProxyInterfaceNotificationBot(
-                        botConfig.getToken(), botConfig.getUsername());
+                        botConfig.getToken(),
+                        botConfig.getUsername(),
+                        allowHealth,
+                        baseURL,
+                        apiPrefix
+                );
 
                 botsApi.registerBot(bot);
                 notificationService.registerBot(botConfig.getUsername(), bot);
                 System.out.printf("✅ Telegram bot activated: %s%n", botConfig.getUsername());
+
+                index++;
             }
 
         } catch (TelegramApiException e) {

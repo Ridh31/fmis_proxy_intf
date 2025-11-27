@@ -1,5 +1,7 @@
 package com.fmis.fmis_proxy_intf.fmis_proxy_intf.bot;
 
+import com.fmis.fmis_proxy_intf.fmis_proxy_intf.util.TelegramUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -14,9 +16,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ProxyInterfaceNotificationBot extends TelegramLongPollingBot {
 
+    @Value("${application.public.base-url}")
+    private String baseURL;
+
+    @Value("${application.api.prefix}")
+    private String apiPrefix;
+
     private final String botToken;
     private final String botUsername;
     private final Set<String> chatIds = ConcurrentHashMap.newKeySet();
+    private final boolean healthCommand;
 
     /**
      * Constructs a Telegram bot with the provided token and username.
@@ -24,9 +33,14 @@ public class ProxyInterfaceNotificationBot extends TelegramLongPollingBot {
      * @param botToken    the bot token issued by BotFather
      * @param botUsername the bot username (without the '@' symbol)
      */
-    public ProxyInterfaceNotificationBot(String botToken, String botUsername) {
+
+    public ProxyInterfaceNotificationBot(String botToken, String botUsername,
+                                         boolean healthCommand, String baseURL, String apiPrefix) {
         this.botToken = botToken;
         this.botUsername = botUsername;
+        this.healthCommand = healthCommand;
+        this.baseURL = baseURL;
+        this.apiPrefix = apiPrefix;
     }
 
     /**
@@ -83,10 +97,37 @@ public class ProxyInterfaceNotificationBot extends TelegramLongPollingBot {
                     }
                     break;
 
+                case "/health":
+                    if (healthCommand) {
+                        String health = callHealthApi();
+                        sendMessage(chatId, TelegramUtil.buildHealthCheckMessage(health));
+                    } else {
+                        sendMessage(chatId, "❌ This bot cannot run /health");
+                    }
+                    break;
+
                 default:
                     sendMessage(chatId, "🤖 Unknown command. Use /start or /stop.");
                     break;
             }
+        }
+    }
+
+    private String callHealthApi() {
+        try {
+            var client = java.net.http.HttpClient.newHttpClient();
+            String healthUrl = baseURL.replaceAll("/$", "") + apiPrefix + "/system/health";
+
+            var request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(healthUrl))
+                    .GET()
+                    .build();
+
+            var response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+
+            return response.body();
+        } catch (Exception e) {
+            return "❌ Error checking system health: " + e.getMessage();
         }
     }
 
