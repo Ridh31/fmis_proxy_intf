@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -60,10 +61,12 @@ public class SarmisInterfaceController {
     private static final String INSTITUTION_CLOSING_LIST_SARMIS = "INSTITUTION_CLOSING_LIST_SARMIS";
     private static final String ASSET_KIND_LIST_SARMIS = "ASSET_KIND_LIST_SARMIS";
 
+    private final RestTemplate proxyRestTemplate;
+    private final RestTemplate camDigiKeyRestTemplate;
+
     private final SarmisInterfaceService sarmisInterfaceService;
     private final SecurityServerService securityServerService;
     private final InternalCamDigiKeyService internalCamDigiKeyService;
-    private final RestTemplate restTemplate;
     private final AuthorizationHelper authorizationHelper;
     private final TelegramNotificationService telegramNotificationService;
 
@@ -75,7 +78,7 @@ public class SarmisInterfaceController {
      * @param sarmisInterfaceService      service for saving and managing SARMIS interface logs
      * @param securityServerService       service for retrieving security server configurations by config key
      * @param internalCamDigiKeyService   Service for interacting with CamDigiKey and retrieving authorization tokens.
-     * @param restTemplate                HTTP client for sending requests to external systems such as SARMIS
+     * @param camDigiKeyRestTemplate      HTTP client for sending requests to external systems such as SARMIS
      * @param authorizationHelper         helper for authorization and authentication checks
      * @param telegramNotificationService service for sending Telegram notifications
      */
@@ -83,13 +86,15 @@ public class SarmisInterfaceController {
     public SarmisInterfaceController(SarmisInterfaceService sarmisInterfaceService,
                                      SecurityServerService securityServerService,
                                      InternalCamDigiKeyService internalCamDigiKeyService,
-                                     RestTemplate restTemplate,
+                                     @Qualifier("proxyRestTemplate") RestTemplate proxyRestTemplate,
+                                     @Qualifier("camDigiKeyRestTemplate") RestTemplate camDigiKeyRestTemplate,
                                      AuthorizationHelper authorizationHelper,
                                      TelegramNotificationService telegramNotificationService) {
         this.sarmisInterfaceService = sarmisInterfaceService;
         this.securityServerService = securityServerService;
         this.internalCamDigiKeyService = internalCamDigiKeyService;
-        this.restTemplate = restTemplate;
+        this.proxyRestTemplate = proxyRestTemplate;
+        this.camDigiKeyRestTemplate = camDigiKeyRestTemplate;
         this.authorizationHelper = authorizationHelper;
         this.telegramNotificationService = telegramNotificationService;
     }
@@ -205,7 +210,7 @@ public class SarmisInterfaceController {
 
             // Call the external CamDigiKey service
             String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
+            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
                 try {
@@ -223,7 +228,7 @@ public class SarmisInterfaceController {
 
                         // Send request to external SARMIS API
                         try {
-                            ResponseEntity<String> sarmisResponse = restTemplate.postForEntity(securityServerURL, entity, String.class);
+                            ResponseEntity<String> sarmisResponse = proxyRestTemplate.postForEntity(securityServerURL, entity, String.class);
 
                             // Log the response from SARMIS
                             sarmisInterface.setResponse(sarmisResponse.getBody());
@@ -494,7 +499,7 @@ public class SarmisInterfaceController {
             InternalCamDigiKey camDigiKey = camDigiKeyOpt.get();
 
             String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
+            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
                 sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
@@ -527,7 +532,7 @@ public class SarmisInterfaceController {
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
             // Forward GET request to SARMIS using URI
-            ResponseEntity<String> sarmisResponse = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> sarmisResponse = proxyRestTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
 
             // Save audit log
             sarmisInterface.setResponse(sarmisResponse.getBody());
@@ -737,7 +742,7 @@ public class SarmisInterfaceController {
 
             InternalCamDigiKey camDigiKey = camDigiKeyOpt.get();
             String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
+            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
                 sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
@@ -770,7 +775,7 @@ public class SarmisInterfaceController {
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
             // Forward GET request to SARMIS using URI
-            ResponseEntity<String> sarmisResponse = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> sarmisResponse = proxyRestTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
 
             // Save audit log
             sarmisInterface.setResponse(sarmisResponse.getBody());
@@ -972,7 +977,7 @@ public class SarmisInterfaceController {
 
             // Retrieve organization token from CamDigiKey
             String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
+            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
                 try {
@@ -1002,7 +1007,7 @@ public class SarmisInterfaceController {
 
                             // Send request to SARMIS API
                             HttpEntity<String> sarmisRequest = new HttpEntity<>(headers);
-                            ResponseEntity<JsonNode> sarmisResponse = restTemplate.exchange(
+                            ResponseEntity<JsonNode> sarmisResponse = proxyRestTemplate.exchange(
                                     uri,
                                     HttpMethod.GET,
                                     sarmisRequest,
@@ -1156,7 +1161,7 @@ public class SarmisInterfaceController {
     }
 
     /**
-     * Calls the SARMIS Institution Closing List API.
+     * Calls the SARMIS Asset Kind List API.
      * Retrieves a token from CamDigiKey and uses it to fetch data from SARMIS.
      *
      * @param page   pagination page (default 0)
@@ -1231,7 +1236,7 @@ public class SarmisInterfaceController {
 
             // Retrieve organization token from CamDigiKey
             String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = restTemplate.getForEntity(camDigiKeyURL, String.class);
+            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
 
             if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
                 try {
@@ -1261,7 +1266,7 @@ public class SarmisInterfaceController {
 
                             // Send request to SARMIS API
                             HttpEntity<String> sarmisRequest = new HttpEntity<>(headers);
-                            ResponseEntity<JsonNode> sarmisResponse = restTemplate.exchange(
+                            ResponseEntity<JsonNode> sarmisResponse = proxyRestTemplate.exchange(
                                     uri,
                                     HttpMethod.GET,
                                     sarmisRequest,
