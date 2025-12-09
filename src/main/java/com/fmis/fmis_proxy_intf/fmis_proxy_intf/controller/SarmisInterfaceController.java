@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.constant.HeaderConstants;
-import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.InternalCamDigiKey;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SarmisInterface;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.model.SecurityServer;
 import com.fmis.fmis_proxy_intf.fmis_proxy_intf.service.InternalCamDigiKeyService;
@@ -66,25 +65,29 @@ public class SarmisInterfaceController {
 
     private final SarmisInterfaceService sarmisInterfaceService;
     private final SecurityServerService securityServerService;
+    private final InternalCamDigiKeyController internalCamDigiKeyController;
     private final InternalCamDigiKeyService internalCamDigiKeyService;
     private final AuthorizationHelper authorizationHelper;
     private final TelegramNotificationService telegramNotificationService;
 
     /**
-     * Constructs a new {@code SarmisController} with the required service dependencies.
-     * Initializes services responsible for logging interface activity, retrieving security server configurations,
-     * and sending HTTP requests to external APIs.
+     * Constructs a new SarmisController with its required service dependencies.
+     * Handles SARMIS interactions, including logging interface activity, retrieving
+     * security server configurations, fetching CamDigiKey tokens, sending HTTP requests,
+     * performing authorization checks, and sending Telegram notifications.
      *
-     * @param sarmisInterfaceService      service for saving and managing SARMIS interface logs
-     * @param securityServerService       service for retrieving security server configurations by config key
-     * @param internalCamDigiKeyService   Service for interacting with CamDigiKey and retrieving authorization tokens.
-     * @param camDigiKeyRestTemplate      HTTP client for sending requests to external systems such as SARMIS
-     * @param authorizationHelper         helper for authorization and authentication checks
-     * @param telegramNotificationService service for sending Telegram notifications
+     * @param sarmisInterfaceService       Service for managing SARMIS interface logs.
+     * @param securityServerService        Service for retrieving security server configurations.
+     * @param internalCamDigiKeyController Controller for accessing CamDigiKey tokens.
+     * @param internalCamDigiKeyService    Service for interacting with CamDigiKey and retrieving tokens.
+     * @param camDigiKeyRestTemplate       HTTP client for sending requests to external systems.
+     * @param authorizationHelper          Helper for authorization and authentication checks.
+     * @param telegramNotificationService  Service for sending Telegram notifications.
      */
     @Autowired
     public SarmisInterfaceController(SarmisInterfaceService sarmisInterfaceService,
                                      SecurityServerService securityServerService,
+                                     InternalCamDigiKeyController internalCamDigiKeyController,
                                      InternalCamDigiKeyService internalCamDigiKeyService,
                                      @Qualifier("proxyRestTemplate") RestTemplate proxyRestTemplate,
                                      @Qualifier("camDigiKeyRestTemplate") RestTemplate camDigiKeyRestTemplate,
@@ -92,6 +95,7 @@ public class SarmisInterfaceController {
                                      TelegramNotificationService telegramNotificationService) {
         this.sarmisInterfaceService = sarmisInterfaceService;
         this.securityServerService = securityServerService;
+        this.internalCamDigiKeyController = internalCamDigiKeyController;
         this.internalCamDigiKeyService = internalCamDigiKeyService;
         this.proxyRestTemplate = proxyRestTemplate;
         this.camDigiKeyRestTemplate = camDigiKeyRestTemplate;
@@ -100,12 +104,13 @@ public class SarmisInterfaceController {
     }
 
     /**
-     * Accepts FMIS purchase orders in JSON or XML format, injects a generated interface code,
-     * logs the request, and forwards the payload to the SARMIS external API.
+     * Receives FMIS purchase orders in JSON or XML format, injects a unique interface code,
+     * logs the request, and forwards the payload to the external SARMIS API.
+     * Handles organization token retrieval from CamDigiKey and manages error responses consistently.
      *
-     * @param requestBody Raw request body content.
-     * @param contentType Content-Type header value (e.g., application/json, application/xml).
-     * @return Standard API response indicating success or failure.
+     * @param requestBody Raw request body content (JSON or XML).
+     * @param contentType Content-Type header (application/json or application/xml).
+     * @return ApiResponse indicating success with SARMIS response, or error details if failed.
      */
     @PostMapping("/sarmis/fmis-purchase-orders")
     public ResponseEntity<ApiResponse<?>> fmisPurchaseOrders(
@@ -194,110 +199,58 @@ public class SarmisInterfaceController {
             headers.set(HeaderConstants.X_ROAD_CLIENT, securityServer.getSubsystem());
             HttpEntity<String> entity = new HttpEntity<>(payload, headers);
 
-            // CamDigiKey Authorization
-            Optional<InternalCamDigiKey> camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
-            if (camDigiKey.isEmpty()) {
+            // Get organization token via internal controller
+            ResponseEntity<ApiResponse<?>> camDigiKeyResponse = internalCamDigiKeyController.getOrganizationAccessToken(SARMIS_APP_KEY);
+
+            if (camDigiKeyResponse.getStatusCode().is2xxSuccessful() && camDigiKeyResponse.getBody() != null) {
+                JsonNode data = (JsonNode) camDigiKeyResponse.getBody().getData();
+                organizationToken = data.path("accessToken").asText();
+                headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
+            } else {
+                // Token fetch failed, log and return
                 sarmisInterface.setStatus(false);
-                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+                String message = camDigiKeyResponse.getBody() != null
+                        ? camDigiKeyResponse.getBody().getMessage()
+                        : ResponseMessageUtil.fetchError("Organization Token");
+                sarmisInterface.setResponse(message);
                 sarmisInterfaceService.save(sarmisInterface);
 
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.configurationNotFound(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
-                        ));
+                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                        .body(camDigiKeyResponse.getBody());
             }
 
-            // Call the external CamDigiKey service
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
+            // Send request to external SARMIS API
+            try {
+                ResponseEntity<String> sarmisResponse = proxyRestTemplate.postForEntity(securityServerURL, entity, String.class);
 
-            if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
-                try {
-                    String body = camDigiKeyResponse.getBody();
-                    JsonNode root = objectMapper.readTree(body);
-
-                    int errorCode = root.path("error").asInt();
-
-                    if (errorCode == 0) {
-                        JsonNode data = root.path("data");
-                        organizationToken = data.path("accessToken").asText();
-
-                        // Set the Authorization header
-                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
-
-                        // Send request to external SARMIS API
-                        try {
-                            ResponseEntity<String> sarmisResponse = proxyRestTemplate.postForEntity(securityServerURL, entity, String.class);
-
-                            // Log the response from SARMIS
-                            sarmisInterface.setResponse(sarmisResponse.getBody());
-                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceService.save(sarmisInterface);
-
-                            if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
-                                return ResponseEntity.ok(new ApiResponse<>(
-                                        ResponseCodeUtil.processed(),
-                                        ResponseMessageUtil.processed("Batch Purchase Orders"),
-                                        objectMapper.readTree(sarmisResponse.getBody())
-                                ));
-                            } else {
-                                sarmisInterface.setResponse(sarmisResponse.getBody());
-                                sarmisInterface.setStatus(false);
-                                sarmisInterfaceService.save(sarmisInterface);
-
-                                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                                        .body(new ApiResponse<>(
-                                                ResponseCodeUtil.serviceUnavailable(),
-                                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
-                                        ));
-                            }
-                        } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterface.setResponse(sarmisError.toString());
-                            sarmisInterface.setStatus(false);
-                            sarmisInterfaceService.save(sarmisInterface);
-
-                            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                                    .body(new ApiResponse<>(
-                                            ResponseCodeUtil.upstreamServiceError(),
-                                            ResponseMessageUtil.upstreamServiceError(),
-                                            sarmisError
-                                    ));
-                        }
-                    } else {
-                        String message = root.path("message").asText("Unknown CamDigiKey error");
-                        sarmisInterface.setStatus(false);
-                        sarmisInterface.setResponse(message);
-                        sarmisInterfaceService.save(sarmisInterface);
-
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ApiResponse<>(
-                                        ResponseCodeUtil.invalid(),
-                                        message
-                                ));
-                    }
-
-                } catch (JsonProcessingException e) {
-                    sarmisInterface.setStatus(false);
-                    sarmisInterface.setResponse("JSON processing error: " + e.getMessage());
-                    sarmisInterfaceService.save(sarmisInterface);
-
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ApiResponse<>(
-                                    ResponseCodeUtil.internalError(),
-                                    ResponseMessageUtil.internalError("JSON response")
-                            ));
-                }
-            } else {
-                sarmisInterface.setStatus(false);
-                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token"));
+                sarmisInterface.setResponse(sarmisResponse.getBody());
+                sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
                 sarmisInterfaceService.save(sarmisInterface);
 
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
+                    return ResponseEntity.ok(new ApiResponse<>(
+                            ResponseCodeUtil.processed(),
+                            ResponseMessageUtil.processed("Batch Purchase Orders"),
+                            objectMapper.readTree(sarmisResponse.getBody())
+                    ));
+                } else {
+                    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                            .body(new ApiResponse<>(
+                                    ResponseCodeUtil.serviceUnavailable(),
+                                    ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
+                            ));
+                }
+            } catch (RestClientException e) {
+                JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
+                sarmisInterface.setResponse(sarmisError.toString());
+                sarmisInterface.setStatus(false);
+                sarmisInterfaceService.save(sarmisInterface);
+
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                         .body(new ApiResponse<>(
-                                ResponseCodeUtil.fetchError(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
+                                ResponseCodeUtil.upstreamServiceError(),
+                                ResponseMessageUtil.upstreamServiceError(),
+                                sarmisError
                         ));
             }
 
@@ -482,52 +435,24 @@ public class SarmisInterfaceController {
             headers.setContentType(MediaType.valueOf(securityServer.getContentType()));
             headers.set(HeaderConstants.X_ROAD_CLIENT, securityServer.getSubsystem());
 
-            // CamDigiKey Authorization
-            Optional<InternalCamDigiKey> camDigiKeyOpt = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
-            if (camDigiKeyOpt.isEmpty()) {
-                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+            // Get organization token via internal controller
+            ResponseEntity<ApiResponse<?>> camDigiKeyResponse = internalCamDigiKeyController.getOrganizationAccessToken(SARMIS_APP_KEY);
+            if (camDigiKeyResponse.getStatusCode().is2xxSuccessful() && camDigiKeyResponse.getBody() != null) {
+                JsonNode data = objectMapper.convertValue(camDigiKeyResponse.getBody().getData(), JsonNode.class);
+                String organizationToken = data.path("accessToken").asText();
+                headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
+            } else {
+                // Token fetch failed, log and return
                 sarmisInterface.setStatus(false);
+                String message = camDigiKeyResponse.getBody() != null
+                        ? camDigiKeyResponse.getBody().getMessage()
+                        : ResponseMessageUtil.fetchError("Organization Token");
+                sarmisInterface.setResponse(message);
                 sarmisInterfaceService.save(sarmisInterface);
 
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.configurationNotFound(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
-                        ));
+                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                        .body(camDigiKeyResponse.getBody());
             }
-
-            InternalCamDigiKey camDigiKey = camDigiKeyOpt.get();
-
-            String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
-
-            if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
-                sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
-                sarmisInterface.setStatus(false);
-                sarmisInterfaceService.save(sarmisInterface);
-
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.fetchError(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
-                        ));
-            }
-
-            JsonNode camDigiKeyJson = objectMapper.readTree(camDigiKeyResponse.getBody());
-            if (camDigiKeyJson.path("error").asInt() != 0) {
-                sarmisInterface.setResponse(camDigiKeyJson.toString());
-                sarmisInterface.setStatus(false);
-                sarmisInterfaceService.save(sarmisInterface);
-
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.invalid(),
-                                camDigiKeyJson.path("message").asText("Unknown error")
-                        ));
-            }
-
-            String organizationToken = camDigiKeyJson.path("data").path("accessToken").asText();
-            headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
 
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -726,51 +651,24 @@ public class SarmisInterfaceController {
             headers.setContentType(MediaType.valueOf(securityServer.getContentType()));
             headers.set(HeaderConstants.X_ROAD_CLIENT, securityServer.getSubsystem());
 
-            // CamDigiKey Authorization
-            Optional<InternalCamDigiKey> camDigiKeyOpt = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
-            if (camDigiKeyOpt.isEmpty()) {
-                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+            // Get organization token via internal controller
+            ResponseEntity<ApiResponse<?>> camDigiKeyResponse = internalCamDigiKeyController.getOrganizationAccessToken(SARMIS_APP_KEY);
+            if (camDigiKeyResponse.getStatusCode().is2xxSuccessful() && camDigiKeyResponse.getBody() != null) {
+                JsonNode data = objectMapper.convertValue(camDigiKeyResponse.getBody().getData(), JsonNode.class);
+                String organizationToken = data.path("accessToken").asText();
+                headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
+            } else {
+                // Token fetch failed, log and return
                 sarmisInterface.setStatus(false);
+                String message = camDigiKeyResponse.getBody() != null
+                        ? camDigiKeyResponse.getBody().getMessage()
+                        : ResponseMessageUtil.fetchError("Organization Token");
+                sarmisInterface.setResponse(message);
                 sarmisInterfaceService.save(sarmisInterface);
 
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.configurationNotFound(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
-                        ));
+                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                        .body(camDigiKeyResponse.getBody());
             }
-
-            InternalCamDigiKey camDigiKey = camDigiKeyOpt.get();
-            String camDigiKeyURL = camDigiKey.getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
-
-            if (camDigiKeyResponse.getStatusCode() != HttpStatus.OK) {
-                sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
-                sarmisInterface.setStatus(false);
-                sarmisInterfaceService.save(sarmisInterface);
-
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.fetchError(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
-                        ));
-            }
-
-            JsonNode camDigiKeyJson = objectMapper.readTree(camDigiKeyResponse.getBody());
-            if (camDigiKeyJson.path("error").asInt() != 0) {
-                sarmisInterface.setResponse(camDigiKeyJson.toString());
-                sarmisInterface.setStatus(false);
-                sarmisInterfaceService.save(sarmisInterface);
-
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.invalid(),
-                                camDigiKeyJson.path("message").asText("Unknown error")
-                        ));
-            }
-
-            String organizationToken = camDigiKeyJson.path("data").path("accessToken").asText();
-            headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
 
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -917,7 +815,6 @@ public class SarmisInterfaceController {
             @RequestParam(defaultValue = "") String search
     ) {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        String organizationToken = "";
 
         // Initialize the SARMIS interface log
         SarmisInterface sarmisInterface = new SarmisInterface();
@@ -954,142 +851,69 @@ public class SarmisInterfaceController {
 
             // Extract configuration values
             SecurityServer securityServer = optionalConfig.get();
-            String securityServerURL = securityServer.getBaseURL() + securityServer.getEndpoint();
 
-            // Prepare headers for SARMIS API call
+            // Build URI with query parameters
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder
+                    .fromHttpUrl(securityServer.getBaseURL() + securityServer.getEndpoint())
+                    .queryParam("page", page)
+                    .queryParam("size", size);
+            if (!search.isEmpty()) {
+                uriBuilder.queryParam("search", search);
+            }
+
+            URI uri = uriBuilder.build().encode().toUri();
+
+            // Prepare headers
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.valueOf(securityServer.getContentType()));
             headers.set(HeaderConstants.X_ROAD_CLIENT, securityServer.getSubsystem());
 
-            // Fetch CamDigiKey config by app key
-            Optional<InternalCamDigiKey> camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
-            if (camDigiKey.isEmpty()) {
-                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+            // Get organization token via internal controller
+            ResponseEntity<ApiResponse<?>> camDigiKeyResponse = internalCamDigiKeyController.getOrganizationAccessToken(SARMIS_APP_KEY);
+            if (camDigiKeyResponse.getStatusCode().is2xxSuccessful() && camDigiKeyResponse.getBody() != null) {
+                JsonNode data = objectMapper.convertValue(camDigiKeyResponse.getBody().getData(), JsonNode.class);
+                String organizationToken = data.path("accessToken").asText();
+                headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
+            } else {
+                // Token fetch failed, log and return
                 sarmisInterface.setStatus(false);
+                String message = camDigiKeyResponse.getBody() != null
+                        ? camDigiKeyResponse.getBody().getMessage()
+                        : ResponseMessageUtil.fetchError("Organization Token");
+                sarmisInterface.setResponse(message);
                 sarmisInterfaceService.save(sarmisInterface);
 
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.configurationNotFound(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
-                        ));
+                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                        .body(camDigiKeyResponse.getBody());
             }
 
-            // Retrieve organization token from CamDigiKey
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
-                try {
-                    // Parse CamDigiKey JSON response
-                    String body = camDigiKeyResponse.getBody();
-                    JsonNode root = objectMapper.readTree(body);
+            // Send request to SARMIS API
+            ResponseEntity<JsonNode> sarmisResponse = proxyRestTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    JsonNode.class
+            );
 
-                    int errorCode = root.path("error").asInt();
+            // Log and persist the response
+            sarmisInterface.setResponse((sarmisResponse.getBody()).toString());
+            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
+            sarmisInterfaceService.save(sarmisInterface);
 
-                    if (errorCode == 0) {
-                        // Extract access token from CamDigiKey response
-                        JsonNode data = root.path("data");
-                        organizationToken = data.path("accessToken").asText();
-
-                        // Set the Authorization header
-                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
-
-                        try {
-                            // Build full SARMIS URL with query params
-                            UriComponentsBuilder uriBuilder = UriComponentsBuilder
-                                    .fromHttpUrl(securityServer.getBaseURL() + securityServer.getEndpoint())
-                                    .queryParam("page", page)
-                                    .queryParam("size", size)
-                                    .queryParam("search", search);
-
-                            URI uri = uriBuilder.build().encode().toUri();
-
-                            // Send request to SARMIS API
-                            HttpEntity<String> sarmisRequest = new HttpEntity<>(headers);
-                            ResponseEntity<JsonNode> sarmisResponse = proxyRestTemplate.exchange(
-                                    uri,
-                                    HttpMethod.GET,
-                                    sarmisRequest,
-                                    JsonNode.class
-                            );
-
-                            // Log and persist the response
-                            sarmisInterface.setResponse((sarmisResponse.getBody()).toString());
-                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceService.save(sarmisInterface);
-
-                            JsonNode sarmisResponseJSON = sarmisResponse.getBody();
-
-                            // Return success response
-                            if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
-                                return ResponseEntity.ok(new ApiResponse<>(
-                                        ResponseCodeUtil.processed(),
-                                        ResponseMessageUtil.processed("Institution closing list"),
-                                        sarmisResponseJSON
-                                ));
-                            } else {
-                                sarmisInterface.setResponse(ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse);
-                                sarmisInterface.setStatus(false);
-                                sarmisInterfaceService.save(sarmisInterface);
-
-                                // SARMIS responded but not with 2xx
-                                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                                        .body(new ApiResponse<>(
-                                                ResponseCodeUtil.serviceUnavailable(),
-                                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
-                                        ));
-                            }
-                        } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterface.setResponse(sarmisError.toString());
-                            sarmisInterface.setStatus(false);
-                            sarmisInterfaceService.save(sarmisInterface);
-
-                            // Failed to connect to SARMIS
-                            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                                    .body(new ApiResponse<>(
-                                            ResponseCodeUtil.upstreamServiceError(),
-                                            ResponseMessageUtil.upstreamServiceError(),
-                                            sarmisError
-                                    ));
-                        }
-                    } else {
-                        // CamDigiKey returned an error code
-                        String message = root.path("message").asText("Unknown error");
-                        sarmisInterface.setResponse(camDigiKeyResponse.getBody());
-                        sarmisInterface.setStatus(false);
-                        sarmisInterfaceService.save(sarmisInterface);
-
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ApiResponse<>(
-                                        ResponseCodeUtil.invalid(),
-                                        message
-                                ));
-                    }
-
-                } catch (JsonProcessingException e) {
-                    sarmisInterface.setResponse("JSON parsing error: " + e.getMessage());
-                    sarmisInterface.setStatus(false);
-                    sarmisInterfaceService.save(sarmisInterface);
-
-                    // JSON parsing error
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ApiResponse<>(
-                                    ResponseCodeUtil.internalError(),
-                                    ResponseMessageUtil.internalError("JSON response")
-                            ));
-                }
+            // Return success or error response
+            if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
+                return ResponseEntity.ok(new ApiResponse<>(
+                        ResponseCodeUtil.processed(),
+                        ResponseMessageUtil.processed("Institution closing list"),
+                        sarmisResponse.getBody()
+                ));
             } else {
-                sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
-                sarmisInterface.setStatus(false);
-                sarmisInterfaceService.save(sarmisInterface);
-
-                // CamDigiKey failed to provide a token
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
-                                ResponseCodeUtil.fetchError(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
+                                ResponseCodeUtil.serviceUnavailable(),
+                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
                         ));
             }
 
@@ -1164,7 +988,7 @@ public class SarmisInterfaceController {
      * Calls the SARMIS Asset Kind List API.
      * Retrieves a token from CamDigiKey and uses it to fetch data from SARMIS.
      *
-     * @param page   pagination page (default 0)
+     * @param page   pagination page (default 1)
      * @param size   page size (default 10)
      * @param search optional search string
      * @return response containing SARMIS data or error info
@@ -1176,7 +1000,6 @@ public class SarmisInterfaceController {
             @RequestParam(defaultValue = "") String search
     ) {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        String organizationToken = "";
 
         // Initialize the SARMIS interface log
         SarmisInterface sarmisInterface = new SarmisInterface();
@@ -1213,142 +1036,68 @@ public class SarmisInterfaceController {
 
             // Extract configuration values
             SecurityServer securityServer = optionalConfig.get();
-            String securityServerURL = securityServer.getBaseURL() + securityServer.getEndpoint();
+
+            // Build URI with query parameters
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder
+                    .fromHttpUrl(securityServer.getBaseURL() + securityServer.getEndpoint())
+                    .queryParam("page", page)
+                    .queryParam("size", size);
+            if (!search.isEmpty()) {
+                uriBuilder.queryParam("search", search);
+            }
+            URI uri = uriBuilder.build().encode().toUri();
 
             // Prepare headers for SARMIS API call
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.valueOf(securityServer.getContentType()));
             headers.set(HeaderConstants.X_ROAD_CLIENT, securityServer.getSubsystem());
 
-            // Fetch CamDigiKey config by app key
-            Optional<InternalCamDigiKey> camDigiKey = internalCamDigiKeyService.findByAppKey(SARMIS_APP_KEY);
-            if (camDigiKey.isEmpty()) {
-                sarmisInterface.setResponse("Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY));
+            // Get organization token via internal controller
+            ResponseEntity<ApiResponse<?>> camDigiKeyResponse = internalCamDigiKeyController.getOrganizationAccessToken(SARMIS_APP_KEY);
+            if (camDigiKeyResponse.getStatusCode().is2xxSuccessful() && camDigiKeyResponse.getBody() != null) {
+                JsonNode data = objectMapper.convertValue(camDigiKeyResponse.getBody().getData(), JsonNode.class);
+                String organizationToken = data.path("accessToken").asText();
+                headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
+            } else {
+                // Token fetch failed
                 sarmisInterface.setStatus(false);
+                String message = camDigiKeyResponse.getBody() != null
+                        ? camDigiKeyResponse.getBody().getMessage()
+                        : ResponseMessageUtil.fetchError("Organization Token");
+                sarmisInterface.setResponse(message);
                 sarmisInterfaceService.save(sarmisInterface);
 
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>(
-                                ResponseCodeUtil.configurationNotFound(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.configurationNotFound(SARMIS_APP_KEY)
-                        ));
+                return ResponseEntity.status(camDigiKeyResponse.getStatusCode())
+                        .body(camDigiKeyResponse.getBody());
             }
 
-            // Retrieve organization token from CamDigiKey
-            String camDigiKeyURL = camDigiKey.get().getAccessURL() + apiPrefix + "/portal/camdigikey/organization-token";
-            ResponseEntity<String> camDigiKeyResponse = camDigiKeyRestTemplate.getForEntity(camDigiKeyURL, String.class);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            if (camDigiKeyResponse.getStatusCode() == HttpStatus.OK) {
-                try {
-                    // Parse CamDigiKey JSON response
-                    String body = camDigiKeyResponse.getBody();
-                    JsonNode root = objectMapper.readTree(body);
+            // Send request to SARMIS API
+            ResponseEntity<JsonNode> sarmisResponse = proxyRestTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    JsonNode.class
+            );
 
-                    int errorCode = root.path("error").asInt();
+            // Log response
+            sarmisInterface.setResponse(sarmisResponse.getBody() != null ? sarmisResponse.getBody().toString() : null);
+            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
+            sarmisInterfaceService.save(sarmisInterface);
 
-                    if (errorCode == 0) {
-                        // Extract access token from CamDigiKey response
-                        JsonNode data = root.path("data");
-                        organizationToken = data.path("accessToken").asText();
-
-                        // Set the Authorization header
-                        headers.set(HttpHeaders.AUTHORIZATION, organizationToken);
-
-                        try {
-                            // Build full SARMIS URL with query params
-                            UriComponentsBuilder uriBuilder = UriComponentsBuilder
-                                    .fromHttpUrl(securityServer.getBaseURL() + securityServer.getEndpoint())
-                                    .queryParam("page", page)
-                                    .queryParam("size", size)
-                                    .queryParam("search", search);
-
-                            URI uri = uriBuilder.build().encode().toUri();
-
-                            // Send request to SARMIS API
-                            HttpEntity<String> sarmisRequest = new HttpEntity<>(headers);
-                            ResponseEntity<JsonNode> sarmisResponse = proxyRestTemplate.exchange(
-                                    uri,
-                                    HttpMethod.GET,
-                                    sarmisRequest,
-                                    JsonNode.class
-                            );
-
-                            // Log and persist the response
-                            sarmisInterface.setResponse((sarmisResponse.getBody()).toString());
-                            sarmisInterface.setStatus(sarmisResponse.getStatusCode().is2xxSuccessful());
-                            sarmisInterfaceService.save(sarmisInterface);
-
-                            JsonNode assetKindList = sarmisResponse.getBody();
-
-                            // Return success response
-                            if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
-                                return ResponseEntity.ok(new ApiResponse<>(
-                                        ResponseCodeUtil.processed(),
-                                        ResponseMessageUtil.processed("Asset kind list"),
-                                        assetKindList
-                                ));
-                            } else {
-                                sarmisInterface.setResponse(ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse);
-                                sarmisInterface.setStatus(false);
-                                sarmisInterfaceService.save(sarmisInterface);
-
-                                // SARMIS responded but not with 2xx
-                                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                                        .body(new ApiResponse<>(
-                                                ResponseCodeUtil.serviceUnavailable(),
-                                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
-                                        ));
-                            }
-                        } catch (RestClientException e) {
-                            JsonNode sarmisError = ExceptionUtils.extractJsonFromErrorMessage(e.getMessage(), objectMapper);
-                            sarmisInterface.setResponse(sarmisError.toString());
-                            sarmisInterface.setStatus(false);
-                            sarmisInterfaceService.save(sarmisInterface);
-
-                            // Failed to connect to SARMIS
-                            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                                    .body(new ApiResponse<>(
-                                            ResponseCodeUtil.upstreamServiceError(),
-                                            ResponseMessageUtil.upstreamServiceError(),
-                                            sarmisError
-                                    ));
-                        }
-                    } else {
-                        // CamDigiKey returned an error code
-                        String message = root.path("message").asText("Unknown error");
-                        sarmisInterface.setResponse(camDigiKeyResponse.getBody());
-                        sarmisInterface.setStatus(false);
-                        sarmisInterfaceService.save(sarmisInterface);
-
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ApiResponse<>(
-                                        ResponseCodeUtil.invalid(),
-                                        message
-                                ));
-                    }
-
-                } catch (JsonProcessingException e) {
-                    sarmisInterface.setResponse("JSON parsing error: " + e.getMessage());
-                    sarmisInterface.setStatus(false);
-                    sarmisInterfaceService.save(sarmisInterface);
-
-                    // JSON parsing error
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new ApiResponse<>(
-                                    ResponseCodeUtil.internalError(),
-                                    ResponseMessageUtil.internalError("JSON response")
-                            ));
-                }
+            // Return response
+            if (sarmisResponse.getStatusCode().is2xxSuccessful()) {
+                return ResponseEntity.ok(new ApiResponse<>(
+                        ResponseCodeUtil.processed(),
+                        ResponseMessageUtil.processed("Asset kind list"),
+                        sarmisResponse.getBody()
+                ));
             } else {
-                sarmisInterface.setResponse("Internal CamDigiKey: " + (camDigiKeyResponse.getBody() != null ? camDigiKeyResponse.getBody() : ResponseMessageUtil.fetchError("Organization token")));
-                sarmisInterface.setStatus(false);
-                sarmisInterfaceService.save(sarmisInterface);
-
-                // CamDigiKey failed to provide a token
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .body(new ApiResponse<>(
-                                ResponseCodeUtil.fetchError(),
-                                "Internal CamDigiKey: " + ResponseMessageUtil.fetchError("Organization token")
+                                ResponseCodeUtil.serviceUnavailable(),
+                                ResponseMessageUtil.serviceUnavailable() + " Detail: " + sarmisResponse
                         ));
             }
 
