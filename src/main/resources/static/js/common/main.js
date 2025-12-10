@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const logoutBtn = document.getElementById("logout");
     const sidebarToggleBtn = document.getElementById("sidebarToggle");
     let logDatatable = $("#logTable");
+    let activityDatatable = $("#activityTable");
     let modalContent = $(".modal-content");
     const calendarEl = document.getElementById("calendar");
 
@@ -30,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (e.propertyName === "width") {
                 // Adjust DataTable columns
                 logDatatable.DataTable().columns.adjust().draw();
+                activityDatatable.DataTable().columns.adjust().draw();
 
                 // Resize FullCalendar if exists
                 if (window.calendar) {

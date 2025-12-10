@@ -39,7 +39,6 @@ public class CamDigiKeyLog {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm a")
     private LocalDateTime createdDate = LocalDateTime.now();
 
-    @JsonIgnore
     private Boolean status = true;
 
     @Column(name = "is_deleted")

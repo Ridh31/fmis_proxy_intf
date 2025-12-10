@@ -17,13 +17,14 @@ const basicAuth = btoa(`${username}:${password}`);
 const baseUrl = window.location.origin;
 const filterBtn = document.querySelector("#filter-button");
 const logTable = $("#logTable");
+const activityTable = $("#activityTable");
 const modalContent = $(".modal-content");
 
 /**
  * Displays a loading message in the table body while data is being fetched.
  */
-function showLoading(colSpan) {
-    const tbody = document.querySelector("#logTable tbody");
+function showLoading(colSpan, tbodyElement = "#logTable tbody") {
+    const tbody = document.querySelector(tbodyElement);
     tbody.innerHTML = "";
 
     const row = document.createElement("tr");

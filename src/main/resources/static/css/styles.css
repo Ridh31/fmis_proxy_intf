@@ -642,7 +642,7 @@ section.content {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-#logTable {
+#logTable, #activityTable {
     width: 100% !important;
     border-collapse: collapse;
     background-color: var(--color-white);
@@ -663,20 +663,20 @@ th {
     font-weight: 600;
 }
 
-#logTable th, #logTable td {
+#logTable th, #logTable td, #activityTable th, #activityTable td {
     white-space: nowrap !important;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-#logTable td {
+#logTable td, #activityTable td {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 500px;
 }
 
 /* Sticky headers */
-#logTable.dataTable thead th {
+#logTable.dataTable thead th, #activityTable.dataTable thead th {
     position: sticky;
     top: 0;
     background-color: var(--table-thead-bg);
@@ -700,7 +700,7 @@ tr:hover {
 }
 
 /* Header font weight */
-#logTable.dataTable thead > tr > th {
+#logTable.dataTable thead > tr > th, #activityTable.dataTable thead > tr > th {
     font-weight: 600;
 }
 
@@ -760,14 +760,14 @@ table.dataTable thead th, table.dataTable thead td {
     z-index: 10;
 }
 
-#modalTitle, #createModalTitle, #userModalTitle, #resetModalTitle {
+#modalTitle, #createModalTitle, #userModalTitle, #resetModalTitle, #logModalTitle {
     margin-top: 0;
     font-size: 1.25rem;
     color: var(--content-title);
     user-select: none;
 }
 
-#modalBody, #createModalBody, #userModalBody, #resetModalBody {
+#modalBody, #createModalBody, #userModalBody, #resetModalBody, #logModalBody {
     overflow-y: auto;
     flex: 1;
     padding-right: 0.5rem;
@@ -817,14 +817,16 @@ table.dataTable thead th, table.dataTable thead td {
 
 #createModal #modalTitle,
 #updateModal #modalTitle,
-#resetModal #modalTitle {
+#resetModal #modalTitle,
+#logModal #modalTitle {
     font-size: 1.1rem;
     text-align: center;
 }
 
 #createModal .modal-form,
 #updateModal .modal-form,
-#resetModal .modal-form {
+#resetModal .modal-form,
+#logModal .modal-form {
     gap: 0.6rem;
 }
 
@@ -903,6 +905,13 @@ table.dataTable thead th, table.dataTable thead td {
 .info {
     color: var(--info-text);
     font-weight: 500;
+}
+
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 .blur-text {

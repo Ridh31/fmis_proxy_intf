@@ -25,7 +25,7 @@ async function fetchData() {
 }
 
 /**
- * Initializes the DataTable for CamDigikey logs with server-side processing.
+ * Initializes the DataTable for Internal CamDigiKey with server-side processing.
  * - Fetches only the current page from the server.
  * - Applies filters dynamically.
  * - Shows loading spinner during AJAX requests.
@@ -100,13 +100,154 @@ function renderTable() {
     attachEditHandler(table);
 }
 
+/**
+ * Loads or refreshes the DataTable.
+ * - Calls renderLogTable() on first load.
+ * - Uses ajax.reload() for filter changes.
+ */
+async function fetchLogData() {
+    showLoading(6, "#activityTable tbody");
+
+    if ($.fn.DataTable.isDataTable("#activityTable")) {
+        activityTable.DataTable().ajax.reload();
+        return;
+    }
+
+    renderLogTable();
+}
+
+/**
+ * Initializes the DataTable for CamDigiKey logs with server-side processing.
+ * - Fetches only the current page from the server.
+ * - Applies filters dynamically.
+ * - Shows loading spinner during AJAX requests.
+ */
+function renderLogTable() {
+
+    if ($.fn.DataTable.isDataTable("#activityTable")) {
+        activityTable.DataTable().destroy();
+    }
+
+    activityTable.DataTable({
+        serverSide: true,
+        processing: true,
+        pageLength: 10,
+        scrollX: true,
+        scrollCollapse: true,
+        lengthMenu: [10, 25, 50, 100, 200],
+        fixedHeader: true,
+        ajax: {
+            url: `${baseUrl}${apiPrefix}/internal/camdigikey/list-camdigikey-log`,
+            type: "GET",
+            beforeSend: showLoading(6, "#activityTable tbody"),
+            complete: hideLoading,
+            headers: {
+                "Authorization": `Basic ${basicAuth}`,
+                "X-Partner-Token": partnerToken
+            },
+            data: function (d) {
+                const page = Math.floor(d.start / d.length);
+                return {
+                    page: page,
+                    size: d.length
+                };
+            },
+            dataSrc: function (json) {
+                json.recordsTotal = json?.data?.totalElements || 0;
+                json.recordsFiltered = json?.data?.totalElements || 0;
+                return json?.data?.content || [];
+            },
+            error: function () {
+                showError(7);
+                showToast("error", "Error fetching data.");
+            }
+        },
+        columns: [
+            { data: null, title: "#", render: (data, type, row, meta) => meta.row + 1 },
+            { data: "action", title: "Action" },
+            { data: "appKey", title: "App Key" },
+            { data: "ipAddress", title: "IP Address" },
+            { data: "requestURL", title: "Request URL" },
+            { data: "createdDate", title: "Date", defaultContent: "N/A" },
+            {
+                data: null,
+                title: "Response",
+                render: (data, type, row, meta) => `<span class="view-link" data-status="${row.status || ''}">View</span>`
+            }
+        ]
+    });
+}
+
+/**
+ * Opens the modal and displays the data in a formatted and styled way.
+ *
+ * @param {Object|string} item - The data to display (JSON object or string).
+ * @param {string} [status="true"] - The status value; determines background color.
+ */
+function openLogModal(item, status = true) {
+    const modal = document.getElementById("logModal");
+    const body = document.getElementById("logModalBody");
+    const title = document.getElementById("logModalTitle");
+
+    const isFailed = (status === false || status === "false");
+    let content = "";
+
+    if (!item || (typeof item === "object" && Object.keys(item).length === 0)) {
+        content = `<div style="padding:1rem; color:#888; font-style:italic; border:1px dashed #CCC; border-radius:8px;">No data</div>`;
+    } else {
+        let jsonStr = typeof item === "string" ? item : JSON.stringify(item, null, 2);
+
+        // Highlight keys
+        const highlightRegex = /("(accessToken|loginToken|loginUrl|message)"\s*:\s*)"([^"]+)"/g;
+        jsonStr = jsonStr.replace(highlightRegex, (_, keyPrefix, keyName, value) => {
+            let color = "", textColor = "";
+            switch (keyName) {
+                case "accessToken": color = "yellow"; textColor = "#000"; break;
+                case "loginToken": color = "#CCE5FF"; textColor = "#003366"; break;
+                case "loginUrl": color = "#D3F9D8"; textColor = "#2C6E49"; break;
+                case "message": color = "#FFE5B4"; textColor = "#5A3E1B"; break;
+            }
+            return `${keyPrefix}"<span style="background-color:${color}; color:${textColor}; font-weight:bold;">${value}</span>"`;
+        });
+
+        const bgColor = isFailed ? "#FFF5F5" : "#F9F9F9";
+        const borderColor = isFailed ? "#F5C6CB" : "#E4E4E4";
+
+        content = `
+            <pre style="
+                white-space: pre-wrap;
+                font-size: 0.85rem;
+                font-family: 'JetBrains Mono', monospace;
+                color: #333;
+                background-color: ${bgColor};
+                border: 1px solid ${borderColor};
+                padding: 1rem;
+                border-radius: 8px;
+                max-height: 60vh;
+                overflow-y: auto;
+            ">${jsonStr}</pre>
+        `;
+    }
+
+    title.textContent = "Response";
+    body.innerHTML = content;
+    modal.style.display = "flex";
+}
+
+/**
+ * Closes the log modal.
+ */
+function closeLogModal() {
+    document.getElementById("logModal").style.display = "none";
+}
+
 // Open the Create Modal
 document.getElementById("openModalBtn").addEventListener("click", () => {
     document.getElementById("createModal").style.display = "flex";
 });
 
 /**
- * Closes the create modal, clears error messages, and resets the form fields.
+ * Closes the modal create, clears error messages, and resets the form fields.
  */
 function closeCreateModal() {
     document.getElementById("createModal").style.display = "none";
@@ -117,6 +258,33 @@ function closeCreateModal() {
 // Close buttons
 document.getElementById("createModalClose").addEventListener("click", closeCreateModal);
 document.getElementById("cancelCreateModal").addEventListener("click", closeCreateModal);
+
+// View modal
+activityTable.on("click", ".view-link", function () {
+    const row = $(this).closest("tr");
+    const data = activityTable.DataTable().row(row).data();
+    const status = $(this).data("status");
+
+    let parsed;
+
+    try {
+        const raw = data.response;
+
+        if (!raw || raw.trim() === "") {
+            parsed = null;
+        } else {
+            try {
+                parsed = JSON.parse(raw);
+            } catch {
+                parsed = raw;
+            }
+        }
+    } catch {
+        parsed = null;
+    }
+
+    openLogModal(parsed, status);
+});
 
 /**
  * Clears all validation error styles and messages from inputs
@@ -418,3 +586,4 @@ filterBtn.addEventListener("click", () => {
 
 // Initial data fetch on page load
 fetchData();
+fetchLogData();

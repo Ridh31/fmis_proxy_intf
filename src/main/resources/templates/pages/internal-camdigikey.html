@@ -66,6 +66,29 @@
         </table>
     </div>
 
+    <!-- CamDigiKey Log -->
+    <div class="content-card">
+        <div class="card-header">
+            <h2>Activity Log</h2>
+        </div>
+        <div class="card-body">
+            <table id="activityTable" class="datatable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Action</th>
+                        <th>App Key</th>
+                        <th>IP Address</th>
+                        <th>Access URL</th>
+                        <th>Date</th>
+                        <th>Response</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Create Host Modal -->
     <div id="createModal" class="modal">
         <div class="modal-content">
@@ -135,6 +158,17 @@
                 <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
                 <button type="submit" form="editHostForm" class="btn btn-primary" id="update-btn">Save</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Log Modal -->
+    <div id="logModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-close" onclick="closeLogModal()">&times;</span>
+                <h2 id="logModalTitle">Response</h2>
+            </div>
+            <div id="logModalBody"></div>
         </div>
     </div>
     <script th:src="@{/js/utils/function.js}"></script>
