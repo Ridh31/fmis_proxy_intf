@@ -168,11 +168,20 @@ function renderLogTable() {
             { data: "appKey", title: "App Key" },
             { data: "ipAddress", title: "IP Address" },
             { data: "requestURL", title: "Request URL" },
+            {
+                data: "status",
+                title: "Status",
+                render: (data) => `
+                    <span class="${data === true ? "success" : "error"}">
+                        ${data === true ? "Processed" : "Failed"}
+                    </span>
+                `
+            },
             { data: "createdDate", title: "Date", defaultContent: "N/A" },
             {
                 data: null,
                 title: "Response",
-                render: (data, type, row, meta) => `<span class="view-link" data-status="${row.status || ''}">View</span>`
+                render: (data, type, row, meta) => `<span class="view-link" data-status="${row.status}">View</span>`
             }
         ]
     });

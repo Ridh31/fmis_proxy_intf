@@ -34,8 +34,7 @@ public interface CamDigiKeyLogRepository extends JpaRepository<CamDigiKeyLog, Lo
         FROM
             camdigikey_log cl
         WHERE
-            cl.status = TRUE
-            AND cl.is_deleted = FALSE
+            cl.is_deleted = FALSE
             AND (:action IS NULL OR cl.action = :action)
             AND (:appKey IS NULL OR cl.app_key = :appKey)
             AND (:ipAddress IS NULL OR cl.ip_address = :ipAddress)

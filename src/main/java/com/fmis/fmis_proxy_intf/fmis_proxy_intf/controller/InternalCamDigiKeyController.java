@@ -637,7 +637,7 @@ public class InternalCamDigiKeyController {
                 String accessToken = data.path("accessToken").asText();
 
                 // Validate the token
-                ResponseEntity<ApiResponse<?>> jwtResponse = validateJwt(appKey, accessToken);
+                ResponseEntity<ApiResponse<?>> jwtResponse = validateJwt(appKey, accessToken, baseUrl);
                 ApiResponse<?> jwtBody = jwtResponse.getBody();
 
                 if (jwtBody == null || jwtBody.getData() == null) {
@@ -749,14 +749,16 @@ public class InternalCamDigiKeyController {
     @GetMapping("/validate-jwt")
     public ResponseEntity<ApiResponse<?>> validateJwt(
             @RequestParam(required = false) String appKey,
-            @RequestParam(required = false) String jwt) {
+            @RequestParam(required = false) String jwt,
+            @RequestParam(required = false) String hostURL) {
 
         String resource = "JWT";
         String url = null;
 
         // Validate input
         if (appKey == null || appKey.trim().isEmpty()) {
-            saveCamDigiKeyLog(resource, appKey, null, ResponseMessageUtil.invalid("appKey"), false);
+            url = (hostURL != null ? hostURL : "") + camDigiKeyApiPrefix + "/portal/camdigikey/validate-jwt?jwt=" + jwt;
+            saveCamDigiKeyLog(resource, appKey, url, ResponseMessageUtil.invalid("appKey"), false);
 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
@@ -766,7 +768,8 @@ public class InternalCamDigiKeyController {
         }
 
         if (jwt == null || jwt.trim().isEmpty()) {
-            saveCamDigiKeyLog(resource, appKey, null, ResponseMessageUtil.invalid("jwt"), false);
+            url = (hostURL != null ? hostURL : "") + camDigiKeyApiPrefix + "/portal/camdigikey/validate-jwt?jwt=" + jwt;
+            saveCamDigiKeyLog(resource, appKey, url, ResponseMessageUtil.invalid("jwt"), false);
 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(
