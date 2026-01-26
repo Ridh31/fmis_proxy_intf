@@ -163,6 +163,7 @@ public class PageController {
         model.addAttribute("partnerManagementUrl", apiPrefix + "/admin/partner-management");
         model.addAttribute("userProfilesUrl", apiPrefix + "/admin/user-profiles");
         model.addAttribute("fmisConfigUrl", apiPrefix + "/admin/fmis-config");
+        model.addAttribute("springAIUrl", apiPrefix + "/admin/spring-ai");
     }
 
     /**
@@ -445,5 +446,35 @@ public class PageController {
         model.addAttribute("currentPage", "fmis-config");
 
         return "pages/fmis-config";
+    }
+
+    /**
+     * Handles GET request to the FMIS Proxy AI page.
+     *
+     * @return ResponseEntity with the config HTML page or a redirect if not authenticated.
+     */
+    @GetMapping("/spring-ai")
+    public Object springAI(
+            @CookieValue(name = "isAdmin", required = false) String isAdmin,
+            @CookieValue(name = "adminUsername", required = false) String adminUsername,
+            @CookieValue(name = "adminPassword", required = false) String adminPassword,
+            Model model,
+            HttpServletResponse response
+    ) {
+        // Check authentication
+        String redirect = checkAdminAuth(isAdmin, adminUsername, adminPassword);
+        if (redirect != null) return redirect;
+
+        // Set cookies
+        CookieUtils.setCookie(response, "isAdmin", "true", cookieLifetime);
+        CookieUtils.setCookie(response, "adminUsername", adminUsername, cookieLifetime);
+        CookieUtils.setCookie(response, "adminPassword", adminPassword, cookieLifetime);
+
+        // Add attributes to model for Thymeleaf
+        model.addAttribute("title", "Spring AI | FMIS Proxy Interface");
+        model.addAttribute("heading", "Spring AI");
+        model.addAttribute("currentPage", "spring-ai");
+
+        return "pages/spring-ai";
     }
 }
