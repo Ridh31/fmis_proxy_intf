@@ -39,26 +39,26 @@ public class BodyValidationUtil {
 
         // List of required keys for each bank statement
         String[] requiredKeys = {
-            "CMB_BSP_STMT_DT",
-            "CMB_BANK_ACCOUNT_N",
-            "CMB_CURRENCY_CD",
-            "CMB_VALUE_DT",
-            "CMB_BANK_STMT_TYPE",
-            "CMB_BSP_TRAN_AMT",
-            "CMB_OPEN_BALANCE",
-            "CMB_END_BALANCE",
-            "CMB_IMMEDIATE_BAL",
-            "CMB_RECON_REF_ID",
-            "CMB_CHECK_NUMBER",
-            "CMB_DESCRLONG",
-            "CMB_LETTER_NUMBER"
+                "CMB_BSP_STMT_DT",
+                "CMB_BANK_ACCOUNT_N",
+                "CMB_CURRENCY_CD",
+                "CMB_VALUE_DT",
+                "CMB_BANK_STMT_TYPE",
+                "CMB_BSP_TRAN_AMT",
+                "CMB_OPEN_BALANCE",
+                "CMB_END_BALANCE",
+                "CMB_IMMEDIATE_BAL",
+                "CMB_RECON_REF_ID",
+                "CMB_CHECK_NUMBER",
+                "CMB_DESCRLONG",
+                "CMB_LETTER_NUMBER"
         };
 
         String[] numericFields = {
-            "CMB_BSP_TRAN_AMT",
-            "CMB_OPEN_BALANCE",
-            "CMB_END_BALANCE",
-            "CMB_IMMEDIATE_BAL"
+                "CMB_BSP_TRAN_AMT",
+                "CMB_OPEN_BALANCE",
+                "CMB_END_BALANCE",
+                "CMB_IMMEDIATE_BAL"
         };
 
         // Check each statement in the array
@@ -104,6 +104,24 @@ public class BodyValidationUtil {
                     }
                 } else {
                     throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be numeric. (Entry: " + (i + 1) + ")");
+                }
+            }
+        }
+
+        // Ensure consistent statement date across all entries
+        String firstStatementDate = null;
+        for (int i = 0; i < bankStmtNode.size(); i++) {
+            JsonNode stmt = bankStmtNode.get(i);
+            JsonNode dateNode = stmt.get("CMB_BSP_STMT_DT");
+            if (dateNode != null && dateNode.isTextual()) {
+                String currentDate = dateNode.asText();
+                if (firstStatementDate == null) {
+                    firstStatementDate = currentDate;
+                } else if (!firstStatementDate.equals(currentDate)) {
+                    throw new IllegalArgumentException(
+                            "The bank statement field (CMB_BSP_STMT_DT) must be the same for all entries. " +
+                                    "Expected: " + firstStatementDate + ", Found: " + currentDate + ". (Entry: " + (i + 1) + ")"
+                    );
                 }
             }
         }

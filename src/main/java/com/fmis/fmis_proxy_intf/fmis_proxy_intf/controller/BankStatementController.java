@@ -294,7 +294,7 @@ public class BankStatementController {
             bankStatementDTO.setPayload("{}");
             bankStatementDTO.setXml("<?xml version=\"1.0\"?><Data></Data>");
             bankStatementDTO.setStatus(false);
-            bankStatementDTO.setMessage(ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS);
+            bankStatementDTO.setMessage(String.format(ApiResponseConstants.BAD_REQUEST_INVALID_ENTITY, "Data") + " (Entry: *)");
 
             // Retrieve current user info and set creator ID
             String username = userService.getAuthenticatedUsername();
@@ -317,7 +317,7 @@ public class BankStatementController {
                     "N/A",
                     null,
                     ApiResponseConstants.BAD_REQUEST_CODE,
-                    ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS
+                    String.format(ApiResponseConstants.BAD_REQUEST_INVALID_ENTITY, "Data") + " (Entry: *)"
             );
 
             // Send notification via Telegram bot
@@ -327,7 +327,7 @@ public class BankStatementController {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(
                             ResponseCodeUtil.invalid(),
-                            ResponseMessageUtil.invalid("Data")
+                            String.format(ApiResponseConstants.BAD_REQUEST_INVALID_ENTITY, "Data") + " (Entry: *)"
                     ));
         }
 
@@ -356,6 +356,7 @@ public class BankStatementController {
             final String[] statement = new String[2];
 
             Map<String, Object> data = bankStatementDTO.getData();
+            JsonToXmlUtil.replaceNullsWithEmptyString(data);
             List<Map<String, Object>> statementList = (List<Map<String, Object>>) data.get("CMB_BANKSTM_STG");
 
             partner.ifPresent(p -> {
@@ -378,6 +379,34 @@ public class BankStatementController {
 
             // Format the statement date
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            if (statement[0] == null) {
+                bankStatementDTO.setMethod("POST");
+                bankStatementDTO.setEndpoint(endpoint);
+                bankStatementDTO.setFilename(filename);
+                bankStatementDTO.setPayload("{}");
+                bankStatementDTO.setXml("<?xml version=\"1.0\"?><Data></Data>");
+                bankStatementDTO.setStatus(false);
+                bankStatementDTO.setMessage(ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS);
+                bankStatementDTO.setCreatedBy(userId);
+                bankStatementDTO.setPartnerId(partnerId);
+
+                bankStatementService.importBankStatement(partnerId, bankStatementDTO);
+
+                String telegramMessage = TelegramUtil.buildBankStatementNotification(
+                        partner, "N/A", null,
+                        ApiResponseConstants.BAD_REQUEST_CODE,
+                        ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS
+                );
+                telegramNotificationService.sendBankInterfaceMessage(telegramMessage);
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                ResponseCodeUtil.validationFailed(),
+                                ApiResponseConstants.BAD_REQUEST_NO_BANK_STATEMENT_RECORDS
+                        ));
+            }
+
             LocalDateTime statementDate = LocalDateTime.parse(statement[0], formatter);
             statementDate = statementDate.plusHours(7);
             String bankAccountNumber = (!statement[1].isEmpty()) ? statement[1] : null;

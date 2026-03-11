@@ -167,7 +167,10 @@ function openModal(item) {
         Object.keys(item.Data).length === 0 &&
         item.status === "Failed" &&
         typeof item.message === "string" &&
-        item.message.includes("There are no statement records.");
+        (
+            item.message.includes("There are no statement records.") ||
+            item.message.includes("Missing or invalid Data was provided.")
+        );
 
     if (isDataEmpty) {
         const modal = document.getElementById("modal");
