@@ -105,6 +105,10 @@ public class BodyValidationUtil {
                 } else {
                     throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be numeric. (Entry: " + (i + 1) + ")");
                 }
+
+                if (value < 0) {
+                    throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be a positive number. (Entry: " + (i + 1) + ")");
+                }
             }
         }
 
