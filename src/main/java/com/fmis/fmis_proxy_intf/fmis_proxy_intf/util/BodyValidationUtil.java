@@ -93,21 +93,16 @@ public class BodyValidationUtil {
             for (String numericKey : numericFields) {
                 JsonNode valueNode = stmt.get(numericKey);
 
-                double value;
                 if (valueNode.isNumber()) {
-                    value = valueNode.asDouble();
+                    // valid, no action needed
                 } else if (valueNode.isTextual()) {
                     try {
-                        value = Double.parseDouble(valueNode.asText());
+                        Double.parseDouble(valueNode.asText());
                     } catch (NumberFormatException e) {
                         throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be numeric. (Entry: " + (i + 1) + ")");
                     }
                 } else {
                     throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be numeric. (Entry: " + (i + 1) + ")");
-                }
-
-                if (value < 0) {
-                    throw new IllegalArgumentException("The bank statement field (" + numericKey + ") must be a positive number. (Entry: " + (i + 1) + ")");
                 }
             }
         }
