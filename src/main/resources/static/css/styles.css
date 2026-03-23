@@ -278,6 +278,10 @@ section.content {
     padding: 0 16px;
 }
 
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /**
 |--------------------------------------------------------------------------
 | Responsive

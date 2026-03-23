@@ -159,38 +159,104 @@ function renderTable() {
 /**
  * Fetches ALL filtered data (no pagination) and exports to Excel.
  * Excludes the raw JSON "Data" field.
+ * Fetches total count first to avoid arbitrary size cap.
+ * Warns user via SweetAlert if export exceeds 10,000 rows.
  */
 async function exportToExcel() {
-    showToast("info", "Preparing Excel export...");
+    const exportBtn = document.getElementById("exportExcel");
+    showLoadingIconButton(exportBtn);
 
-    const params = new URLSearchParams({
+    const filterParams = {
         page: 0,
-        size: 10000,
+        size: 1,
         ...(document.getElementById("partner").value && { bankId: document.getElementById("partner").value }),
         ...(document.getElementById("bankAccount").value && { bankAccountNumber: document.getElementById("bankAccount").value }),
         ...(document.getElementById("statementId").value && { statementId: document.getElementById("statementId").value }),
         ...(document.getElementById("statementDate").value && { statementDate: formatDate(document.getElementById("statementDate").value) }),
         ...(document.getElementById("importedDate").value && { importedDate: formatDate(document.getElementById("importedDate").value) }),
         ...(document.getElementById("status").value && { status: document.getElementById("status").value }),
-    });
+    };
 
     try {
-        const response = await fetch(`${url}?${params}`, {
+        const countRes = await fetch(`${url}?${new URLSearchParams(filterParams)}`, {
             headers: {
                 "Authorization": `Basic ${basicAuth}`,
                 "X-Partner-Token": partnerToken
             }
         });
+        if (!countRes.ok) throw new Error(`HTTP ${countRes.status}`);
+        const countJson = await countRes.json();
+        const total = countJson?.data?.totalElements || 0;
 
+        if (total === 0) {
+            showToast("warning", "No data to export.");
+            return;
+        }
+
+        if (total > 50000) {
+            await Swal.fire({
+                title: "Export Too Large",
+                html: `
+                    <div style="font-size:14px; color:#374151; line-height:1.6;">
+                        Your export contains
+                        <span style="font-weight:700; color:#DC2626;">${total.toLocaleString()}</span> rows
+                        which is too large to export at once.
+                        <br/><br/>
+                        Please apply filters to reduce the data before exporting.
+                    </div>`,
+                icon: "error",
+                iconColor: "#DC2626",
+                confirmButtonText: "OK, I'll Filter",
+                confirmButtonColor: "#1a73e8",
+                customClass: {
+                    popup: "swal-modern",
+                    title: "swal-modern-title"
+                }
+            });
+            return;
+        }
+
+        if (total > 10000) {
+            hideLoadingIconButton(exportBtn);
+
+            const confirm = await Swal.fire({
+                title: "Large Export",
+                html: `
+                    <div style="font-size:14px; color:#374151; line-height:1.6;">
+                        You are about to export
+                        <span style="font-weight:700; color:#111827;">${total.toLocaleString()}</span> rows.
+                        <br/>This may take a while to complete.
+                    </div>`,
+                icon: "warning",
+                iconColor: "#F59E0B",
+                showCancelButton: true,
+                confirmButtonText: "Yes, Export",
+                cancelButtonText: "Cancel",
+                confirmButtonColor: "#1a73e8",
+                cancelButtonColor: "#6B7280",
+                reverseButtons: true,
+                customClass: {
+                    popup: "swal-modern",
+                    title: "swal-modern-title"
+                }
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            showLoadingIconButton(exportBtn);
+        }
+
+        filterParams.size = total;
+        const response = await fetch(`${url}?${new URLSearchParams(filterParams)}`, {
+            headers: {
+                "Authorization": `Basic ${basicAuth}`,
+                "X-Partner-Token": partnerToken
+            }
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const json = await response.json();
         const rows = json?.data?.content || [];
-
-        if (rows.length === 0) {
-            showToast("warning", "No data to export.");
-            return;
-        }
 
         const exportData = rows.map((row, i) => ({
             "#": i + 1,
@@ -205,7 +271,6 @@ async function exportToExcel() {
             "Imported Date": row.createdDate ?? ""
         }));
 
-        // Auto column width
         const colWidths = Object.keys(exportData[0]).map(key => ({
             wch: Math.max(key.length, ...exportData.map(r => String(r[key] ?? "").length)) + 2
         }));
@@ -219,11 +284,13 @@ async function exportToExcel() {
 
         const filename = `Bank Statement (${new Date().toISOString().slice(0, 10)}).xlsx`;
         XLSX.writeFile(workbook, filename);
-        showToast("success", "Excel exported successfully.");
+        showToast("success", `Exported ${total.toLocaleString()} rows successfully.`);
 
     } catch (error) {
         console.error("Export error:", error);
         showToast("error", "Failed to export Excel.");
+    } finally {
+        hideLoadingIconButton(exportBtn);
     }
 }
 

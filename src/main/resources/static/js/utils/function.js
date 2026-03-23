@@ -130,6 +130,49 @@ function hideLoadingButton(button) {
 }
 
 /**
+ * Shows a loading spinner inside an icon button using dark colored bars.
+ *
+ * @param {HTMLElement} button - The icon button element
+ */
+function showLoadingIconButton(button) {
+    if (!button) return;
+    button.dataset.originalContent = button.innerHTML;
+    button.disabled = true;
+    button.style.cursor = "not-allowed";
+    button.innerHTML = `
+        <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 30" style="vertical-align: middle;">
+            <rect x="0" y="10" width="4" height="12" fill="var(--color-blue-dark)" opacity="0.6">
+                <animate attributeName="opacity" values="0.2;1;0.2" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="height" values="12;24;12" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="y" values="10;3;10" begin="0s" dur="0.6s" repeatCount="indefinite"></animate>
+            </rect>
+            <rect x="8" y="10" width="4" height="12" fill="var(--color-blue-dark)" opacity="0.6">
+                <animate attributeName="opacity" values="0.2;1;0.2" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="height" values="12;24;12" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="y" values="10;3;10" begin="0.15s" dur="0.6s" repeatCount="indefinite"></animate>
+            </rect>
+            <rect x="16" y="10" width="4" height="12" fill="var(--color-blue-dark)" opacity="0.6">
+                <animate attributeName="opacity" values="0.2;1;0.2" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="height" values="12;24;12" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+                <animate attributeName="y" values="10;3;10" begin="0.3s" dur="0.6s" repeatCount="indefinite"></animate>
+            </rect>
+        </svg>
+    `;
+}
+
+/**
+ * Restores an icon button to its original state.
+ *
+ * @param {HTMLElement} button - The icon button element
+ */
+function hideLoadingIconButton(button) {
+    if (!button) return;
+    button.innerHTML = button.dataset.originalContent || button.innerHTML;
+    button.disabled = false;
+    button.style.cursor = "pointer";
+}
+
+/**
  * Show error when fetching data
  *
  * @param message - The data to display.
