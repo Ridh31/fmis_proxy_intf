@@ -188,6 +188,20 @@ function renderLogTable() {
 }
 
 /**
+ * Escapes HTML special characters to prevent raw HTML from rendering in the modal.
+ *
+ * @param {string} str - Raw string that may contain HTML.
+ * @returns {string} - Escaped string safe for innerHTML injection.
+ */
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+/**
  * Opens the modal and displays the data in a formatted and styled way.
  *
  * @param {Object|string} item - The data to display (JSON object or string).
@@ -204,7 +218,9 @@ function openLogModal(item, status = true) {
     if (!item || (typeof item === "object" && Object.keys(item).length === 0)) {
         content = `<div style="padding:1rem; color:#888; font-style:italic; border:1px dashed #CCC; border-radius:8px;">No data</div>`;
     } else {
-        let jsonStr = typeof item === "string" ? item : JSON.stringify(item, null, 2);
+        let jsonStr = typeof item === "string"
+            ? escapeHtml(item)
+            : JSON.stringify(item, null, 2);
 
         // Highlight keys
         const highlightRegex = /("(accessToken|loginToken|loginUrl|message)"\s*:\s*)"([^"]+)"/g;

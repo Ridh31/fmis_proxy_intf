@@ -126,6 +126,7 @@ body, html {
 .menu-item.active {
     background-color: var(--sidebar-hover-bg);
     font-weight: bold;
+    border-left: 3px solid white;
 }
 
 .menu-item:hover {

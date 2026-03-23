@@ -23,7 +23,9 @@ body, html {
 
 .left {
     flex: 0.5;
-    background: var(--btn-secondary-hover-bg) url('/img/waving-dark.jpg') center center / cover no-repeat;
+    background: #1a2740;
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -34,12 +36,19 @@ body, html {
     pointer-events: none;
 }
 
+.left img {
+    max-width: 120px;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
 .left h1 {
     font-size: 2.5rem;
 }
 
 .left h2 {
     font-size: 1.3rem;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
 }
 
 .right {
@@ -53,6 +62,7 @@ body, html {
 .login-box {
     width: 100%;
     max-width: 400px;
+    animation: fadeIn 0.4s ease;
 }
 
 .login-box h2 {
@@ -81,9 +91,18 @@ body, html {
 .input-group input {
     width: 100%;
     padding: 0.75rem;
-    border: 1.5px solid var(--color-gray-300);
-    border-radius: 6px;
+    border: 1.5px solid var(--color-gray-200);
+    border-radius: 8px;
     font-size: 1rem;
+    background-color: #F5F7FA;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--color-blue-dark);
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+    background-color: #ffffff;
 }
 
 .input-group input.error {
@@ -171,4 +190,27 @@ body, html {
         opacity: 1;
         transform: scale(1);
     }
+}
+
+.waves-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+.w1 { animation: wave1 6s ease-in-out infinite; }
+.w2 { animation: wave2 8s ease-in-out infinite; }
+.w3 { animation: wave3 10s ease-in-out infinite; }
+
+@keyframes wave1 {
+    0%,100% { d: path("M0,280 C80,220 160,300 240,260 C320,220 400,300 480,260 C520,240 520,240 520,240 L520,500 L0,500 Z"); }
+    50%      { d: path("M0,260 C80,300 160,220 240,270 C320,310 400,230 480,270 C520,285 520,285 520,285 L520,500 L0,500 Z"); }
+}
+@keyframes wave2 {
+    0%,100% { d: path("M0,320 C90,270 170,350 260,310 C340,275 420,350 520,310 L520,500 L0,500 Z"); }
+    50%      { d: path("M0,310 C90,355 170,280 260,325 C340,360 420,290 520,330 L520,500 L0,500 Z"); }
+}
+@keyframes wave3 {
+    0%,100% { d: path("M0,370 C100,330 200,390 300,360 C400,330 460,380 520,360 L520,500 L0,500 Z"); }
+    50%      { d: path("M0,355 C100,390 200,340 300,375 C400,405 460,355 520,375 L520,500 L0,500 Z"); }
 }

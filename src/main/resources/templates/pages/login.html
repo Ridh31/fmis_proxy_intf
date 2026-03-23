@@ -13,6 +13,11 @@
 <body>
 <div class="container">
     <div class="left">
+        <svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 500" preserveAspectRatio="none">
+            <path class="w1" fill="rgba(255,255,255,0.04)" d="M0,280 C80,220 160,300 240,260 C320,220 400,300 480,260 C520,240 520,240 520,240 L520,500 L0,500 Z"/>
+            <path class="w2" fill="rgba(255,255,255,0.06)" d="M0,320 C90,270 170,350 260,310 C340,275 420,350 520,310 L520,500 L0,500 Z"/>
+            <path class="w3" fill="rgba(255,255,255,0.09)" d="M0,370 C100,330 200,390 300,360 C400,330 460,380 520,360 L520,500 L0,500 Z"/>
+        </svg>
         <div>
             <img src="/img/logo-fmis-v2-300x190-1.png" alt="Logo" style="max-width: 150px; margin-bottom: 1rem;">
             <h2>Financial Management Information System</h2>
@@ -32,7 +37,15 @@
 
                 <div class="input-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password">
+                    <div style="position: relative;">
+                        <input type="password" id="password">
+                        <span onclick="togglePassword()" style="
+                            position: absolute; right: 12px; top: 50%;
+                            transform: translateY(-50%);
+                            cursor: pointer; font-size: 1rem;
+                            color: #9CA3AF; user-select: none;
+                        " id="eye-toggle">👁</span>
+                    </div>
                     <div id="password-error" class="error-message" style="display: none;">The Password field is required</div>
                 </div>
 

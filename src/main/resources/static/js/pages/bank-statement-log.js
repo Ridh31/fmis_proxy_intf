@@ -94,7 +94,7 @@ function renderTable() {
         pageLength: 10,
         scrollX: true,
         scrollCollapse: true,
-        lengthMenu: [10, 25, 50, 100, 200],
+        lengthMenu: [10, 25, 50, 100, 200, 1000],
         fixedColumns: { leftColumns: 2 },
         ajax: {
             url: url,
@@ -157,6 +157,77 @@ function renderTable() {
 }
 
 /**
+ * Fetches ALL filtered data (no pagination) and exports to Excel.
+ * Excludes the raw JSON "Data" field.
+ */
+async function exportToExcel() {
+    showToast("info", "Preparing Excel export...");
+
+    const params = new URLSearchParams({
+        page: 0,
+        size: 10000,
+        ...(document.getElementById("partner").value && { bankId: document.getElementById("partner").value }),
+        ...(document.getElementById("bankAccount").value && { bankAccountNumber: document.getElementById("bankAccount").value }),
+        ...(document.getElementById("statementId").value && { statementId: document.getElementById("statementId").value }),
+        ...(document.getElementById("statementDate").value && { statementDate: formatDate(document.getElementById("statementDate").value) }),
+        ...(document.getElementById("importedDate").value && { importedDate: formatDate(document.getElementById("importedDate").value) }),
+        ...(document.getElementById("status").value && { status: document.getElementById("status").value }),
+    });
+
+    try {
+        const response = await fetch(`${url}?${params}`, {
+            headers: {
+                "Authorization": `Basic ${basicAuth}`,
+                "X-Partner-Token": partnerToken
+            }
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const json = await response.json();
+        const rows = json?.data?.content || [];
+
+        if (rows.length === 0) {
+            showToast("warning", "No data to export.");
+            return;
+        }
+
+        const exportData = rows.map((row, i) => ({
+            "#": i + 1,
+            "Bank Account": row.bankAccountNumber ?? "",
+            "Statement ID": row.statementId ?? "",
+            "Statement Date": row.statementDate ?? "",
+            "Status": row.status ?? "",
+            "Method": row.method ?? "",
+            "Endpoint": row.endpoint ?? "",
+            "Branch": row.branch ?? "",
+            "Imported By": row.importedBy ?? "",
+            "Imported Date": row.createdDate ?? ""
+        }));
+
+        // Auto column width
+        const colWidths = Object.keys(exportData[0]).map(key => ({
+            wch: Math.max(key.length, ...exportData.map(r => String(r[key] ?? "").length)) + 2
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        worksheet["!freeze"] = { xSplit: 0, ySplit: 1 };
+        worksheet["!cols"] = colWidths;
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Bank Statement Log");
+
+        const filename = `Bank Statement (${new Date().toISOString().slice(0, 10)}).xlsx`;
+        XLSX.writeFile(workbook, filename);
+        showToast("success", "Excel exported successfully.");
+
+    } catch (error) {
+        console.error("Export error:", error);
+        showToast("error", "Failed to export Excel.");
+    }
+}
+
+/**
  * Opens the modal and displays the statement data JSON prettily
  * @param {object} item - The statement data object
  */
@@ -175,26 +246,16 @@ function openModal(item) {
     if (isDataEmpty) {
         const modal = document.getElementById("modal");
         const body = document.getElementById("modalBody");
-
         body.innerHTML = `
-        <div style="
-            background-color: #F8D7DA;
-            color: #842029;
-            border: 1px solid #F5C2C7;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        ">
+        <div style="padding:10px 14px; border-radius:8px; font-size:12px; line-height:1.5;
+            background:#FEF2F2; border:1px solid #FECACA; color:#991B1B;">
             <strong>Details:</strong> ${item.message}
         </div>`;
-
         modal.style.display = "flex";
         return;
     }
 
     let html = "";
-
     const modal = document.getElementById("modal");
     const body = document.getElementById("modalBody");
     const message = typeof item.message === "string" ? item.message : "";
@@ -202,53 +263,67 @@ function openModal(item) {
     const hasEntryStar = message.includes("Entry: *");
     const hasEntries = item.Data && Array.isArray(item.Data.CMB_BANKSTM_STG) && item.Data.CMB_BANKSTM_STG.length > 0;
 
-    // Fallback error without CMB or Entry: *
-    if (item.status === "Failed" && !hasCMB && !hasEntryStar) {
-        html += `<div style="
-            background-color: #F8D7DA;
-            color: #842029;
-            border: 1px solid #F5C2C7;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            padding: 1rem;
-            margin-bottom: 1rem;">
-            <strong>Error:</strong> ${message || "Unknown error"}
+    const kvRow = (key, value, isError = false, isHighlighted = false) => `
+        <div style="display:grid; grid-template-columns:190px 1fr; padding:5px 14px;
+            font-size:12px; border-bottom:1px solid #F3F4F6;
+            ${isError ? 'background:#FEF2F2; border-left:3px solid #EF4444; padding-left:11px;' : ''}">
+            <span style="font-weight:600; color:${isHighlighted ? '#991B1B' : '#111827'};">${key}</span>
+            <span style="color:${isError ? '#DC2626' : isHighlighted ? '#B91C1C' : '#374151'}; ${isError ? 'font-weight:500;' : ''}">${value}</span>
         </div>`;
 
-        // Show entries like success style if available
+    const entryHeader = (index, entry = {}, isHighlighted = false) => {
+        const colors = ['#3B82F6', '#8B5CF6', '#0891B2', '#059669'];
+        const color = isHighlighted ? '#DC2626' : colors[index % colors.length];
+        const bankCode = entry.CMB_BANK_CODE || "";
+        const bankAccount = entry.CMB_BANK_ACCOUNT_N || "";
+        const meta = bankCode && bankAccount ? `${bankCode} | ${bankAccount}` : bankCode || bankAccount || "";
+        return `
+        <div style="padding:8px 14px; display:flex; align-items:center; justify-content:space-between;
+            background:${isHighlighted ? '#FEF2F2' : '#F0F2F5'};
+            border-bottom:1px solid ${isHighlighted ? '#FECACA' : '#E5E7EB'};">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.06em;
+                text-transform:uppercase; color:${color};">
+                Entry ${index + 1}
+            </span>
+            ${meta ? `<span style="font-size:11px; color:#6B7280; font-family:monospace;">${meta}</span>` : ''}
+        </div>`;
+    };
+
+    const detailsBox = (msg, type = "warning") => {
+        const styles = {
+            warning: { bg: '#FFFBEB', border: '#FDE68A', color: '#92400E' },
+            success: { bg: '#F0FDF4', border: '#BBF7D0', color: '#166534' },
+            error:   { bg: '#FEF2F2', border: '#FECACA', color: '#991B1B' }
+        };
+        const s = styles[type];
+        return `<div style="padding:10px 14px; border-radius:8px; font-size:12px; line-height:1.5;
+        margin: 12px 0;
+        background:${s.bg}; border:1px solid ${s.border}; color:${s.color};">
+        <strong>Details:</strong> ${msg}
+    </div>`;
+    };
+
+    const entryCard = (content, isHighlighted = false) => `
+        <div style="border-radius:10px; overflow:hidden; margin-bottom:12px;
+            border:1px solid ${isHighlighted ? '#FECACA' : '#E5E7EB'};">
+            ${content}
+        </div>`;
+
+    // Fallback error without CMB or Entry: *
+    if (item.status === "Failed" && !hasCMB && !hasEntryStar) {
+        html += detailsBox(message || "Unknown error", "error");
+
         if (hasEntries) {
             item.Data.CMB_BANKSTM_STG.forEach((entry, i) => {
-                html += `<div style="
-                    padding:1rem;
-                    margin-bottom:1rem;
-                    border-radius:8px;
-                    font-size:0.85rem;
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    border: 1px solid #E4E4E4;
-                    background-color:#F9F9F9;
-                ">`;
-
-                // Badge for Entry
-                html += `<div style="display:flex; justify-content:flex-start; margin-bottom:4px;">
-                    <span style="
-                        background-color: #4C5F85;
-                        color: white;
-                        padding: 4px 7px;
-                        border-radius: 5px;
-                        font-size: 0.75rem;
-                        font-weight: 600;
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    ">Entry ${i + 1}</span>
-                </div>`;
-
-                Object.entries(entry).forEach(([key, value]) => {
-                    html += `<p style="margin:4px 0;">
-                        <span style="font-weight:600;">${key}:</span>
-                        <span style="color:#8C7F77;"> ${value}</span>
-                    </p>`;
-                });
-
-                html += `</div>`;
+                let cardContent = entryHeader(i, entry);
+                cardContent += `<div>`;
+                Object.entries(entry)
+                    .filter(([key]) => key !== "CMB_BANK_CODE")
+                    .forEach(([key, value]) => {
+                        cardContent += kvRow(key, value);
+                    });
+                cardContent += `</div>`;
+                html += entryCard(cardContent);
             });
         }
 
@@ -257,97 +332,58 @@ function openModal(item) {
         return;
     }
 
-    // Get the specific Entry number
+    // Get highlighted entry index
     let highlightedIndex = -1;
     const entryMatch = message.match(/Entry:\s*(\d+)/);
-    if (entryMatch) {
-        highlightedIndex = parseInt(entryMatch[1], 10) - 1;
-    }
+    if (entryMatch) highlightedIndex = parseInt(entryMatch[1], 10) - 1;
 
     // Extract error fields
     const fieldsToHighlight = new Set();
     const fieldMatch = message.match(/CMB_[A-Z_]+/g);
-    if (fieldMatch) {
-        fieldMatch.forEach(f => fieldsToHighlight.add(f));
-    }
+    if (fieldMatch) fieldMatch.forEach(f => fieldsToHighlight.add(f));
 
     if (item.Data && Array.isArray(item.Data.CMB_BANKSTM_STG)) {
-        const isGlobalError = message && message.includes("Entry: *");
-        const showGlobalDetailsBox = isGlobalError;
-        const showSpecificDetailsBox = message && Number.isInteger(highlightedIndex);
-        const shownDetailBox = new Set();
+        const isGlobalError = message.includes("Entry: *");
         const isStatus = item.status === "Processed";
+        const shownDetailBox = new Set();
 
-        // 1. Show global error message ONCE at the top
-        if (showGlobalDetailsBox && !isStatus) {
-            html += `<div style="background-color: #FFF3CD; color: #856404; border: 1px solid #FFEEBA; border-radius: 8px; font-size: 0.85rem; padding: 0.75rem; margin-bottom: 1rem;">
-                    <strong>Details: </strong>${message}
-                </div>`;
+        const totalEntries = item.Data.CMB_BANKSTM_STG.length;
+        html += `
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                <span style="margin-left:auto; font-size:11px; background:#F3F4F6; color:#6B7280; padding:2px 8px; border-radius:20px;">${totalEntries} entr${totalEntries !== 1 ? 'ies' : 'y'}</span>
+            </div>`;
+
+        // Global message at top
+        if (isGlobalError && !isStatus) {
+            html += detailsBox(message, "warning");
         } else if (isStatus) {
-            html += `<div style="background-color: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; border-radius: 8px; font-size: 0.85rem; padding: 0.75rem; margin-bottom: 1rem;">
-                    <strong>Details: </strong>${message}
-                </div>`;
+            html += detailsBox(message, "success");
         }
 
-        // 2. Loop through each entry
         item.Data.CMB_BANKSTM_STG.forEach((entry, i) => {
             const isErrorEntry = i === highlightedIndex;
-            const showThisDetailsBox = showSpecificDetailsBox && isErrorEntry && !shownDetailBox.has(i);
             const isHighlighted = isGlobalError || isErrorEntry;
 
-            html += `<div style="margin-bottom: 1rem;">`;
-
-            // 2a. Show specific error above the relevant entry
-            if (showThisDetailsBox) {
-                html += `<div style="background-color: #FFF3CD; color: #856404; border: 1px solid #FFEEBA; border-radius: 8px; font-size: 0.85rem; padding: 0.75rem; margin-bottom: 1rem;">
-                        <strong>Details: </strong>${message}
-                    </div>`;
+            // Specific error box above relevant entry
+            if (isErrorEntry && !shownDetailBox.has(i)) {
+                html += detailsBox(message, "warning");
                 shownDetailBox.add(i);
             }
 
-            // Container
-            html += `<div style="
-                    padding:1rem;
-                    margin-bottom:1rem;
-                    border-radius:8px;
-                    font-size:0.85rem;
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    border: 1px solid ${isHighlighted ? '#F5C6CB' : '#E4E4E4'};
-                    background-color:${isHighlighted ? '#FCEBEA' : '#F9F9F9'};
-                    color: ${isHighlighted ? '#842029' : 'inherit'};
-                ">`;
-
-            // Badge
-            html += `
-                <div style="display: flex; justify-content: flex-start;">
-                    <span style="
-                        background-color: ${isHighlighted ? '#EF4444' : '#3B82F6'};
-                        color: white;
-                        padding: 4px 7px;
-                        border-radius: 5px;
-                        font-size: 0.75rem;
-                        font-weight: 600;
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    ">
-                        Entry ${i + 1}
-                    </span>
-                </div>`;
-
-            Object.entries(entry).forEach(([key, value]) => {
-                const isFieldError = isErrorEntry && fieldsToHighlight.has(key);
-                html += `
-                    <p style="margin: 4px 0; ${isFieldError ? 'border-left: 4px solid #D9534F; padding-left: 8px; background-color: #FEF7F7;' : ''}">
-                        <span style="font-weight: 600;">${key}:</span>
-                        <span style="color: ${isHighlighted ? '#B97A78' : '#8C7F77'};"> ${value}</span>
-                    </p>`;
-            });
-
-            html += `</div>`;
-            html += `</div>`;
+            let cardContent = entryHeader(i, entry, isHighlighted);
+            cardContent += `<div>`;
+            Object.entries(entry)
+                .filter(([key]) => key !== "CMB_BANK_CODE")
+                .forEach(([key, value]) => {
+                    const isFieldError = isErrorEntry && fieldsToHighlight.has(key);
+                    cardContent += kvRow(key, value, isFieldError, isHighlighted);
+                });
+            cardContent += `</div>`;
+            html += entryCard(cardContent, isHighlighted);
         });
 
     } else {
-        html += `<pre style="white-space: pre-wrap; font-size: 0.85rem;">${JSON.stringify(item, null, 2)}</pre>`;
+        html += `<pre style="white-space:pre-wrap; font-size:12px; color:#374151;">${JSON.stringify(item, null, 2)}</pre>`;
     }
 
     body.innerHTML = html;
@@ -453,6 +489,8 @@ logTable.on("click", ".download-json", function () {
     const data = logTable.DataTable().row(row).data();
     downloadJSON(data);
 });
+
+document.getElementById("exportExcel").addEventListener("click", exportToExcel);
 
 // Initial fetch when page loads
 loadPartners();

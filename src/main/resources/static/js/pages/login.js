@@ -99,4 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (buttonText) buttonText.style.display = "inline";
         }
     });
+
+    window.togglePassword = function () {
+        const input = document.getElementById("password");
+        input.type = input.type === "password" ? "text" : "password";
+    };
 });
